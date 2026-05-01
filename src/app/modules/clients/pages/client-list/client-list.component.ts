@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -25,12 +25,12 @@ export class ClientListComponent implements OnInit {
   searchQuery = '';
   private search$ = new Subject<string>();
 
-  form!: FormGroup;
+  form!: UntypedFormGroup;
 
   constructor(
     private clientService:       ClientService,
     private router:              Router,
-    private fb:                  FormBuilder,
+    private fb:                  UntypedFormBuilder,
     private messageService:      MessageService,
     private confirmationService: ConfirmationService
   ) {}

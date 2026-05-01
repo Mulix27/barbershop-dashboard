@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -11,11 +11,11 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class LoginComponent implements OnInit {
 
-  form!: FormGroup;
+  form!: UntypedFormGroup;
   loading = false;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private authService: AuthService,
     private router: Router,
     private messageService: MessageService
