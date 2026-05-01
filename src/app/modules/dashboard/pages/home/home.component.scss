@@ -1,0 +1,456 @@
+// ── Variables ─────────────────────────────────────────────────
+$gold:       #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim:   rgba(201, 168, 76, 0.12);
+$surface:    #13131E;
+$card:       #16161F;
+$border:     rgba(201, 168, 76, 0.1);
+$border-sub: rgba(255, 255, 255, 0.06);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.45);
+$dark:       #0D0D14;
+
+// ── Header ────────────────────────────────────────────────────
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+
+  h1 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 .25rem;
+  }
+}
+
+.header-sub {
+  font-size: .8125rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+// ── Métricas ──────────────────────────────────────────────────
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.metric-card {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color .2s;
+
+  &:hover { border-color: rgba(201, 168, 76, 0.25); }
+}
+
+.metric-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .pi { font-size: 18px; }
+
+  &.appt    { background: rgba(201,168,76,.12); .pi { color: $gold; } }
+  &.revenue { background: rgba(34,197,94,.12);  .pi { color: #22c55e; } }
+  &.ticket  { background: rgba(99,102,241,.12); .pi { color: #818cf8; } }
+  &.services{ background: rgba(236,72,153,.12); .pi { color: #f472b6; } }
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric-label {
+  font-size: .75rem;
+  color: $text-muted;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $text;
+  line-height: 1.2;
+
+  &.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1rem;
+  }
+}
+
+.metric-sub {
+  font-size: .7rem;
+  color: $text-muted;
+}
+
+// ── Grid principal ────────────────────────────────────────────
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+// ── Cards base ────────────────────────────────────────────────
+.card {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h2 {
+    font-size: .9375rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0;
+  }
+}
+
+// ── Agenda ────────────────────────────────────────────────────
+.date-nav {
+  margin-bottom: .875rem;
+}
+
+.date-label {
+  font-size: .8rem;
+  color: $gold;
+  font-weight: 600;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: .125rem;
+}
+
+.agenda-item {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .625rem .5rem;
+  border-radius: 10px;
+  transition: background .15s;
+
+  &:hover { background: rgba(255,255,255,.03); }
+}
+
+.appt-time {
+  font-size: .8125rem;
+  font-weight: 700;
+  color: $gold;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.appt-dot {
+  width: 8px;
+  height: 8px;
+  background: $gold;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(201,168,76,.5);
+}
+
+.appt-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.appt-client {
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appt-service {
+  font-size: .75rem;
+  color: $text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Gráfica ───────────────────────────────────────────────────
+.chart-total {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $text;
+  margin: .25rem 0 0;
+}
+
+.chart-period {
+  font-size: .8rem;
+  color: $text-muted;
+  font-weight: 400;
+  margin-left: .375rem;
+}
+
+.chart-container {
+  height: 200px;
+  margin-top: .75rem;
+}
+
+// ── Grid secundario ───────────────────────────────────────────
+.secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+// ── Top servicios ─────────────────────────────────────────────
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.service-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.service-rank {
+  width: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+  color: $text-muted;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.service-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.service-name {
+  font-size: .8125rem;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service-bar {
+  height: 4px;
+  background: rgba(255,255,255,.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.service-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $gold 0%, $gold-light 100%);
+  border-radius: 99px;
+  transition: width .6s ease;
+}
+
+.service-pct {
+  font-size: .75rem;
+  font-weight: 700;
+  color: $gold;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+// ── Ventas recientes ──────────────────────────────────────────
+.sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: .125rem;
+}
+
+.sale-item {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .625rem .5rem;
+  border-radius: 10px;
+  transition: background .15s;
+
+  &:hover { background: rgba(255,255,255,.03); }
+}
+
+.sale-avatar {
+  width: 36px;
+  height: 36px;
+  background: $gold-dim;
+  border: 1px solid rgba(201,168,76,.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+.sale-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sale-client {
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+}
+
+.sale-method {
+  font-size: .75rem;
+  color: $text-muted;
+}
+
+.sale-total {
+  font-size: .9375rem;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+// ── Botones ───────────────────────────────────────────────────
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .625rem 1.125rem;
+  background: linear-gradient(135deg, #C9A84C 0%, #E8C96B 100%);
+  border: none;
+  border-radius: 10px;
+  color: #0D0D14;
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+
+  &:hover { opacity: .9; transform: translateY(-1px); }
+  &.sm { padding: .5rem .875rem; font-size: .8125rem; }
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .375rem .625rem;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: $gold;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  .pi { font-size: 11px; }
+  &:hover { background: $gold-dim; }
+}
+
+// ── Estado vacío ──────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: .75rem;
+  text-align: center;
+
+  .pi {
+    font-size: 2rem;
+    color: $text-muted;
+    opacity: .5;
+  }
+
+  p {
+    font-size: .875rem;
+    color: $text-muted;
+    margin: 0;
+  }
+
+  &.sm {
+    padding: 1rem;
+    p { font-size: .8rem; }
+  }
+}
+
+// ── PrimeNG Overrides ─────────────────────────────────────────
+:host ::ng-deep {
+  .appt-badge.p-tag {
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+  }
+
+  .p-skeleton {
+    background: rgba(255,255,255,.05) !important;
+
+    &::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(201,168,76,.06),
+        transparent
+      ) !important;
+    }
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 1200px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .main-grid,
+  .secondary-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .dashboard-header { flex-direction: column; }
+}

@@ -1,0 +1,90 @@
+$gold:       #C9A84C;
+$gold-dim:   rgba(201, 168, 76, 0.12);
+$surface:    #13131E;
+$border:     rgba(201, 168, 76, 0.12);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.45);
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background: $surface;
+  border-bottom: 1px solid $border;
+  backdrop-filter: blur(12px);
+}
+
+// ── Hamburguesa ───────────────────────────────────────────────
+.toggle-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid $border;
+  border-radius: 8px;
+  color: $text-muted;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+
+  .pi { font-size: 14px; }
+
+  &:hover {
+    background: $gold-dim;
+    color: $gold;
+    border-color: rgba(201, 168, 76, 0.3);
+  }
+}
+
+// ── Saludo ────────────────────────────────────────────────────
+.topbar-greeting {
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text;
+    line-height: 1.2;
+    margin: 0;
+  }
+}
+
+.topbar-date {
+  font-size: .75rem;
+  color: $text-muted;
+  text-transform: capitalize;
+  margin-top: 2px;
+}
+
+// ── Spacer ────────────────────────────────────────────────────
+.topbar-spacer { flex: 1; }
+
+// ── Badge barbería ────────────────────────────────────────────
+.shop-badge {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .375rem .875rem;
+  background: $gold-dim;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 999px;
+  color: $gold;
+  font-size: .8125rem;
+  font-weight: 600;
+
+  .pi { font-size: 13px; }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .topbar-greeting h2 { font-size: .875rem; }
+  .shop-badge span { display: none; }
+}

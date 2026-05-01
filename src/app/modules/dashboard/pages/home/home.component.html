@@ -1,0 +1,212 @@
+<!-- ── Skeletons mientras carga ───────────────────────────── -->
+<ng-container *ngIf="loading">
+  <div class="dashboard-header">
+    <p-skeleton width="280px" height="28px" styleClass="mb-2"></p-skeleton>
+    <p-skeleton width="180px" height="16px"></p-skeleton>
+  </div>
+  <div class="metrics-grid">
+    <p-skeleton *ngFor="let i of [1,2,3,4]" height="96px" borderRadius="12px"></p-skeleton>
+  </div>
+  <div class="main-grid">
+    <p-skeleton height="380px" borderRadius="12px"></p-skeleton>
+    <p-skeleton height="380px" borderRadius="12px"></p-skeleton>
+  </div>
+</ng-container>
+
+<!-- ── Dashboard real ────────────────────────────────────── -->
+<ng-container *ngIf="!loading">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1>{{ greeting }}, {{ userName }}! 👋</h1>
+      <p class="header-sub">Aquí está lo que pasa en tu barbería hoy</p>
+    </div>
+    <button class="btn-primary" (click)="navigateTo('/agenda')">
+      <i class="pi pi-plus"></i>
+      Nueva cita
+    </button>
+  </div>
+
+  <!-- Métricas del día -->
+  <div class="metrics-grid">
+
+    <div class="metric-card">
+      <div class="metric-icon appt">
+        <i class="pi pi-calendar"></i>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Citas hoy</span>
+        <span class="metric-value">{{ todayAppointments }}</span>
+        <span class="metric-sub">{{ todayLabel }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon revenue">
+        <i class="pi pi-dollar"></i>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Ingresos hoy</span>
+        <span class="metric-value">{{ formatCurrency(todayRevenue) }}</span>
+        <span class="metric-sub">{{ totalSales }} ventas registradas</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon ticket">
+        <i class="pi pi-ticket"></i>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Ticket promedio</span>
+        <span class="metric-value">{{ formatCurrency(avgTicket) }}</span>
+        <span class="metric-sub">Por venta del día</span>
+      </div>
+    </div>
+
+    <div class="metric-card" (click)="navigateTo('/reports')" style="cursor:pointer">
+      <div class="metric-icon services">
+        <i class="pi pi-chart-bar"></i>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Top servicio</span>
+        <span class="metric-value truncate">{{ topServices[0]?.name ?? '—' }}</span>
+        <span class="metric-sub">{{ topServices[0]?.qty ?? 0 }} veces este mes</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Grid principal -->
+  <div class="main-grid">
+
+    <!-- Agenda del día -->
+    <div class="card agenda-card">
+      <div class="card-header">
+        <h2>Agenda del día</h2>
+        <button class="btn-ghost" (click)="navigateTo('/agenda')">
+          Ver todo <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="date-nav">
+        <span class="date-label">{{ todayLabel | titlecase }}</span>
+      </div>
+
+      <!-- Lista de citas -->
+      <div class="agenda-list" *ngIf="todayAgenda.length > 0">
+        <div class="agenda-item" *ngFor="let appt of todayAgenda">
+          <div class="appt-time">{{ formatTime(appt.startTime) }}</div>
+          <div class="appt-dot"></div>
+          <div class="appt-info">
+            <span class="appt-client">{{ appt.clientName }}</span>
+            <span class="appt-service">{{ appt.haircutName ?? appt.serviceNotes ?? 'Servicio no especificado' }}</span>
+          </div>
+          <p-tag
+            [value]="statusLabel(appt.status)"
+            [severity]="statusSeverity(appt.status)"
+            styleClass="appt-badge">
+          </p-tag>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div class="empty-state" *ngIf="todayAgenda.length === 0">
+        <i class="pi pi-calendar-times"></i>
+        <p>No hay citas agendadas para hoy</p>
+        <button class="btn-primary sm" (click)="navigateTo('/agenda')">
+          Agendar cita
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Gráfica de ventas -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <h2>Resumen de ventas</h2>
+          <p class="chart-total">{{ formatCurrency(todayRevenue) }}
+            <span class="chart-period">esta semana</span>
+          </p>
+        </div>
+        <button class="btn-ghost" (click)="navigateTo('/reports')">
+          Ver reportes <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="chart-container">
+        <canvas baseChart
+          [data]="salesChartData"
+          [options]="salesChartOptions"
+          type="line">
+        </canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Grid secundario -->
+  <div class="secondary-grid">
+
+    <!-- Top servicios -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Servicios más vendidos</h2>
+        <button class="btn-ghost" (click)="navigateTo('/reports')">
+          Ver todos <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="services-list">
+        <div class="service-item" *ngFor="let svc of topServices; let i = index">
+          <span class="service-rank">{{ i + 1 }}</span>
+          <div class="service-info">
+            <span class="service-name">{{ svc.name }}</span>
+            <div class="service-bar">
+              <div class="service-fill" [style.width.%]="svc.pct"></div>
+            </div>
+          </div>
+          <span class="service-pct">{{ svc.pct }}%</span>
+        </div>
+
+        <div class="empty-state sm" *ngIf="topServices.length === 0">
+          <p>Sin datos aún</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ventas recientes -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Ventas recientes</h2>
+        <button class="btn-ghost" (click)="navigateTo('/sales')">
+          Ver todas <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="sales-list">
+        <div class="sale-item" *ngFor="let sale of recentSales">
+          <div class="sale-avatar">
+            {{ sale.clientName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="sale-info">
+            <span class="sale-client">{{ sale.clientName }}</span>
+            <span class="sale-method">
+              {{ sale.paymentMethod === 'cash' ? 'Efectivo' :
+                 sale.paymentMethod === 'card' ? 'Tarjeta' : 'Transferencia' }}
+            </span>
+          </div>
+          <span class="sale-total">{{ formatCurrency(sale.total) }}</span>
+        </div>
+
+        <div class="empty-state sm" *ngIf="recentSales.length === 0">
+          <p>Sin ventas registradas hoy</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</ng-container>

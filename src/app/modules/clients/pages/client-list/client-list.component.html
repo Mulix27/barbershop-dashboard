@@ -1,0 +1,283 @@
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="clients-layout">
+
+  <!-- ── Panel izquierdo: lista ─────────────────────────── -->
+  <div class="clients-sidebar">
+
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div>
+        <h1>Clientes</h1>
+        <p class="header-sub">{{ filtered.length }} registrados</p>
+      </div>
+      <button class="btn-primary sm" (click)="openCreate()">
+        <i class="pi pi-plus"></i>
+        Nuevo
+      </button>
+    </div>
+
+    <!-- Búsqueda -->
+    <div class="search-box">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        pInputText
+        placeholder="Buscar por nombre o teléfono..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearch($event)"/>
+    </div>
+
+    <!-- Skeleton -->
+    <ng-container *ngIf="loading">
+      <div class="client-item skeleton" *ngFor="let i of [1,2,3,4,5]">
+        <p-skeleton shape="circle" size="40px"></p-skeleton>
+        <div style="flex:1">
+          <p-skeleton width="60%" height="14px" styleClass="mb-1"></p-skeleton>
+          <p-skeleton width="40%" height="12px"></p-skeleton>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Lista de clientes -->
+    <div class="clients-list" *ngIf="!loading">
+
+      <div
+        class="client-item"
+        *ngFor="let client of filtered"
+        [class.active]="selected?.id === client.id"
+        (click)="select(client)">
+
+        <div class="client-avatar">{{ getInitials(client.fullName) }}</div>
+
+        <div class="client-info">
+          <span class="client-name">{{ client.fullName }}</span>
+          <span class="client-phone">
+            <i class="pi pi-phone"></i>
+            {{ client.phone }}
+          </span>
+        </div>
+
+        <!-- Acciones -->
+        <div class="client-actions" (click)="$event.stopPropagation()">
+          <button
+            class="action-btn"
+            pTooltip="Ver detalle"
+            tooltipPosition="left"
+            (click)="goToDetail(client)">
+            <i class="pi pi-external-link"></i>
+          </button>
+          <button
+            class="action-btn"
+            pTooltip="Editar"
+            tooltipPosition="left"
+            (click)="openEdit(client)">
+            <i class="pi pi-pencil"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Vacío -->
+      <div class="empty-list" *ngIf="filtered.length === 0">
+        <i class="pi pi-users"></i>
+        <p>No se encontraron clientes</p>
+        <button class="btn-primary sm" (click)="openCreate()">
+          Agregar cliente
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Panel derecho: detalle del cliente ─────────────── -->
+  <div class="client-detail" *ngIf="selected; else noSelection">
+
+    <!-- Header del perfil -->
+    <div class="profile-header">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar">{{ getInitials(selected.fullName) }}</div>
+      </div>
+
+      <div class="profile-info">
+        <h2>{{ selected.fullName }}</h2>
+        <div class="profile-contacts">
+          <span *ngIf="selected.phone">
+            <i class="pi pi-phone"></i> {{ selected.phone }}
+          </span>
+          <span *ngIf="selected.email">
+            <i class="pi pi-envelope"></i> {{ selected.email }}
+          </span>
+          <span *ngIf="selected.birthDate">
+            <i class="pi pi-calendar"></i> {{ formatDate(selected.birthDate) }}
+          </span>
+        </div>
+        <p class="profile-notes" *ngIf="selected.notes">{{ selected.notes }}</p>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-outline" (click)="openEdit(selected)">
+          <i class="pi pi-pencil"></i> Editar perfil
+        </button>
+        <button class="btn-primary" (click)="goToDetail(selected)">
+          <i class="pi pi-eye"></i> Ver historial completo
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <p-tabView styleClass="clients-tabs">
+
+      <!-- Tab: Cortes guardados -->
+      <p-tabPanel header="Cortes guardados">
+        <div class="haircuts-section">
+
+          <div class="section-header">
+            <span>{{ selected.haircuts?.length ?? 0 }} estilos guardados</span>
+            <button class="btn-primary sm" (click)="goToDetail(selected)">
+              <i class="pi pi-plus"></i> Agregar corte
+            </button>
+          </div>
+
+          <!-- Grid de cortes -->
+          <div class="haircuts-grid" *ngIf="selected.haircuts && selected.haircuts.length > 0">
+            <div
+              class="haircut-card"
+              *ngFor="let haircut of selected.haircuts"
+              [class.preferred]="haircut.isPreferred">
+
+              <!-- Foto principal o placeholder -->
+              <div class="haircut-photo">
+                <img
+                  *ngIf="haircut.photos && haircut.photos.length > 0"
+                  [src]="haircut.photos[0].url"
+                  [alt]="haircut.name"
+                  loading="lazy"/>
+                <div class="photo-placeholder" *ngIf="!haircut.photos || haircut.photos.length === 0">
+                  <i class="pi pi-image"></i>
+                  <span>Sin foto</span>
+                </div>
+
+                <!-- Badge preferido -->
+                <div class="preferred-badge" *ngIf="haircut.isPreferred">
+                  <i class="pi pi-star-fill"></i> Favorito
+                </div>
+
+                <!-- Cantidad de fotos -->
+                <div class="photo-count" *ngIf="haircut.photos && haircut.photos.length > 1">
+                  <i class="pi pi-images"></i>
+                  {{ haircut.photos.length }}
+                </div>
+              </div>
+
+              <!-- Info del corte -->
+              <div class="haircut-info">
+                <span class="haircut-name">{{ haircut.name }}</span>
+                <span class="haircut-type">
+                  {{ haircut.type === 'hair' ? 'Cabello' :
+                     haircut.type === 'beard' ? 'Barba' : 'Combo' }}
+                </span>
+                <p class="haircut-desc" *ngIf="haircut.description">
+                  {{ haircut.description }}
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Sin cortes -->
+          <div class="empty-haircuts" *ngIf="!selected.haircuts || selected.haircuts.length === 0">
+            <i class="pi pi-scissors"></i>
+            <p>No hay estilos guardados para este cliente</p>
+            <button class="btn-primary sm" (click)="goToDetail(selected)">
+              Guardar primer corte
+            </button>
+          </div>
+
+        </div>
+      </p-tabPanel>
+
+      <!-- Tab: Notas -->
+      <p-tabPanel header="Notas">
+        <div class="notes-section">
+          <p *ngIf="selected.notes">{{ selected.notes }}</p>
+          <div class="empty-state sm" *ngIf="!selected.notes">
+            <i class="pi pi-file-edit"></i>
+            <p>Sin notas para este cliente</p>
+          </div>
+        </div>
+      </p-tabPanel>
+
+    </p-tabView>
+
+  </div>
+
+  <!-- Sin cliente seleccionado -->
+  <ng-template #noSelection>
+    <div class="no-selection">
+      <i class="pi pi-user"></i>
+      <h3>Selecciona un cliente</h3>
+      <p>Elige un cliente de la lista para ver su perfil y cortes guardados</p>
+    </div>
+  </ng-template>
+
+</div>
+
+<!-- ── Dialog: Crear / Editar cliente ─────────────────────── -->
+<p-dialog
+  [(visible)]="showForm"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px' }"
+  [header]="isEdit ? 'Editar cliente' : 'Nuevo cliente'"
+  styleClass="dark-dialog">
+
+  <form [formGroup]="form" class="client-form">
+
+    <div class="field">
+      <label>Nombre completo *</label>
+      <input pInputText formControlName="fullName" placeholder="Juan Pérez" class="w-full"/>
+    </div>
+
+    <div class="field">
+      <label>Teléfono *</label>
+      <input pInputText formControlName="phone" placeholder="6441234567" class="w-full"/>
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input pInputText formControlName="email" placeholder="juan@mail.com" class="w-full"/>
+    </div>
+
+    <div class="field">
+      <label>Fecha de nacimiento</label>
+      <input pInputText type="date" formControlName="birthDate" class="w-full"/>
+    </div>
+
+    <div class="field">
+      <label>Notas</label>
+      <textarea
+        pInputTextarea
+        formControlName="notes"
+        rows="3"
+        placeholder="Alergias, preferencias generales..."
+        class="w-full">
+      </textarea>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showForm = false">Cancelar</button>
+    <button
+      class="btn-primary"
+      (click)="save()"
+      [disabled]="form.invalid || saving">
+      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
+      {{ saving ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Crear cliente') }}
+    </button>
+  </ng-template>
+
+</p-dialog>

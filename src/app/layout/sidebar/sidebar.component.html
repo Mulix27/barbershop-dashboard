@@ -1,0 +1,60 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+
+  <!-- Logo de la barbería -->
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <i class="pi pi-tag"></i>
+    </div>
+    <div class="logo-text" *ngIf="!collapsed">
+      <span class="shop-name">{{ barbershopName }}</span>
+      <span class="shop-label">BARBER SHOP</span>
+    </div>
+  </div>
+
+  <!-- Navegación -->
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of visibleItems"
+      class="nav-item"
+      [class.active]="isActive(item.route)"
+      [routerLink]="item.route"
+      [pTooltip]="collapsed ? item.label : ''"
+      tooltipPosition="right"
+      tooltipStyleClass="sidebar-tooltip">
+      <i class="pi {{ item.icon }}"></i>
+      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <!-- Footer: usuario + logout -->
+  <div class="sidebar-footer">
+
+    <!-- Info del usuario -->
+    <div class="user-info" *ngIf="!collapsed">
+      <div class="user-avatar">{{ userInitials }}</div>
+      <div class="user-meta">
+        <span class="user-name">{{ userName }}</span>
+        <span class="user-role">{{ userRole }}</span>
+      </div>
+    </div>
+    <div class="user-avatar solo" *ngIf="collapsed"
+      [pTooltip]="userName" tooltipPosition="right">
+      {{ userInitials }}
+    </div>
+
+    <!-- Separador -->
+    <div class="footer-divider"></div>
+
+    <!-- Botón cerrar sesión -->
+    <button
+      class="logout-btn"
+      (click)="logout()"
+      [pTooltip]="collapsed ? 'Cerrar sesión' : ''"
+      tooltipPosition="right">
+      <i class="pi pi-sign-out"></i>
+      <span *ngIf="!collapsed">Cerrar sesión</span>
+    </button>
+
+  </div>
+
+</aside>

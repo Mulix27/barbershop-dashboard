@@ -1,0 +1,247 @@
+$gold:       #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim:   rgba(201, 168, 76, 0.12);
+$dark:       #0D0D14;
+$surface:    #13131E;
+$border:     rgba(201, 168, 76, 0.12);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.45);
+
+:host {
+  display: block;
+  height: 100vh;
+}
+
+// ── Sidebar container ─────────────────────────────────────────
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-width, 240px);
+  background: $surface;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  transition: width .3s cubic-bezier(.4,0,.2,1);
+  z-index: 100;
+  overflow: hidden;
+
+  &.collapsed {
+    width: 72px;
+  }
+}
+
+// ── Logo ──────────────────────────────────────────────────────
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: 1.25rem 1rem;
+  min-height: 72px;
+  border-bottom: 1px solid $border;
+}
+
+.logo-mark {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .pi {
+    font-size: 16px;
+    color: $dark;
+  }
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shop-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.shop-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  color: $gold;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+// ── Navegación ────────────────────────────────────────────────
+.sidebar-nav {
+  flex: 1;
+  padding: .75rem .5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $border; border-radius: 2px; }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .625rem .875rem;
+  border-radius: 10px;
+  color: $text-muted;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+
+  .pi {
+    font-size: 15px;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+  }
+
+  &:hover {
+    background: rgba(255,255,255,.04);
+    color: rgba(232, 230, 222, 0.8);
+  }
+
+  // Item activo con borde dorado izquierdo
+  &.active {
+    background: $gold-dim;
+    color: $gold;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20%;
+      bottom: 20%;
+      width: 3px;
+      background: $gold;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .pi { color: $gold; }
+  }
+}
+
+.nav-label { flex: 1; }
+
+// ── Footer ────────────────────────────────────────────────────
+.sidebar-footer {
+  padding: .75rem .5rem 1rem;
+  border-top: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .5rem .75rem;
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  background: $gold-dim;
+  border: 1px solid $border;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+
+  &.solo {
+    margin: 0 auto;
+    cursor: default;
+  }
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 11px;
+  color: $gold;
+  text-transform: capitalize;
+}
+
+.footer-divider {
+  height: 1px;
+  background: $border;
+  margin: 0 .5rem;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  width: 100%;
+  padding: .625rem .875rem;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: $text-muted;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+
+  .pi { font-size: 15px; flex-shrink: 0; }
+
+  &:hover {
+    background: rgba(239, 68, 68, .08);
+    color: #EF6C6C;
+  }
+}
+
+// ── Tooltip override ──────────────────────────────────────────
+:host ::ng-deep .sidebar-tooltip.p-tooltip {
+  .p-tooltip-text {
+    background: #1E1E2C !important;
+    color: #E8E6DE !important;
+    border: 1px solid $border !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+  }
+  .p-tooltip-arrow { border-right-color: #1E1E2C !important; }
+}

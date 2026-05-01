@@ -1,0 +1,35 @@
+$sidebar-width:     240px;
+$sidebar-collapsed: 72px;
+
+.layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #0D0D14;
+}
+
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: $sidebar-width;
+  transition: margin-left .3s cubic-bezier(.4,0,.2,1);
+  min-width: 0;
+
+  .layout-wrapper.sidebar-collapsed & {
+    margin-left: $sidebar-collapsed;
+  }
+}
+
+.layout-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+// ── Responsive mobile ─────────────────────────────────────────
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0 !important;
+  }
+}

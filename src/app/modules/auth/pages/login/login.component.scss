@@ -1,0 +1,290 @@
+// ── Variables locales ──────────────────────────────────────────
+$gold:       #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim:   rgba(201, 168, 76, 0.15);
+$dark:       #0D0D14;
+$dark-card:  #16161F;
+$dark-input: #1E1E2C;
+$border:     rgba(201, 168, 76, 0.2);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.5);
+
+// ── Página completa ───────────────────────────────────────────
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $dark;
+  overflow: hidden;
+}
+
+// ── Fondo decorativo ──────────────────────────────────────────
+.login-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bg-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(201, 168, 76, 0.03) 0px,
+    rgba(201, 168, 76, 0.03) 1px,
+    transparent 1px,
+    transparent 40px
+  );
+}
+
+// Diamante dorado decorativo (como en el mockup)
+.bg-diamond {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 600px;
+  height: 600px;
+  border: 1px solid rgba(201, 168, 76, 0.08);
+  border-radius: 40px;
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    inset: 40px;
+    border: 1px solid rgba(201, 168, 76, 0.05);
+    border-radius: 32px;
+  }
+
+  &::after {
+    inset: 80px;
+    border-color: rgba(201, 168, 76, 0.03);
+  }
+}
+
+// ── Card de login ─────────────────────────────────────────────
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem;
+  background: $dark-card;
+  border: 1px solid $border;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(201, 168, 76, 0.05);
+  margin: 1rem;
+}
+
+// ── Logo ──────────────────────────────────────────────────────
+.login-logo {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.logo-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: .75rem;
+
+  .pi {
+    font-size: 24px;
+    color: $dark;
+  }
+}
+
+.logo-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-top: .375rem;
+
+  span:not(.logo-brand) {
+    flex: 1;
+    max-width: 40px;
+    height: 1px;
+    background: $border;
+  }
+}
+
+.logo-brand {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  color: $gold;
+  text-transform: uppercase;
+}
+
+// ── Títulos ───────────────────────────────────────────────────
+.login-title {
+  text-align: center;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: $text;
+  margin-bottom: .375rem;
+}
+
+.login-subtitle {
+  text-align: center;
+  font-size: .875rem;
+  color: $text-muted;
+  margin-bottom: 2rem;
+}
+
+// ── Formulario ────────────────────────────────────────────────
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  label {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: rgba(232, 230, 222, 0.7);
+    letter-spacing: .02em;
+  }
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-error {
+  font-size: .75rem;
+  color: #EF6C6C;
+}
+
+// ── Overrides PrimeNG para tema oscuro dorado ─────────────────
+:host ::ng-deep {
+
+  // Input text
+  .p-inputtext {
+    background: $dark-input !important;
+    border-color: $border !important;
+    color: $text !important;
+    border-radius: 10px !important;
+    padding: .75rem 1rem !important;
+    font-size: .875rem !important;
+
+    &::placeholder { color: $text-muted !important; }
+    &:focus {
+      border-color: $gold !important;
+      box-shadow: 0 0 0 2px $gold-dim !important;
+    }
+  }
+
+  // Input con ícono
+  .p-input-icon-left {
+    > i {
+      color: $text-muted !important;
+      font-size: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-top: 0;
+    }
+    > input { padding-left: 2.5rem !important; }
+  }
+
+  // Password
+  .p-password-input {
+    background: $dark-input !important;
+    border-color: $border !important;
+    color: $text !important;
+    border-radius: 10px !important;
+    padding: .75rem 1rem !important;
+    width: 100% !important;
+
+    &:focus {
+      border-color: $gold !important;
+      box-shadow: 0 0 0 2px $gold-dim !important;
+    }
+  }
+
+  .p-password-panel {
+    background: $dark-card !important;
+    border-color: $border !important;
+  }
+
+  .p-password { width: 100%; }
+
+  // Checkbox
+  .p-checkbox .p-checkbox-box {
+    background: $dark-input !important;
+    border-color: $border !important;
+    border-radius: 6px !important;
+
+    &.p-highlight {
+      background: $gold !important;
+      border-color: $gold !important;
+    }
+  }
+
+  .p-checkbox-label {
+    color: $text-muted !important;
+    font-size: .8125rem !important;
+  }
+
+  // Botón principal — dorado
+  .login-btn.p-button {
+    background: linear-gradient(135deg, $gold 0%, $gold-light 100%) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: $dark !important;
+    font-weight: 700 !important;
+    font-size: .9375rem !important;
+    padding: .875rem !important;
+    letter-spacing: .02em;
+    transition: opacity .2s, transform .15s !important;
+
+    &:hover:not(:disabled) {
+      opacity: .92 !important;
+      transform: translateY(-1px) !important;
+    }
+
+    &:active:not(:disabled) { transform: translateY(0) !important; }
+
+    &:disabled { opacity: .5 !important; }
+
+    .p-button-icon { color: $dark !important; }
+  }
+}
+
+// ── Footer ─────────────────────────────────────────────────────
+.login-footer {
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: .8125rem;
+  color: $text-muted;
+
+  a {
+    color: $gold;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: .25rem;
+
+    &:hover { color: $gold-light; }
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 480px) {
+  .login-card { padding: 2rem 1.5rem; }
+  .bg-diamond { width: 400px; height: 400px; }
+}

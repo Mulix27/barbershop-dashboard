@@ -1,0 +1,21 @@
+<div class="layout-wrapper" [class.sidebar-collapsed]="collapsed">
+
+  <app-sidebar
+    [collapsed]="collapsed"
+    (toggleSidebar)="toggle()">
+  </app-sidebar>
+
+  <div class="layout-main">
+
+    <app-topbar
+      [sidebarCollapsed]="collapsed"
+      (toggleSidebar)="toggle()">
+    </app-topbar>
+
+    <main class="layout-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>

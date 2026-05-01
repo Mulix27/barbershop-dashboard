@@ -1,0 +1,585 @@
+$gold:       #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim:   rgba(201, 168, 76, 0.12);
+$card:       #16161F;
+$border:     rgba(201, 168, 76, 0.1);
+$border-sub: rgba(255, 255, 255, 0.06);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.45);
+$dark:       #0D0D14;
+
+// ── Layout split ──────────────────────────────────────────────
+.clients-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100vh - 72px - 3rem);
+  min-height: 500px;
+  background: #0D0D14;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid $border;
+}
+
+// ── Sidebar izquierdo ─────────────────────────────────────────
+.clients-sidebar {
+  background: #13131E;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1.125rem 1rem;
+  border-bottom: 1px solid $border;
+
+  h1 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 2px;
+  }
+}
+
+.header-sub {
+  font-size: .75rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+// ── Búsqueda ──────────────────────────────────────────────────
+.search-box {
+  position: relative;
+  padding: .875rem 1.125rem;
+  border-bottom: 1px solid $border-sub;
+
+  .pi {
+    position: absolute;
+    left: 1.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: $text-muted;
+  }
+
+  input {
+    width: 100%;
+    background: rgba(255,255,255,.04) !important;
+    border: 1px solid $border-sub !important;
+    border-radius: 8px !important;
+    padding: .5rem .75rem .5rem 2.25rem !important;
+    font-size: .8125rem !important;
+    color: $text !important;
+
+    &::placeholder { color: $text-muted !important; }
+    &:focus { border-color: rgba(201,168,76,.3) !important; box-shadow: none !important; }
+  }
+}
+
+// ── Lista ─────────────────────────────────────────────────────
+.clients-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: .5rem .5rem;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb { background: $border; border-radius: 2px; }
+}
+
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .625rem .75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: rgba(255,255,255,.04); }
+
+  &.active {
+    background: $gold-dim;
+    border: 1px solid rgba(201,168,76,.2);
+  }
+
+  &.skeleton { pointer-events: none; padding: .75rem; }
+}
+
+.client-avatar {
+  width: 38px;
+  height: 38px;
+  background: $gold-dim;
+  border: 1px solid rgba(201,168,76,.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+.client-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.client-name {
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-phone {
+  font-size: .75rem;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .pi { font-size: 10px; }
+}
+
+.client-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity .15s;
+
+  .client-item:hover & { opacity: 1; }
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid $border-sub;
+  border-radius: 6px;
+  color: $text-muted;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+
+  .pi { font-size: 11px; }
+
+  &:hover { background: $gold-dim; color: $gold; border-color: rgba(201,168,76,.3); }
+}
+
+// ── Panel derecho: detalle ────────────────────────────────────
+.client-detail {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: $dark;
+}
+
+// ── Header del perfil ─────────────────────────────────────────
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid $border;
+  background: #13131E;
+}
+
+.profile-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  background: $gold-dim;
+  border: 2px solid rgba(201,168,76,.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: $gold;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 .5rem;
+  }
+}
+
+.profile-contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem .875rem;
+  margin-bottom: .375rem;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    font-size: .8rem;
+    color: $text-muted;
+
+    .pi { font-size: 12px; color: $gold; }
+  }
+}
+
+.profile-notes {
+  font-size: .8rem;
+  color: $text-muted;
+  font-style: italic;
+  margin: .375rem 0 0;
+}
+
+.profile-actions {
+  display: flex;
+  gap: .75rem;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────
+:host ::ng-deep .clients-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .p-tabview-nav-container {
+    padding: 0 1.25rem;
+    background: #13131E;
+    border-bottom: 1px solid $border;
+  }
+
+  .p-tabview-nav {
+    background: transparent !important;
+    border: none !important;
+
+    li .p-tabview-nav-link {
+      background: transparent !important;
+      border: none !important;
+      color: $text-muted !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      padding: .875rem 1rem !important;
+      border-bottom: 2px solid transparent !important;
+
+      &:hover { color: $text !important; }
+    }
+
+    li.p-highlight .p-tabview-nav-link {
+      color: $gold !important;
+      border-bottom-color: $gold !important;
+    }
+  }
+
+  .p-tabview-panels {
+    flex: 1;
+    background: $dark !important;
+    overflow-y: auto;
+    padding: 1.25rem !important;
+  }
+}
+
+// ── Sección de cortes ─────────────────────────────────────────
+.haircuts-section { }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: .8125rem;
+  color: $text-muted;
+}
+
+.haircuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .875rem;
+}
+
+.haircut-card {
+  background: #13131E;
+  border: 1px solid $border-sub;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+  cursor: pointer;
+
+  &:hover {
+    border-color: rgba(201,168,76,.25);
+    transform: translateY(-2px);
+  }
+
+  &.preferred {
+    border-color: rgba(201,168,76,.4);
+    box-shadow: 0 0 12px rgba(201,168,76,.1);
+  }
+}
+
+.haircut-photo {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .375rem;
+  aspect-ratio: 1;
+
+  .pi { font-size: 1.5rem; color: $text-muted; }
+  span { font-size: .7rem; color: $text-muted; }
+}
+
+.preferred-badge {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  background: $gold;
+  color: #0D0D14;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  .pi { font-size: 9px; }
+}
+
+.photo-count {
+  position: absolute;
+  bottom: .5rem;
+  right: .5rem;
+  background: rgba(0,0,0,.7);
+  color: $text;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .pi { font-size: 10px; }
+}
+
+.haircut-info {
+  padding: .625rem .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.haircut-name {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.haircut-type {
+  font-size: .7rem;
+  color: $gold;
+  font-weight: 500;
+}
+
+.haircut-desc {
+  font-size: .7rem;
+  color: $text-muted;
+  margin: 2px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Notas ─────────────────────────────────────────────────────
+.notes-section {
+  font-size: .875rem;
+  color: $text-muted;
+  line-height: 1.6;
+}
+
+// ── Sin selección ─────────────────────────────────────────────
+.no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: .75rem;
+  color: $text-muted;
+
+  .pi { font-size: 3rem; opacity: .3; }
+  h3 { font-size: 1rem; font-weight: 600; color: $text; margin: 0; }
+  p  { font-size: .875rem; margin: 0; text-align: center; }
+}
+
+// ── Empty states ──────────────────────────────────────────────
+.empty-list, .empty-haircuts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: .75rem;
+  text-align: center;
+
+  .pi { font-size: 2rem; color: $text-muted; opacity: .4; }
+  p   { font-size: .875rem; color: $text-muted; margin: 0; }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  padding: 1.5rem;
+  text-align: center;
+
+  .pi { font-size: 1.5rem; color: $text-muted; opacity: .4; }
+  p   { font-size: .8125rem; color: $text-muted; margin: 0; }
+
+  &.sm { padding: .875rem; }
+}
+
+// ── Botones ───────────────────────────────────────────────────
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .625rem 1.125rem;
+  background: linear-gradient(135deg, #C9A84C 0%, #E8C96B 100%);
+  border: none;
+  border-radius: 10px;
+  color: #0D0D14;
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+
+  &:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &.sm { padding: .5rem .875rem; font-size: .8125rem; }
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .625rem 1.125rem;
+  background: none;
+  border: 1px solid rgba(201,168,76,.3);
+  border-radius: 10px;
+  color: $gold;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: $gold-dim; }
+  &.sm { padding: .5rem .875rem; font-size: .8125rem; }
+}
+
+// ── Dialog ────────────────────────────────────────────────────
+:host ::ng-deep .dark-dialog {
+  .p-dialog {
+    background: #16161F !important;
+    border: 1px solid rgba(201,168,76,.15) !important;
+    border-radius: 16px !important;
+  }
+
+  .p-dialog-header {
+    background: #16161F !important;
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+    border-radius: 16px 16px 0 0 !important;
+    color: #E8E6DE !important;
+    padding: 1.25rem 1.5rem !important;
+  }
+
+  .p-dialog-content {
+    background: #16161F !important;
+    padding: 1.25rem 1.5rem !important;
+  }
+
+  .p-dialog-footer {
+    background: #16161F !important;
+    border-top: 1px solid rgba(255,255,255,.06) !important;
+    padding: .875rem 1.5rem !important;
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+  }
+
+  .p-inputtext, textarea {
+    background: rgba(255,255,255,.04) !important;
+    border-color: rgba(255,255,255,.1) !important;
+    color: #E8E6DE !important;
+    border-radius: 8px !important;
+
+    &:focus { border-color: rgba(201,168,76,.4) !important; box-shadow: none !important; }
+  }
+}
+
+.client-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+
+  label {
+    font-size: .8rem;
+    color: rgba(232,230,222,.6);
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 900px) {
+  .clients-layout { grid-template-columns: 1fr; }
+  .client-detail { display: none; }
+}
