@@ -72,10 +72,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "barbershop-dashboard:build:production"
+              "buildTarget": "barbershop-dashboard:build:production"
             },
             "development": {
-              "browserTarget": "barbershop-dashboard:build:development"
+              "buildTarget": "barbershop-dashboard:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -83,7 +83,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "barbershop-dashboard:build"
+            "buildTarget": "barbershop-dashboard:build"
           }
         },
         "test": {

@@ -12,7 +12,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-import { ChartsModule } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 
 @NgModule({
   declarations: [AppComponent],
@@ -25,7 +25,7 @@ import { ChartsModule } from 'ng2-charts';
     ConfirmDialogModule,
   ],
   providers: [
-    ChartsModule,
+    NgChartsModule,
     MessageService,
     ConfirmationService,
     {

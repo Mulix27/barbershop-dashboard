@@ -9,6 +9,10 @@ const routes: Routes = [
     loadChildren: () =>
       import('./modules/auth/auth.module').then(m => m.AuthModule)
   },
+  {
+    path: 'upload',
+    loadChildren: () => import('./modules/upload/upload.module').then(m => m.UploadModule)
+  },
 
   // Rutas protegidas — requieren token JWT
   {
@@ -16,6 +20,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     loadChildren: () =>
       import('./layout/layout.module').then(m => m.LayoutModule)
+  },
+  {
+    path: 'staff',
+    loadChildren: () =>
+      import('./modules/barber-staff/barber-staff.module').then(m => m.BarberStaffModule)
   },
 
   // Fallback
@@ -26,4 +35,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

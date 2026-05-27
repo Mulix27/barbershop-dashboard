@@ -1,1 +1,570 @@
-<p>reports works!</p>
+<p-toast position="top-right"></p-toast>
+
+<div class="reports-page">
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1>
+        {{ isSingleBarber ? "Personal Business Insights" : "Business Reports" }}
+      </h1>
+      <p class="header-sub">
+        {{
+          isSingleBarber
+            ? "Optimiza tu tiempo y rentabilidad, " + userName
+            : "Analiza el rendimiento general y exporta informes detallados"
+        }}
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Selector período -->
+      <div class="period-selector">
+        <button
+          *ngFor="let opt of periodOptions"
+          class="period-btn"
+          [class.active]="selectedPeriod === opt.value"
+          (click)="selectedPeriod = opt.value; loadReport()"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <!-- Generar informe -->
+      <button class="btn-primary" (click)="generateReport()">
+        <i class="pi pi-plus"></i>
+        Generar Informe
+      </button>
+    </div>
+  </div>
+
+  <!-- Rango de fechas activo -->
+  <div class="date-range-badge" *ngIf="!loading && report">
+    <i class="pi pi-calendar"></i>
+    <span>{{ report.periodLabel }}</span>
+  </div>
+
+  <!-- ── Skeletons ──────────────────────────────────────── -->
+  <ng-container *ngIf="loading">
+    <div class="metrics-grid">
+      <p-skeleton
+        *ngFor="let i of [1, 2, 3, 4]"
+        height="100px"
+        borderRadius="14px"
+      ></p-skeleton>
+    </div>
+    <div class="charts-row">
+      <p-skeleton height="320px" borderRadius="14px"></p-skeleton>
+      <p-skeleton height="320px" borderRadius="14px"></p-skeleton>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="!loading && report">
+    <!-- ════════════════════════════════════════════════════
+         MÉTRICAS PRINCIPALES
+    ════════════════════════════════════════════════════ -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon revenue"><i class="pi pi-dollar"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">
+            {{
+              isSingleBarber
+                ? "Ingresos Brutos"
+                : "Ingresos Totales (Facturado)"
+            }}
+          </span>
+          <span class="metric-value">{{ formatCurrency(totalRevenue) }}</span>
+          <span class="metric-trend up">
+            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+          </span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon profit"><i class="pi pi-chart-line"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">
+            {{ isSingleBarber ? "Ganancia Neta Real" : "Ganancia Neta" }}
+          </span>
+          <span class="metric-value">{{ formatCurrency(netProfit) }}</span>
+          <span class="metric-trend up">
+            <i class="pi pi-arrow-up"></i> Estimado 41%
+          </span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon occupancy">
+          <i class="pi pi-calendar-clock"></i>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">
+            {{
+              isSingleBarber ? "Valor Promedio por Hora" : "Tasa de Ocupación"
+            }}
+          </span>
+          <span class="metric-value">
+            {{
+              isSingleBarber
+                ? formatCurrency(totalRevenue / 160)
+                : occupancyRate + "%"
+            }}
+          </span>
+          <span class="metric-trend up">
+            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+          </span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon tickets"><i class="pi pi-ticket"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">
+            {{
+              isSingleBarber
+                ? "Tasa de Retención de Clientes"
+                : "Tickets Completados"
+            }}
+          </span>
+          <span class="metric-value">
+            {{
+              isSingleBarber
+                ? (clientMetrics?.recurringClients ?? 0) + " clientes"
+                : completedAppts
+            }}
+          </span>
+          <span class="metric-trend up">
+            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════
+         GRÁFICAS PRINCIPALES
+    ════════════════════════════════════════════════════ -->
+    <div class="charts-row">
+      <!-- Barras: Rentabilidad por barbero / Por mes (single) -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <h2>
+            {{
+              isSingleBarber
+                ? "Ingresos por Período"
+                : "Rentabilidad por Barbero"
+            }}
+          </h2>
+          <span class="period-tag">{{ periodLabel }}</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas
+            baseChart
+            [data]="barberBarData"
+            [options]="barberBarOptions"
+            type="bar"
+          >
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Línea: Tendencia ocupación / Revenue vs Expenses -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <h2>
+            {{
+              isSingleBarber
+                ? "Revenue vs Gastos"
+                : "Tendencia de Ocupación y Cancelaciones"
+            }}
+          </h2>
+          <span class="period-tag">Últimos 6 meses</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas
+            baseChart
+            [data]="isSingleBarber ? revenueExpensesData : occupancyLineData"
+            [options]="
+              isSingleBarber ? revenueExpensesOptions : occupancyLineOptions
+            "
+            type="line"
+          >
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════
+         TABLAS DE DATOS
+    ════════════════════════════════════════════════════ -->
+    <div class="tables-row">
+      <!-- Rendimiento de Servicios -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-scissors gold"></i>
+            <h2>
+              {{
+                isSingleBarber
+                  ? "Servicios más Rentables"
+                  : "Rendimiento de Servicios Detallado"
+              }}
+            </h2>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th *ngIf="isSingleBarber">Duración</th>
+              <th>Precio</th>
+              <th *ngIf="!isSingleBarber">Cant.</th>
+              <th>Ganancia Neta</th>
+              <th>{{ isSingleBarber ? "Gan/Min" : "Rentab. %" }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let svc of topServices">
+              <td class="svc-td">{{ svc.serviceName }}</td>
+              <td *ngIf="isSingleBarber" class="muted-td">30 min</td>
+              <td class="gold-td">
+                {{
+                  formatCurrency(safeDiv(svc.totalRevenue, svc.totalQuantity))
+                }}
+              </td>
+              <td *ngIf="!isSingleBarber">{{ svc.totalQuantity }}</td>
+              <td class="gold-td">
+                {{ formatCurrency(svc.totalRevenue * 0.82) }}
+              </td>
+              <td>
+                <span class="pct-badge" [class.high]="profitability(svc) > 85">
+                  {{
+                    isSingleBarber
+                      ? "$" + profitPerMinute(svc).toFixed(2)
+                      : profitability(svc) + "%"
+                  }}
+                </span>
+              </td>
+            </tr>
+            <tr class="total-row" *ngIf="topServices.length > 0">
+              <td><strong>Total</strong></td>
+              <td *ngIf="isSingleBarber"></td>
+              <td></td>
+              <td *ngIf="!isSingleBarber">
+                <strong>{{ totalTopServicesQty }}</strong>
+              </td>
+              <td class="gold-td">
+                <strong>{{ formatCurrency(totalRevenue * 0.82) }}</strong>
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="empty-table" *ngIf="topServices.length === 0">
+          Sin datos en este período
+        </div>
+
+        <div class="table-footer">
+          <button class="view-all-btn">
+            Ver todo <i class="pi pi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Rendimiento de Barberos (multi) / Consumo de Insumos (single) -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-users gold"></i>
+            <h2>
+              {{
+                isSingleBarber
+                  ? "Consumo de Insumos"
+                  : "Rendimiento de Barberos Detallado"
+              }}
+            </h2>
+          </div>
+        </div>
+
+        <!-- Multi: tabla de barberos -->
+        <ng-container *ngIf="!isSingleBarber">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Barbero</th>
+                <th>Citas</th>
+                <th>Total Ventas</th>
+                <th>Avg. Ticket</th>
+                <th>Comisión (20%)</th>
+                <th class="gold-td">Ganancia Neta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of barbers">
+                <td>
+                  <div class="barber-cell">
+                    <div class="barber-av">{{ b.barberName.charAt(0) }}</div>
+                    {{ b.barberName }}
+                  </div>
+                </td>
+                <td>{{ b.totalSales }}</td>
+                <td class="gold-td">{{ formatCurrency(b.revenue) }}</td>
+                <td>
+                  {{ formatCurrency(avgTicketBarber(b.revenue, b.totalSales)) }}
+                </td>
+                <td class="muted-td">
+                  {{ formatCurrency(commissionPaid(b.revenue)) }}
+                </td>
+                <td class="gold-td">
+                  <strong>{{
+                    formatCurrency(netProfitBarber(b.revenue))
+                  }}</strong>
+                </td>
+              </tr>
+              <tr class="total-row" *ngIf="barbers.length > 0">
+                <td><strong>Total</strong></td>
+                <td>
+                  <strong>{{ completedAppts }}</strong>
+                </td>
+                <td class="gold-td">
+                  <strong>{{ formatCurrency(totalBarbersRevenue) }}</strong>
+                </td>
+                <td>
+                  <strong>{{
+                    formatCurrency(
+                      avgTicketBarber(totalBarbersRevenue, completedAppts)
+                    )
+                  }}</strong>
+                </td>
+                <td class="muted-td">
+                  <strong>{{
+                    formatCurrency(commissionPaid(totalBarbersRevenue))
+                  }}</strong>
+                </td>
+                <td class="gold-td">
+                  <strong>{{
+                    formatCurrency(netProfitBarber(totalBarbersRevenue))
+                  }}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty-table" *ngIf="barbers.length === 0">
+            Sin datos en este período
+          </div>
+        </ng-container>
+
+        <!-- Single: tabla de insumos/productos -->
+        <ng-container *ngIf="isSingleBarber">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Insumo</th>
+                <th>Utilizado</th>
+                <th>Costo</th>
+                <th>Ing. Generados</th>
+                <th class="gold-td">ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pm of paymentMethods">
+                <td class="svc-td">
+                  {{
+                    pm.paymentMethod === "cash"
+                      ? "Efectivo"
+                      : pm.paymentMethod === "card"
+                        ? "Tarjeta"
+                        : "Transferencia"
+                  }}
+                </td>
+                <td>{{ pm.totalSales }} ventas</td>
+                <td class="muted-td">—</td>
+                <td class="gold-td">{{ formatCurrency(pm.revenue) }}</td>
+                <td class="gold-td"><strong>—</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════
+         HORAS PICO + MÉTODOS DE PAGO + INFORMES GUARDADOS
+    ════════════════════════════════════════════════════ -->
+    <div class="bottom-row">
+      <!-- Horas pico -->
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-clock gold"></i>
+            <h2>Horas Pico</h2>
+          </div>
+        </div>
+        <div class="peak-list">
+          <div class="peak-item" *ngFor="let h of peakHours; let i = index">
+            <span class="peak-rank">#{{ i + 1 }}</span>
+            <span class="peak-label">{{ h.label }}</span>
+            <div class="peak-bar">
+              <div
+                class="peak-fill"
+                [style.width.%]="
+                  peakHours[0]
+                    ? (h.totalAppointments / peakHours[0].totalAppointments) *
+                      100
+                    : 0
+                "
+              ></div>
+            </div>
+            <span class="peak-count">{{ h.totalAppointments }}</span>
+          </div>
+          <div class="empty-sm" *ngIf="peakHours.length === 0">Sin datos</div>
+        </div>
+
+        <p-divider styleClass="dark-divider"></p-divider>
+
+        <!-- Métodos de pago -->
+        <h3 class="sub-title">Métodos de pago</h3>
+        <div class="payment-list">
+          <div class="payment-item" *ngFor="let p of paymentMethods">
+            <div class="pi-wrap">
+              <i
+                class="pi"
+                [class.pi-money-bill]="p.paymentMethod === 'cash'"
+                [class.pi-credit-card]="p.paymentMethod === 'card'"
+                [class.pi-send]="p.paymentMethod === 'transfer'"
+              >
+              </i>
+            </div>
+            <div class="p-info">
+              <span>{{
+                p.paymentMethod === "cash"
+                  ? "Efectivo"
+                  : p.paymentMethod === "card"
+                    ? "Tarjeta"
+                    : "Transferencia"
+              }}</span>
+              <span class="p-count">{{ p.totalSales }} ventas</span>
+            </div>
+            <span class="p-amount">{{ formatCurrency(p.revenue) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas de citas -->
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-calendar gold"></i>
+            <h2>Métricas de Citas</h2>
+          </div>
+        </div>
+        <div class="appt-metrics" *ngIf="apptMetrics">
+          <div class="am-row">
+            <span>Total citas</span>
+            <strong>{{ apptMetrics.totalAppointments }}</strong>
+          </div>
+          <div class="am-row success">
+            <span>Completadas</span>
+            <strong>{{ apptMetrics.completed }}</strong>
+          </div>
+          <div class="am-row warning">
+            <span>Canceladas</span>
+            <strong>{{ apptMetrics.cancelled }}</strong>
+          </div>
+          <div class="am-row danger">
+            <span>No asistió</span>
+            <strong>{{ apptMetrics.noShow }}</strong>
+          </div>
+          <div class="am-row occupancy">
+            <span>Tasa de ocupación</span>
+            <strong>{{ occupancyRate }}%</strong>
+          </div>
+          <div class="am-row muted">
+            <span>Tasa de ausentismo</span>
+            <strong>{{ apptMetrics.noShowRate }}%</strong>
+          </div>
+        </div>
+
+        <p-divider styleClass="dark-divider"></p-divider>
+
+        <!-- Clientes -->
+        <h3 class="sub-title">Clientes</h3>
+        <div class="client-metrics" *ngIf="clientMetrics">
+          <div class="cm-item">
+            <div class="cm-icon new"><i class="pi pi-user-plus"></i></div>
+            <div>
+              <span class="cm-val">{{ clientMetrics.newClients }}</span>
+              <span class="cm-lbl">Nuevos clientes</span>
+            </div>
+          </div>
+          <div class="cm-item">
+            <div class="cm-icon returning"><i class="pi pi-sync"></i></div>
+            <div>
+              <span class="cm-val">{{ clientMetrics.recurringClients }}</span>
+              <span class="cm-lbl">Recurrentes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informes guardados -->
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-file gold"></i>
+            <h2>
+              {{
+                isSingleBarber
+                  ? "Mis Reportes Mensuales"
+                  : "Informes Guardados y Exportaciones"
+              }}
+            </h2>
+          </div>
+        </div>
+        <div class="reports-list">
+          <div class="report-item" *ngFor="let r of savedReports">
+            <div class="ri-info">
+              <span class="ri-name">{{ r.name }}</span>
+              <div class="ri-meta">
+                <p-tag
+                  [value]="r.type"
+                  [severity]="typeSeverity(r.type)"
+                  styleClass="ri-tag"
+                ></p-tag>
+                <span class="ri-date">{{ r.date }}</span>
+              </div>
+            </div>
+            <div class="ri-actions">
+              <span class="ri-format">{{ r.format }}</span>
+              <button
+                class="ri-btn"
+                (click)="downloadReport(r)"
+                [disabled]="downloadingId === r.id"
+                [class.loading]="downloadingId === r.id"
+              >
+                <i
+                  class="pi pi-spin pi-spinner"
+                  *ngIf="downloadingId === r.id"
+                ></i>
+                <i class="pi pi-download" *ngIf="downloadingId !== r.id"></i>
+              </button>
+              <button
+                class="ri-btn"
+                (click)="shareReport(r)"
+                [disabled]="!r.base64"
+              >
+                <i class="pi pi-share-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="table-footer">
+          <button class="view-all-btn">
+            Ver todos los reportes <i class="pi pi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

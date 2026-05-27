@@ -1,1 +1,717 @@
-<p>catalog-list works!</p>
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="catalog-page">
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1>Catálogo e Inventario</h1>
+      <p class="header-sub">
+        Gestiona productos y servicios de la barbería en tiempo real
+      </p>
+    </div>
+    <div class="header-actions">
+      <div class="tab-switcher">
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'products'"
+          (click)="activeTab = 'products'"
+        >
+          <i class="pi pi-box"></i> Productos
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'services'"
+          (click)="activeTab = 'services'"
+        >
+          <i class="pi pi-scissors"></i> Servicios
+        </button>
+      </div>
+      <button
+        class="btn-primary"
+        (click)="activeTab === 'products' ? openCreate() : openCreateService()"
+      >
+        <i class="pi pi-plus"></i>
+        {{ activeTab === "products" ? "Nuevo producto" : "Nueva categoría" }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Métricas productos ──────────────────────────────── -->
+  <div class="metrics-grid" *ngIf="activeTab === 'products'">
+    <div class="metric-card">
+      <div class="metric-icon products"><i class="pi pi-box"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Total productos</span>
+        <span class="metric-value">{{ totalProducts }}</span>
+        <span class="metric-sub">En catálogo activo</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon value"><i class="pi pi-dollar"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Valor en inventario</span>
+        <span class="metric-value">{{ formatCurrency(totalValue) }}</span>
+        <span class="metric-sub">Precio × stock</span>
+      </div>
+    </div>
+    <div class="metric-card" [class.alert]="lowStockCount > 0">
+      <div class="metric-icon low">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Stock bajo</span>
+        <span class="metric-value">{{ lowStockCount }}</span>
+        <span class="metric-sub">Requieren reorden pronto</span>
+      </div>
+    </div>
+    <div class="metric-card" [class.alert]="outOfStockCount > 0">
+      <div class="metric-icon out"><i class="pi pi-times-circle"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Sin stock</span>
+        <span class="metric-value">{{ outOfStockCount }}</span>
+        <span class="metric-sub">Necesitan atención</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Métricas servicios ──────────────────────────────── -->
+  <div class="metrics-grid" *ngIf="activeTab === 'services'">
+    <div class="metric-card">
+      <div class="metric-icon products"><i class="pi pi-list"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Categorías</span>
+        <span class="metric-value">{{ totalCategories }}</span>
+        <span class="metric-sub">Tipos de servicio</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon value"><i class="pi pi-sitemap"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Variantes totales</span>
+        <span class="metric-value">{{ totalVariants }}</span>
+        <span class="metric-sub">Estilos configurados</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon low"><i class="pi pi-dollar"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Cobro general</span>
+        <span class="metric-value">{{ fixedCount }}</span>
+        <span class="metric-sub">Precio fijo por categoría</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon out"><i class="pi pi-sliders-h"></i></div>
+      <div class="metric-info">
+        <span class="metric-label">Por variantes</span>
+        <span class="metric-value">{{ variantCount }}</span>
+        <span class="metric-sub">Precio por estilo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Layout principal ─────────────────────────────────── -->
+  <div class="main-layout" [class.no-sidebar]="activeTab === 'services'">
+    <div class="content-area">
+      <!-- Toolbar -->
+      <div class="toolbar" *ngIf="activeTab === 'products'">
+        <span class="results-count">{{ filtered.length }} productos</span>
+        <div class="toolbar-right">
+          <div class="search-inline">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              placeholder="Buscar por nombre o SKU..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearch()"
+            />
+          </div>
+          <p-dropdown
+            [options]="sortOptions"
+            [(ngModel)]="sortBy"
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="applyFilters()"
+            styleClass="sort-dropdown"
+            [style]="{ minWidth: '160px' }"
+          >
+          </p-dropdown>
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              [class.active]="viewMode === 'grid'"
+              (click)="viewMode = 'grid'"
+            >
+              <i class="pi pi-th-large"></i>
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="viewMode === 'list'"
+              (click)="viewMode = 'list'"
+            >
+              <i class="pi pi-bars"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PRODUCTOS ═══════════ -->
+      <ng-container *ngIf="activeTab === 'products'">
+        <div class="products-grid" *ngIf="loading">
+          <div
+            class="product-card skeleton"
+            *ngFor="let i of [1, 2, 3, 4, 5, 6]"
+          >
+            <p-skeleton height="160px" borderRadius="0"></p-skeleton>
+            <div style="padding: 0.875rem">
+              <p-skeleton
+                width="60%"
+                height="14px"
+                styleClass="mb-2"
+              ></p-skeleton>
+              <p-skeleton
+                width="40%"
+                height="12px"
+                styleClass="mb-2"
+              ></p-skeleton>
+              <p-skeleton width="50%" height="20px"></p-skeleton>
+            </div>
+          </div>
+        </div>
+
+        <div class="products-grid" *ngIf="!loading && viewMode === 'grid'">
+          <div
+            class="product-card"
+            *ngFor="let product of filtered"
+            [class.low-stock]="product.lowStock && product.stock > 0"
+            [class.out-of-stock]="product.stock === 0"
+            [class.inactive]="!product.isActive"
+          >
+            <div class="card-actions">
+              <button
+                class="card-action-btn"
+                pTooltip="Ajustar stock"
+                tooltipPosition="left"
+                (click)="openStockAdjust(product); $event.stopPropagation()"
+              >
+                <i class="pi pi-chart-line"></i>
+              </button>
+              <button
+                class="card-action-btn"
+                pTooltip="Editar"
+                tooltipPosition="left"
+                (click)="openEdit(product); $event.stopPropagation()"
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                class="card-action-btn"
+                pTooltip="{{ product.isActive ? 'Desactivar' : 'Activar' }}"
+                tooltipPosition="left"
+                (click)="confirmToggle(product); $event.stopPropagation()"
+              >
+                <i
+                  class="pi"
+                  [class.pi-eye-slash]="product.isActive"
+                  [class.pi-eye]="!product.isActive"
+                ></i>
+              </button>
+            </div>
+            <div class="product-image">
+              <img
+                *ngIf="product.imageUrl"
+                [src]="product.imageUrl"
+                [alt]="product.name"
+              />
+              <i *ngIf="!product.imageUrl" class="pi pi-box"></i>
+            </div>
+            <div class="product-info">
+              <span class="product-name">{{ product.name }}</span>
+              <span class="product-sku" *ngIf="product.sku"
+                >SKU: {{ product.sku }}</span
+              >
+              <div class="product-bottom">
+                <span class="product-price">{{
+                  formatCurrency(product.price)
+                }}</span>
+                <span
+                  class="stock-badge"
+                  [class.in-stock]="product.stock > product.stockMin"
+                  [class.low]="product.lowStock && product.stock > 0"
+                  [class.out]="product.stock === 0"
+                >
+                  {{ stockLabel(product) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="empty-grid" *ngIf="filtered.length === 0">
+            <i class="pi pi-box"></i>
+            <p>No se encontraron productos</p>
+            <button class="btn-primary sm" (click)="resetFilters()">
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+
+        <div class="products-list-view" *ngIf="!loading && viewMode === 'list'">
+          <p-table [value]="filtered" styleClass="dark-table" [rowHover]="true">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Producto</th>
+                <th>SKU</th>
+                <th>Precio</th>
+                <th>Costo</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-p>
+              <tr>
+                <td>
+                  <strong>{{ p.name }}</strong>
+                </td>
+                <td class="text-muted">{{ p.sku ?? "—" }}</td>
+                <td class="text-gold">{{ formatCurrency(p.price) }}</td>
+                <td class="text-muted">
+                  {{ p.cost ? formatCurrency(p.cost) : "—" }}
+                </td>
+                <td>
+                  <span
+                    class="stock-badge"
+                    [class.in-stock]="p.stock > p.stockMin"
+                    [class.low]="p.lowStock && p.stock > 0"
+                    [class.out]="p.stock === 0"
+                    >{{ p.stock }}</span
+                  >
+                </td>
+                <td>
+                  <p-tag
+                    [value]="p.isActive ? 'Activo' : 'Inactivo'"
+                    [severity]="p.isActive ? 'success' : 'danger'"
+                  ></p-tag>
+                </td>
+                <td>
+                  <div class="list-actions">
+                    <button
+                      class="card-action-btn"
+                      pTooltip="Ajustar stock"
+                      (click)="openStockAdjust(p)"
+                    >
+                      <i class="pi pi-chart-line"></i>
+                    </button>
+                    <button
+                      class="card-action-btn"
+                      pTooltip="Editar"
+                      (click)="openEdit(p)"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button class="card-action-btn" (click)="confirmToggle(p)">
+                      <i class="pi pi-eye-slash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </ng-container>
+
+      <!-- ═══════════ SERVICIOS — nuevo modelo ═══════════ -->
+      <ng-container *ngIf="activeTab === 'services'">
+        <div class="categories-grid">
+          <div
+            class="category-card"
+            *ngFor="let cat of categories"
+            [class.inactive]="!cat.isActive"
+          >
+            <!-- Header de la categoría -->
+            <div class="cat-header">
+              <div class="cat-icon-name">
+                <div class="cat-icon">
+                  <i class="pi {{ cat.icon || 'pi-scissors' }}"></i>
+                </div>
+                <div>
+                  <span class="cat-name">{{ cat.name }}</span>
+                  <span
+                    class="cat-mode-badge"
+                    [class.fixed]="cat.pricingMode === 'fixed'"
+                    [class.variants]="cat.pricingMode === 'variants'"
+                  >
+                    {{
+                      cat.pricingMode === "fixed"
+                        ? "Precio fijo"
+                        : "Por variantes"
+                    }}
+                  </span>
+                </div>
+              </div>
+              <div class="cat-actions">
+                <button
+                  class="card-action-btn"
+                  pTooltip="Editar"
+                  (click)="openEditService(cat)"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  class="card-action-btn"
+                  pTooltip="{{ cat.isActive ? 'Desactivar' : 'Activar' }}"
+                  (click)="toggleCategory(cat)"
+                >
+                  <i
+                    class="pi"
+                    [class.pi-eye-slash]="cat.isActive"
+                    [class.pi-eye]="!cat.isActive"
+                  ></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Modo FIXED: muestra el precio directo -->
+            <div class="cat-fixed-price" *ngIf="cat.pricingMode === 'fixed'">
+              <div class="fixed-price-row">
+                <span class="fixed-price">{{
+                  formatCurrency(cat.basePrice ?? 0)
+                }}</span>
+                <span class="fixed-duration" *ngIf="cat.baseDuration">
+                  <i class="pi pi-clock"></i> {{ cat.baseDuration }} min
+                </span>
+              </div>
+            </div>
+
+            <!-- Modo VARIANTS: lista de variantes -->
+            <div class="cat-variants" *ngIf="cat.pricingMode === 'variants'">
+              <div
+                class="variant-row"
+                *ngFor="let v of cat.variants | slice: 0 : 4"
+                [class.inactive-v]="!v.isActive"
+              >
+                <span class="variant-name">{{ v.name }}</span>
+                <div class="variant-right">
+                  <span class="variant-duration"
+                    ><i class="pi pi-clock"></i> {{ v.durationMin }} min</span
+                  >
+                  <span class="variant-price">{{
+                    formatCurrency(v.price)
+                  }}</span>
+                </div>
+              </div>
+              <div class="variants-more" *ngIf="cat.variants.length > 4">
+                + {{ cat.variants.length - 4 }} más
+              </div>
+              <div class="variants-empty" *ngIf="cat.variants.length === 0">
+                <i class="pi pi-info-circle"></i> Sin variantes configuradas
+              </div>
+            </div>
+
+            <!-- Footer con total de variantes y estado -->
+            <div class="cat-footer">
+              <span
+                class="cat-variants-count"
+                *ngIf="cat.pricingMode === 'variants'"
+              >
+                {{ activeVariants(cat) }} variantes activas
+              </span>
+              <span
+                class="cat-status"
+                [class.active]="cat.isActive"
+                [class.inactive-status]="!cat.isActive"
+              >
+                {{ cat.isActive ? "Activo" : "Inactivo" }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-grid" *ngIf="categories.length === 0 && !loading">
+            <i class="pi pi-scissors"></i>
+            <p>No hay servicios configurados</p>
+            <button class="btn-primary sm" (click)="openCreateService()">
+              Crear primer servicio
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Panel de filtros (solo productos) -->
+    <aside class="filters-panel" *ngIf="activeTab === 'products'">
+      <div class="filters-header">
+        <h3>Filtros</h3>
+        <button class="reset-btn" (click)="resetFilters()">Resetear</button>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Estado de stock</label>
+        <div class="filter-options">
+          <button
+            *ngFor="let opt of stockOptions"
+            class="filter-opt"
+            [class.active]="stockFilter === opt.value"
+            (click)="stockFilter = opt.value; applyFilters()"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+      <p-divider styleClass="dark-divider"></p-divider>
+      <div class="filter-group">
+        <label class="filter-label">Ordenar por</label>
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="sortBy"
+          optionLabel="label"
+          optionValue="value"
+          (onChange)="applyFilters()"
+          styleClass="filter-dropdown"
+          [style]="{ width: '100%' }"
+        >
+        </p-dropdown>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-primary w-full" (click)="applyFilters()">
+          <i class="pi pi-filter"></i> Aplicar filtros
+        </button>
+        <button class="btn-outline w-full" (click)="resetFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ════════ DIALOG: Crear / Editar producto ════════ -->
+<p-dialog
+  [(visible)]="showProductForm"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '520px' }"
+  [header]="isEditProduct ? 'Editar producto' : 'Nuevo producto'"
+  styleClass="dark-dialog"
+>
+  <form [formGroup]="productForm" class="product-form">
+    <div class="form-row">
+      <div class="field">
+        <label>Nombre *</label>
+        <input
+          pInputText
+          formControlName="name"
+          placeholder="Pomada para cabello"
+          class="w-full"
+        />
+      </div>
+      <div class="field">
+        <label>SKU</label>
+        <input
+          pInputText
+          formControlName="sku"
+          placeholder="PRD-001"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Precio de venta *</label>
+        <p-inputNumber
+          formControlName="price"
+          mode="currency"
+          currency="MXN"
+          locale="es-MX"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+      </div>
+      <div class="field">
+        <label>Costo</label>
+        <p-inputNumber
+          formControlName="cost"
+          mode="currency"
+          currency="MXN"
+          locale="es-MX"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Stock inicial</label>
+        <p-inputNumber
+          formControlName="stock"
+          [min]="0"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+      </div>
+      <div class="field">
+        <label>Stock mínimo (alerta)</label>
+        <p-inputNumber
+          formControlName="stockMin"
+          [min]="0"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+      </div>
+    </div>
+    <div class="field">
+      <label>Descripción</label>
+      <input
+        pInputText
+        formControlName="description"
+        placeholder="Descripción del producto..."
+        class="w-full"
+      />
+    </div>
+    <div class="field">
+      <label>Imagen del producto</label>
+      <label
+        class="image-upload-box"
+        for="product-image-input"
+        *ngIf="!imagePreview"
+      >
+        <i class="pi pi-cloud-upload"></i>
+        <span>Subir imagen del producto</span>
+        <small>JPG, PNG o WebP · Máx 10MB</small>
+      </label>
+      <div class="image-preview-box" *ngIf="imagePreview">
+        <img [src]="imagePreview" alt="Vista previa" />
+        <button
+          type="button"
+          class="remove-image-btn"
+          (click)="clearProductImage()"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      <input
+        #productImageInput
+        id="product-image-input"
+        type="file"
+        accept="image/*"
+        (change)="onProductImageSelected($event)"
+        hidden
+      />
+    </div>
+  </form>
+  <ng-template pTemplate="footer">
+    <button
+      class="btn-outline"
+      (click)="showProductForm = false; clearProductImage()"
+    >
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="saveProduct()"
+      [disabled]="productForm.invalid || savingProduct"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="savingProduct"></i>
+      {{
+        savingProduct
+          ? "Guardando..."
+          : isEditProduct
+            ? "Actualizar"
+            : "Crear producto"
+      }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════ DIALOG: Ajustar stock ════════ -->
+<p-dialog
+  [(visible)]="showStockAdjust"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '380px' }"
+  header="Ajustar stock"
+  styleClass="dark-dialog"
+  *ngIf="selectedProduct"
+>
+  <div class="stock-adjust">
+    <div class="current-stock">
+      <span>Stock actual</span>
+      <strong>{{ selectedProduct!.stock }} unidades</strong>
+    </div>
+    <div class="adjust-type">
+      <button
+        class="adjust-btn"
+        [class.active]="stockAdjustType === 'add'"
+        (click)="stockAdjustType = 'add'"
+      >
+        <i class="pi pi-plus"></i> Agregar
+      </button>
+      <button
+        class="adjust-btn danger"
+        [class.active]="stockAdjustType === 'remove'"
+        (click)="stockAdjustType = 'remove'"
+      >
+        <i class="pi pi-minus"></i> Quitar
+      </button>
+    </div>
+    <div class="field">
+      <label>Cantidad</label>
+      <p-inputNumber
+        [(ngModel)]="stockDelta"
+        [min]="1"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        placeholder="0"
+      ></p-inputNumber>
+    </div>
+    <div class="stock-preview" *ngIf="stockDelta > 0">
+      <span>Nuevo stock:</span>
+      <strong
+        [class.text-danger]="
+          stockAdjustType === 'remove' &&
+          selectedProduct!.stock - stockDelta < 0
+        "
+      >
+        {{
+          stockAdjustType === "add"
+            ? selectedProduct!.stock + stockDelta
+            : selectedProduct!.stock - stockDelta
+        }}
+      </strong>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showStockAdjust = false">
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="adjustStock()"
+      [disabled]="stockDelta <= 0"
+    >
+      Confirmar ajuste
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════ DIALOG: Crear / Editar SERVICIO — nuevo modelo ════════ -->
+<p-dialog
+  [(visible)]="showServiceForm"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '620px', maxHeight: '90vh' }"
+  [header]="isEditService ? 'Editar servicio' : 'Nueva categoría de servicio'"
+  styleClass="dark-dialog service-dialog"
+  [contentStyle]="{ 'overflow-y': 'auto', 'max-height': '75vh' }"
+>
+  <!-- Usa el ServiceFormComponent -->
+  <app-service-form
+    *ngIf="showServiceForm"
+    [editData]="isEditService ? getCategoryForEdit() : null"
+    (saved)="onServiceSaved()"
+    (cancelled)="onServiceCancelled()"
+  >
+  </app-service-form>
+</p-dialog>

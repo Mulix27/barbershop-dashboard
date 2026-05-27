@@ -12,7 +12,7 @@ import { TooltipModule }      from 'primeng/tooltip';
 import { MenuModule }         from 'primeng/menu';
 
 // Chart.js
-import { NgChartsModule }     from 'ng2-charts';
+import { NgChartsModule  }     from 'ng2-charts';
 
 const routes: Routes = [
   { path: '', component: HomeComponent }

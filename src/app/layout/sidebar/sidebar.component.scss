@@ -1,10 +1,10 @@
-$gold:       #C9A84C;
+$gold: #C9A84C;
 $gold-light: #E8C96B;
-$gold-dim:   rgba(201, 168, 76, 0.12);
-$dark:       #0D0D14;
-$surface:    #13131E;
-$border:     rgba(201, 168, 76, 0.12);
-$text:       #E8E6DE;
+$gold-dim: rgba(201, 168, 76, 0.12);
+$dark: #0D0D14;
+$surface: #13131E;
+$border: rgba(201, 168, 76, 0.12);
+$text: #E8E6DE;
 $text-muted: rgba(232, 230, 222, 0.45);
 
 :host {
@@ -15,13 +15,15 @@ $text-muted: rgba(232, 230, 222, 0.45);
 // ── Sidebar container ─────────────────────────────────────────
 .sidebar {
   position: fixed;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: var(--sidebar-width, 240px);
   background: $surface;
   border-right: 1px solid $border;
   display: flex;
   flex-direction: column;
-  transition: width .3s cubic-bezier(.4,0,.2,1);
+  transition: width .3s cubic-bezier(.4, 0, .2, 1);
   z-index: 100;
   overflow: hidden;
 
@@ -43,12 +45,25 @@ $text-muted: rgba(232, 230, 222, 0.45);
 .logo-mark {
   width: 38px;
   height: 38px;
-  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
   border-radius: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &.has-logo {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(201, 168, 76, .18);
+  }
 
   .pi {
     font-size: 16px;
@@ -120,11 +135,10 @@ $text-muted: rgba(232, 230, 222, 0.45);
   }
 
   &:hover {
-    background: rgba(255,255,255,.04);
+    background: rgba(255, 255, 255, .04);
     color: rgba(232, 230, 222, 0.8);
   }
 
-  // Item activo con borde dorado izquierdo
   &.active {
     background: $gold-dim;
     color: $gold;
@@ -243,5 +257,35 @@ $text-muted: rgba(232, 230, 222, 0.45);
     border-radius: 8px !important;
     padding: 4px 10px !important;
   }
-  .p-tooltip-arrow { border-right-color: #1E1E2C !important; }
+  .p-tooltip-arrow {
+    border-right-color: #1E1E2C !important;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  MÓVIL — Sidebar como drawer deslizable
+// ════════════════════════════════════════════════════════
+@media (max-width: 767px) {
+
+  :host {
+    height: auto;  // no bloquea el layout
+  }
+
+  .sidebar {
+    // Siempre ancho completo en móvil (no collapsed)
+    width: 240px !important;
+
+    // Oculto por defecto: desplazado fuera de pantalla a la izquierda
+    transform: translateX(-100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+
+    // Sombra para dar profundidad cuando está abierto
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+  }
+
+  // Cuando el layout tiene .mobile-open → mostrar el sidebar
+  // Usamos :host-context para detectar la clase en el padre
+  :host-context(.mobile-open) .sidebar {
+    transform: translateX(0);
+  }
 }

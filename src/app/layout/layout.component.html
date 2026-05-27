@@ -1,4 +1,7 @@
-<div class="layout-wrapper" [class.sidebar-collapsed]="collapsed">
+<div class="layout-wrapper" [class.sidebar-collapsed]="collapsed" [class.mobile-open]="mobileOpen">
+
+  <!-- Backdrop — solo visible en móvil cuando el sidebar está abierto -->
+  <div class="sidebar-backdrop" (click)="closeMobile()"></div>
 
   <app-sidebar
     [collapsed]="collapsed"

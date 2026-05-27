@@ -15,6 +15,7 @@ export interface Appointment {
   source: 'web' | 'whatsapp' | 'dashboard';
   reminderSent: boolean;
   createdAt: string;
+  saleId?: string;
 }
  
 export interface TimeSlot {

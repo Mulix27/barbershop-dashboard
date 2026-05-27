@@ -12,6 +12,7 @@ export interface LoginResponse {
   role: 'owner' | 'barber' | 'cashier';
   barbershopId: string;
   barbershopName: string;
+  logoUrl?: string;
   singleBarber: boolean;
 }
  

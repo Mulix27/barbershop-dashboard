@@ -18,4 +18,5 @@ export interface Product {
   stockMin: number;
   isActive: boolean;
   lowStock: boolean;
+  imageUrl?: string;
 }

@@ -23,6 +23,7 @@ import { DropdownModule }     from 'primeng/dropdown';
 import { ToastModule }        from 'primeng/toast';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 const routes: Routes = [
   { path: '',    component: ClientListComponent },
@@ -50,7 +51,8 @@ const routes: Routes = [
     FileUploadModule,
     DropdownModule,
     InputTextareaModule,
-    ToastModule
+    ToastModule,
+    SharedModule   
   ],
   providers: [MessageService, ConfirmationService]
 })

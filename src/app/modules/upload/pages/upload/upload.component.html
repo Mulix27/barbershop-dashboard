@@ -1,0 +1,140 @@
+<!-- Estado: validando -->
+<div class="upload-page" *ngIf="state === 'validating'">
+  <div class="state-card">
+    <div class="spinner"></div>
+    <p>Verificando sesión...</p>
+  </div>
+</div>
+
+<!-- Estado: token inválido -->
+<div class="upload-page" *ngIf="state === 'invalid' || state === 'expired'">
+  <div class="state-card error">
+    <div class="state-icon error-icon">✕</div>
+    <h2>{{ state === 'expired' ? 'QR Expirado' : 'QR Inválido' }}</h2>
+    <p>{{ state === 'expired'
+      ? 'Este QR ya no es válido. Pide al barbero que genere uno nuevo.'
+      : 'El enlace no es válido o ya fue usado.' }}</p>
+  </div>
+</div>
+
+<!-- Estado: listo para subir -->
+<div class="upload-page" *ngIf="state === 'ready' || state === 'uploading'">
+
+  <!-- Header -->
+  <div class="upload-header">
+    <div class="brand-logo">✂</div>
+    <div>
+      <h1>Subir fotos del corte</h1>
+      <p>Máximo {{ MAX_PHOTOS }} fotos · JPG, PNG, WebP</p>
+    </div>
+  </div>
+
+  <!-- Botones de captura -->
+  <div class="capture-buttons" *ngIf="canAddMore">
+
+    <label class="capture-btn camera" for="camera-input">
+      <span class="capture-icon">📷</span>
+      <span class="capture-label">Tomar foto</span>
+      <span class="capture-hint">Abre la cámara</span>
+      <input
+        id="camera-input"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        (change)="onFilesSelected($event)"
+        style="display:none"/>
+    </label>
+
+    <label class="capture-btn gallery" for="gallery-input">
+      <span class="capture-icon">🖼</span>
+      <span class="capture-label">Desde galería</span>
+      <span class="capture-hint">Selección múltiple</span>
+      <input
+        id="gallery-input"
+        type="file"
+        accept="image/*"
+        multiple
+        (change)="onFilesSelected($event)"
+        style="display:none"/>
+    </label>
+
+  </div>
+
+  <!-- Contador -->
+  <div class="photo-count" *ngIf="pendingPhotos.length > 0">
+    <span>{{ pendingPhotos.length }} / {{ MAX_PHOTOS }} fotos</span>
+    <div class="count-dots">
+      <span
+        *ngFor="let i of [0,1,2,3,4]"
+        class="dot"
+        [class.filled]="i < pendingPhotos.length">
+      </span>
+    </div>
+  </div>
+
+  <!-- Grid de fotos -->
+  <div class="photos-grid" *ngIf="pendingPhotos.length > 0">
+    <div class="photo-item" *ngFor="let p of pendingPhotos; let i = index">
+      <div class="photo-preview">
+        <img [src]="p.preview" [alt]="'Foto ' + (i+1)"/>
+        <button
+          class="remove-photo"
+          (click)="removePhoto(i)"
+          [disabled]="state === 'uploading'">✕</button>
+      </div>
+      <input
+        type="text"
+        [(ngModel)]="p.note"
+        placeholder="Nota opcional..."
+        class="photo-note"
+        [disabled]="state === 'uploading'"/>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="empty-state" *ngIf="pendingPhotos.length === 0">
+    <div class="empty-icon">📸</div>
+    <p>Toma fotos del resultado o selecciona desde tu galería</p>
+  </div>
+
+  <!-- Progress bar (solo al subir) -->
+  <div class="progress-wrap" *ngIf="state === 'uploading'">
+    <div class="progress-bar">
+      <div class="progress-fill uploading-anim"></div>
+    </div>
+    <p>Subiendo fotos a la nube...</p>
+  </div>
+
+  <!-- Botón subir -->
+  <button
+    class="upload-btn"
+    [class.disabled]="pendingPhotos.length === 0 || state === 'uploading'"
+    [disabled]="pendingPhotos.length === 0 || state === 'uploading'"
+    (click)="upload()">
+    <span *ngIf="state !== 'uploading'">
+      Subir {{ pendingPhotos.length > 0 ? pendingPhotos.length : '' }} foto{{ pendingPhotos.length !== 1 ? 's' : '' }}
+    </span>
+    <span *ngIf="state === 'uploading'">Subiendo...</span>
+  </button>
+
+</div>
+
+<!-- Estado: éxito -->
+<div class="upload-page" *ngIf="state === 'done'">
+  <div class="state-card success">
+    <div class="state-icon success-icon">✓</div>
+    <h2>¡Fotos subidas!</h2>
+    <p>{{ uploadedCount }} foto{{ uploadedCount !== 1 ? 's' : '' }} guardada{{ uploadedCount !== 1 ? 's' : '' }} en el historial del cliente.</p>
+    <p class="success-hint">El barbero puede ver las fotos recargando el perfil del cliente.</p>
+  </div>
+</div>
+
+<!-- Estado: error -->
+<div class="upload-page" *ngIf="state === 'error'">
+  <div class="state-card error">
+    <div class="state-icon error-icon">!</div>
+    <h2>Error al subir</h2>
+    <p>{{ errorMsg }}</p>
+    <button class="retry-btn" (click)="retry()">Intentar de nuevo</button>
+  </div>
+</div>

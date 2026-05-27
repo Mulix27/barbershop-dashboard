@@ -12,7 +12,7 @@ export class AuthService {
 
   private apiUrl = `${environment.apiUrl}/api/auth`;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) { }
 
   login(credentials: LoginRequest): Observable<ApiResponse<LoginResponse>> {
     return this.http.post<ApiResponse<LoginResponse>>(
@@ -22,13 +22,14 @@ export class AuthService {
         if (res.success && res.data) {
           localStorage.setItem('token', res.data.token);
           localStorage.setItem('user', JSON.stringify({
-            userId:         res.data.userId,
-            fullName:       res.data.fullName,
-            email:          res.data.email,
-            role:           res.data.role,
-            barbershopId:   res.data.barbershopId,
+            userId: res.data.userId,
+            fullName: res.data.fullName,
+            email: res.data.email,
+            role: res.data.role,
+            barbershopId: res.data.barbershopId,
             barbershopName: res.data.barbershopName,
-            singleBarber:   res.data.singleBarber
+            logoUrl: res.data.logoUrl,
+            singleBarber: res.data.singleBarber
           }));
         }
       })

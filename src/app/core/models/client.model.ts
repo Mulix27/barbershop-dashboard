@@ -24,6 +24,7 @@ export interface HaircutPhoto {
   id: string;
   url: string;
   publicId: string;
+  storageProvider: string;
   takenAt: string;
   notes?: string;
   uploadedBy?: string;

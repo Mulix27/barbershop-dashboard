@@ -1,0 +1,1415 @@
+$gold: #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim: rgba(201, 168, 76, 0.12);
+$card: #16161F;
+$surface: #13131E;
+$border: rgba(201, 168, 76, 0.1);
+$border-sub: rgba(255, 255, 255, 0.06);
+$text: #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.45);
+$dark: #0D0D14;
+
+// ── Layout ────────────────────────────────────────────────────
+.agenda-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.25rem;
+  height: calc(100vh - 72px - 3rem);
+  min-height: 600px;
+}
+
+// ── Main ──────────────────────────────────────────────────────
+.agenda-main {
+  display: flex;
+  flex-direction: column;
+  gap: .875rem;
+  overflow: hidden;
+}
+
+// ── Header ────────────────────────────────────────────────────
+.agenda-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 2px;
+  }
+}
+
+.header-sub {
+  font-size: .8rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  flex-wrap: wrap;
+}
+
+// ── Date nav ──────────────────────────────────────────────────
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-btn {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid $border-sub;
+  border-radius: 8px;
+  color: $text-muted;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+
+  .pi {
+    font-size: 12px;
+  }
+
+  &:hover {
+    background: $gold-dim;
+    color: $gold;
+    border-color: rgba(201, 168, 76, .3);
+  }
+}
+
+.today-btn {
+  padding: .25rem .75rem;
+  height: 32px;
+  background: none;
+  border: 1px solid $border-sub;
+  border-radius: 8px;
+  color: $text-muted;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+
+  &.active,
+  &:hover {
+    background: $gold-dim;
+    color: $gold;
+    border-color: rgba(201, 168, 76, .3);
+  }
+}
+
+// ── View selector ─────────────────────────────────────────────
+:host ::ng-deep .view-selector.p-selectbutton {
+  display: inline-flex;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid $border-sub;
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+
+  .p-button {
+    background: transparent !important;
+    border: 0 !important;
+    color: $text-muted !important;
+    font-size: .82rem !important;
+    padding: .55rem .95rem !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    min-width: 68px;
+    transition: all .2s ease;
+    box-shadow: none !important;
+
+    .p-button-label {
+      line-height: 1 !important;
+    }
+
+    &:hover {
+      background: rgba(201, 168, 76, .08) !important;
+      color: $gold !important;
+    }
+
+    &.p-highlight {
+      background: linear-gradient(135deg, rgba(201, 168, 76, .28), rgba(201, 168, 76, .12)) !important;
+      color: $gold !important;
+      box-shadow: inset 0 0 0 1px rgba(201, 168, 76, .35) !important;
+    }
+
+    &:focus {
+      box-shadow: none !important;
+    }
+  }
+}
+
+// ── Date display ──────────────────────────────────────────────
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .625rem 1rem;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 10px;
+}
+
+.date-label {
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+  text-transform: capitalize;
+}
+
+.closed-badge {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  font-size: .75rem;
+  color: #ef4444;
+  background: rgba(239, 68, 68, .1);
+  padding: 2px 8px;
+  border-radius: 999px;
+
+  .pi {
+    font-size: 11px;
+  }
+}
+
+// ── Calendar container ────────────────────────────────────────
+.calendar-container {
+  flex: 1;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border;
+    border-radius: 2px;
+  }
+}
+
+.slots-skeleton {
+  padding: .75rem;
+}
+
+// ── Slots ─────────────────────────────────────────────────────
+.slots-grid {
+  padding: .5rem .75rem;
+}
+
+.slot-row {
+  display: flex;
+  align-items: stretch;
+  gap: .875rem;
+  min-height: 56px;
+  border-bottom: 1px solid rgba(255, 255, 255, .03);
+  position: relative;
+
+  &.current-time {
+    background: rgba(201, 168, 76, .04);
+    border-bottom-color: rgba(201, 168, 76, .15);
+  }
+}
+
+.slot-time {
+  width: 80px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: .5rem .75rem .5rem 0;
+  position: relative;
+
+  span {
+    font-size: .75rem;
+    font-weight: 500;
+    color: $text-muted;
+  }
+
+  .current-label {
+    color: $gold;
+    font-weight: 700;
+  }
+}
+
+.current-dot {
+  width: 8px;
+  height: 8px;
+  background: $gold;
+  border-radius: 50%;
+  position: absolute;
+  right: -4px;
+  box-shadow: 0 0 8px rgba(201, 168, 76, .6);
+}
+
+.slot-content {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  padding: .375rem 0;
+}
+
+// ── Empty / blocked slot ──────────────────────────────────────
+.empty-slot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  color: transparent;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: .8rem;
+  font-weight: 500;
+
+  .pi {
+    font-size: 12px;
+  }
+
+  .slot-row:hover & {
+    border-color: rgba(201, 168, 76, .2);
+    color: rgba(201, 168, 76, .5);
+    background: rgba(201, 168, 76, .04);
+  }
+}
+
+// ── Appointment block ─────────────────────────────────────────
+.appointment-block {
+  flex: 1;
+  border-radius: 10px;
+  padding: .625rem .875rem;
+  cursor: pointer;
+  border-left: 3px solid;
+  transition: opacity .15s, transform .15s;
+
+  &:hover {
+    opacity: .9;
+    transform: translateX(2px);
+  }
+
+  &.status-confirmed {
+    background: rgba(34, 197, 94, .08);
+    border-left-color: #22c55e;
+  }
+
+  &.status-pending {
+    background: rgba(245, 158, 11, .08);
+    border-left-color: #f59e0b;
+  }
+
+  &.status-in_progress {
+    background: rgba(129, 140, 248, .08);
+    border-left-color: #818cf8;
+  }
+
+  &.status-completed {
+    background: rgba(148, 163, 184, .06);
+    border-left-color: #94a3b8;
+  }
+
+  &.status-cancelled {
+    background: rgba(239, 68, 68, .06);
+    border-left-color: #ef4444;
+    opacity: .7;
+  }
+
+  &.status-no_show {
+    background: rgba(239, 68, 68, .06);
+    border-left-color: #ef4444;
+    opacity: .7;
+  }
+}
+
+.appt-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.appt-client-info {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+
+.appt-avatar {
+  width: 30px;
+  height: 30px;
+  background: $gold-dim;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+.appt-client-name {
+  display: block;
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+  line-height: 1.2;
+}
+
+.appt-service {
+  display: block;
+  font-size: .75rem;
+  color: $text-muted;
+}
+
+.appt-block-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.appt-time-range {
+  font-size: .75rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.appt-block-footer {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-top: .375rem;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .7rem;
+    color: $text-muted;
+
+    .pi {
+      font-size: 10px;
+    }
+  }
+}
+
+.source-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 600;
+
+  &.source-web {
+    background: rgba(99, 102, 241, .15);
+    color: #818cf8;
+  }
+
+  &.source-whatsapp {
+    background: rgba(37, 211, 102, .15);
+    color: #25d366;
+  }
+
+  &.source-dashboard {
+    background: rgba(201, 168, 76, .12);
+    color: $gold;
+  }
+}
+
+.day-closed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  gap: .75rem;
+  text-align: center;
+  padding: 2rem;
+
+  .pi {
+    font-size: 3rem;
+    color: $text-muted;
+    opacity: .3;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0;
+  }
+
+  p {
+    font-size: .875rem;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+.slot-row.past-slot {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.slot-row.past-slot.current-time {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.blocked-slot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-radius: 8px;
+  color: rgba(232, 230, 222, .28);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: not-allowed;
+
+  .pi {
+    font-size: 12px;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SIDEBAR DERECHO
+// ════════════════════════════════════════════════════════
+.agenda-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border;
+    border-radius: 2px;
+  }
+}
+
+.mini-calendar-wrap {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .mini-calendar {
+  width: 100% !important;
+
+  .p-datepicker {
+    background: transparent !important;
+    border: none !important;
+    padding: .75rem !important;
+    width: 100% !important;
+  }
+
+  .p-datepicker-header {
+    background: transparent !important;
+    border-bottom: 1px solid $border-sub !important;
+    padding-bottom: .625rem !important;
+    margin-bottom: .375rem !important;
+    color: $text !important;
+    font-size: .875rem !important;
+  }
+
+  .p-datepicker-prev,
+  .p-datepicker-next {
+    color: $text-muted !important;
+
+    &:hover {
+      color: $gold !important;
+      background: $gold-dim !important;
+      border-radius: 6px;
+    }
+  }
+
+  .p-datepicker table td {
+    padding: 1px !important;
+
+    span {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: .75rem !important;
+      border-radius: 6px !important;
+      color: $text-muted !important;
+    }
+
+    &.p-datepicker-today span {
+      background: $gold-dim !important;
+      color: $gold !important;
+      font-weight: 700 !important;
+    }
+
+    span:hover,
+    span.p-highlight {
+      background: $gold !important;
+      color: $dark !important;
+      font-weight: 700 !important;
+    }
+  }
+
+  .p-datepicker table th span {
+    font-size: .7rem !important;
+    color: $text-muted !important;
+    font-weight: 600 !important;
+  }
+}
+
+.day-summary {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 1rem;
+
+  h3 {
+    font-size: .875rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 .875rem;
+  }
+}
+
+.summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+
+.summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.total {
+    background: $gold;
+  }
+
+  &.confirmed {
+    background: #22c55e;
+  }
+
+  &.pending {
+    background: #f59e0b;
+  }
+
+  &.in_progress {
+    background: #818cf8;
+  }
+
+  &.cancelled {
+    background: #ef4444;
+  }
+}
+
+.summary-label {
+  flex: 1;
+  font-size: .8rem;
+  color: $text-muted;
+}
+
+.summary-val {
+  font-size: .9rem;
+  font-weight: 700;
+  color: $text;
+}
+
+.next-appt {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 1rem;
+
+  h3 {
+    font-size: .875rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 .75rem;
+  }
+}
+
+.next-appt-card {
+  display: flex;
+  flex-direction: column;
+  gap: .625rem;
+}
+
+.next-time {
+  font-size: .875rem;
+  font-weight: 700;
+  color: $gold;
+}
+
+.next-client {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+
+.next-avatar {
+  width: 32px;
+  height: 32px;
+  background: $gold-dim;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+.next-name {
+  display: block;
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+}
+
+.next-service {
+  display: block;
+  font-size: .75rem;
+  color: $text-muted;
+}
+
+// ════════════════════════════════════════════════════════
+//  DIALOGS
+// ════════════════════════════════════════════════════════
+:host ::ng-deep .dark-dialog {
+  .p-dialog {
+    background: #16161F !important;
+    border: 1px solid rgba(201, 168, 76, .15) !important;
+    border-radius: 16px !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .p-dialog-header {
+    background: #16161F !important;
+    border-bottom: 1px solid $border-sub !important;
+    border-radius: 16px 16px 0 0 !important;
+    color: $text !important;
+    padding: 1.25rem 1.5rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .p-dialog-content {
+    background: #16161F !important;
+    padding: 1.25rem 1.5rem !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    max-height: calc(90vh - 140px) !important;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(201, 168, 76, .35);
+      border-radius: 999px;
+    }
+  }
+
+  .p-dialog-footer {
+    background: #16161F !important;
+    border-top: 1px solid $border-sub !important;
+    padding: .875rem 1.5rem !important;
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 5 !important;
+  }
+
+  .p-inputtext {
+    background: rgba(255, 255, 255, .04) !important;
+    border-color: rgba(255, 255, 255, .1) !important;
+    color: $text !important;
+    border-radius: 8px !important;
+
+    &:focus {
+      border-color: rgba(201, 168, 76, .4) !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .p-calendar-w-btn .p-inputtext {
+    border-radius: 8px 0 0 8px !important;
+  }
+
+  .p-datepicker-trigger {
+    background: rgba(255, 255, 255, .04) !important;
+    border-color: rgba(255, 255, 255, .1) !important;
+    color: $text-muted !important;
+  }
+
+  .p-dropdown {
+    width: 100% !important;
+    background: rgba(255, 255, 255, .04) !important;
+    border-color: rgba(255, 255, 255, .1) !important;
+    border-radius: 10px !important;
+  }
+
+  .p-dropdown-label {
+    color: $text !important;
+    padding: .65rem .8rem !important;
+    font-size: .9rem !important;
+  }
+
+  .p-dropdown-trigger {
+    color: $text-muted !important;
+    width: 2.75rem !important;
+  }
+
+  .p-dropdown-panel {
+    background: #1E1E2C !important;
+    border: 1px solid rgba(201, 168, 76, .22) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+
+  .p-dropdown-items {
+    padding: .35rem !important;
+  }
+
+  .p-dropdown-item {
+    color: $text !important;
+    padding: .65rem .75rem !important;
+    border-radius: 8px !important;
+    font-size: .9rem !important;
+
+    &:hover,
+    &.p-highlight {
+      background: rgba(201, 168, 76, .14) !important;
+      color: $gold !important;
+    }
+  }
+
+  .p-inputtext,
+  .p-calendar .p-inputtext {
+    min-height: 42px !important;
+    padding: .65rem .8rem !important;
+    font-size: .9rem !important;
+  }
+}
+
+// ── Status options ────────────────────────────────────────────
+.appt-detail-preview {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .875rem;
+  background: rgba(255, 255, 255, .03);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.detail-avatar {
+  width: 40px;
+  height: 40px;
+  background: $gold-dim;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: $gold;
+}
+
+.detail-name {
+  font-size: .9375rem;
+  font-weight: 700;
+  color: $text;
+  margin: 0 0 2px;
+}
+
+.detail-info {
+  font-size: .8rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.status-options {
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+}
+
+.status-opt {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: .625rem .875rem;
+  background: none;
+  border: 1px solid $border-sub;
+  border-radius: 10px;
+  color: $text-muted;
+  font-size: .875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+
+  .pi {
+    font-size: 14px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, .04);
+    color: $text;
+  }
+
+  &.sopt-confirmed:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, .08);
+  }
+
+  &.sopt-in_progress:hover {
+    border-color: #818cf8;
+    color: #818cf8;
+    background: rgba(129, 140, 248, .08);
+  }
+
+  &.sopt-completed:hover {
+    border-color: #94a3b8;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, .06);
+  }
+
+  &.sopt-cancelled:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, .08);
+  }
+
+  &.sopt-no_show:hover {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, .08);
+  }
+}
+
+// ── Schedule config ───────────────────────────────────────────
+.schedule-desc {
+  font-size: .8125rem;
+  color: $text-muted;
+  margin: 0 0 1rem;
+}
+
+.day-rows {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .625rem .875rem;
+  background: rgba(255, 255, 255, .03);
+  border-radius: 10px;
+  border: 1px solid $border-sub;
+  transition: opacity .2s;
+
+  &.inactive {
+    opacity: .6;
+  }
+}
+
+.day-toggle {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch {
+  width: 36px;
+  height: 20px;
+  background: rgba(255, 255, 255, .1);
+  border-radius: 999px;
+  position: relative;
+  transition: background .2s;
+  flex-shrink: 0;
+
+  &.on {
+    background: $gold;
+  }
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+
+  .toggle-switch.on & {
+    transform: translateX(16px);
+  }
+}
+
+.day-name {
+  font-size: .875rem;
+  font-weight: 600;
+  color: $text;
+  width: 80px;
+}
+
+.day-hours {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.time-input {
+  padding: .375rem .625rem;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  color: $text;
+  font-size: .8125rem;
+  width: 100px;
+
+  &:focus {
+    outline: none;
+    border-color: rgba(201, 168, 76, .4);
+  }
+}
+
+.time-sep {
+  color: $text-muted;
+  font-size: .8rem;
+}
+
+.day-closed-label {
+  font-size: .8rem;
+  color: $text-muted;
+  font-style: italic;
+}
+
+// ── Formulario de cita ────────────────────────────────────────
+.appt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  label {
+    font-size: .8rem;
+    color: rgba(232, 230, 222, .6);
+    font-weight: 600;
+    letter-spacing: .02em;
+    margin-bottom: .15rem;
+  }
+}
+
+.client-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  padding: .25rem;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid $border-sub;
+  border-radius: 12px;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: $text-muted;
+    border-radius: 9px;
+    padding: .65rem .75rem;
+    font-size: .85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &.active {
+      background: $gold-dim;
+      color: $gold;
+      box-shadow: inset 0 0 0 1px rgba(201, 168, 76, .28);
+    }
+  }
+}
+
+// ── Selector servicio ─────────────────────────────────────────
+.service-selected {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.service-name {
+  display: block;
+  color: $text;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.service-meta {
+  display: block;
+  color: $gold;
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.service-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .875rem;
+  width: 100%;
+}
+
+.service-option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.service-option-name {
+  color: $text;
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.service-option-type {
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, .12);
+  color: $gold;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.service-option-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+
+  strong {
+    color: $gold;
+    font-size: .85rem;
+  }
+
+  span {
+    color: $text-muted;
+    font-size: .72rem;
+    font-weight: 600;
+  }
+}
+
+.service-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .5rem;
+  padding: .75rem;
+  background: rgba(201, 168, 76, .07);
+  border: 1px solid rgba(201, 168, 76, .16);
+  border-radius: 12px;
+}
+
+.service-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  span {
+    color: $text-muted;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  strong {
+    color: $text;
+    font-size: .8rem;
+    font-weight: 700;
+  }
+}
+
+// ── Botones ───────────────────────────────────────────────────
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  background: linear-gradient(135deg, #C9A84C 0%, #E8C96B 100%);
+  border: none;
+  border-radius: 10px;
+  color: #0D0D14;
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    opacity: .9;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  &.sm {
+    padding: .375rem .75rem;
+    font-size: .8rem;
+  }
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  background: none;
+  border: 1px solid rgba(201, 168, 76, .3);
+  border-radius: 10px;
+  color: $gold;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: $gold-dim;
+  }
+
+  &.sm {
+    padding: .375rem .75rem;
+    font-size: .8rem;
+  }
+}
+
+.controls-row-nav {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+
+.controls-row-actions {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+
+// ════════════════════════════════════════════════════════
+//  RESPONSIVE
+// ════════════════════════════════════════════════════════
+
+// ── Tablet ────────────────────────────────────────────────────
+@media (max-width: 1100px) {
+  .agenda-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .agenda-layout {
+    height: auto;
+    min-height: unset;
+  }
+
+  .agenda-main {
+    gap: .625rem;
+  }
+
+  .agenda-header {
+    flex-direction: column;
+    gap: .5rem;
+
+    h1 {
+      font-size: 1.125rem;
+    }
+
+    .header-sub {
+      display: none;
+    }
+  }
+
+  // header-controls: columna con 2 filas
+  .header-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .5rem;
+  }
+
+  // Fila 1: date-nav + selectButton en fila horizontal
+  .controls-row-nav {
+    width: 100%;
+    justify-content: flex-start;
+    gap: .5rem;
+  }
+
+  // Fila 2: botones 50/50
+  .controls-row-actions {
+    width: 100%;
+    gap: .5rem;
+
+    .btn-outline,
+    .btn-primary {
+      flex: 1;
+      justify-content: center;
+      padding: .5rem .375rem;
+      font-size: .8rem;
+    }
+  }
+
+  .date-display {
+    padding: .5rem .75rem;
+  }
+
+  .date-label {
+    font-size: .8rem;
+  }
+
+  .calendar-container {
+    height: calc(100vh - 72px - 210px);
+    min-height: 380px;
+    border-radius: 12px;
+  }
+
+  .slot-time {
+    width: 60px;
+  }
+
+  .appt-block-footer {
+    display: none;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .service-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+
+  :host ::ng-deep .dark-dialog .p-dialog {
+    width: 94vw !important;
+    margin: 0 auto !important;
+  }
+
+  .day-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+    padding: .75rem .875rem;
+  }
+
+  .day-toggle {
+    width: 100%;
+  }
+
+  .day-name {
+    width: auto;
+  }
+
+  .day-hours {
+    width: 100%;
+    justify-content: flex-start;
+    gap: .375rem;
+  }
+
+  .time-input {
+    flex: 1;
+    min-width: 80px;
+    width: auto;
+  }
+
+  .time-sep {
+    flex-shrink: 0;
+  }
+
+  :host ::ng-deep .dark-dialog .p-dialog-footer {
+    flex-direction: column-reverse !important;
+    gap: .5rem !important;
+
+    .btn-primary,
+    .btn-outline {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .slot-time {
+    width: 52px;
+  }
+
+  .time-input {
+    font-size: .75rem;
+    padding: .3rem .4rem;
+  }
+}

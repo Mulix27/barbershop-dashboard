@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { ClientService } from '../../../../core/services/client.service';
 import { Client } from 'src/app/core/models/client.model';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-client-list',
@@ -14,13 +15,13 @@ import { Client } from 'src/app/core/models/client.model';
 })
 export class ClientListComponent implements OnInit {
 
-  clients: Client[]     = [];
-  filtered: Client[]    = [];
+  clients: Client[] = [];
+  filtered: Client[] = [];
   selected: Client | null = null;
-  loading  = true;
+  loading = true;
   showForm = false;
-  saving   = false;
-  isEdit   = false;
+  saving = false;
+  isEdit = false;
 
   searchQuery = '';
   private search$ = new Subject<string>();
@@ -28,12 +29,12 @@ export class ClientListComponent implements OnInit {
   form!: UntypedFormGroup;
 
   constructor(
-    private clientService:       ClientService,
-    private router:              Router,
-    private fb:                  UntypedFormBuilder,
-    private messageService:      MessageService,
+    private clientService: ClientService,
+    private router: Router,
+    private fb: UntypedFormBuilder,
+    private messageService: MessageService,
     private confirmationService: ConfirmationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.buildForm();
@@ -48,11 +49,11 @@ export class ClientListComponent implements OnInit {
 
   buildForm(): void {
     this.form = this.fb.group({
-      fullName:  ['', [Validators.required, Validators.maxLength(120)]],
-      phone:     ['', [Validators.required]],
-      email:     ['', Validators.email],
+      fullName: ['', [Validators.required, Validators.maxLength(120)]],
+      phone: ['', [Validators.required]],
+      email: ['', Validators.email],
       birthDate: [''],
-      notes:     ['']
+      notes: ['']
     });
   }
 
@@ -60,8 +61,9 @@ export class ClientListComponent implements OnInit {
     this.loading = true;
     this.clientService.getAll().subscribe({
       next: (res) => {
+        // getAll ahora retorna ApiResponse<Client[]>
         if (res.success) {
-          this.clients  = res.data;
+          this.clients = res.data;
           this.filtered = res.data;
           if (this.clients.length > 0 && !this.selected) {
             this.select(this.clients[0]);
@@ -91,8 +93,8 @@ export class ClientListComponent implements OnInit {
 
   select(client: Client): void {
     this.selected = client;
-    // Cargar detalle completo con cortes
     this.clientService.getById(client.id).subscribe(res => {
+      // getById ahora retorna ApiResponse<Client>
       if (res.success) this.selected = res.data;
     });
   }
@@ -106,11 +108,11 @@ export class ClientListComponent implements OnInit {
   openEdit(client: Client): void {
     this.isEdit = true;
     this.form.patchValue({
-      fullName:  client.fullName,
-      phone:     client.phone,
-      email:     client.email ?? '',
+      fullName: client.fullName,
+      phone: client.phone,
+      email: client.email ?? '',
       birthDate: client.birthDate ?? '',
-      notes:     client.notes ?? ''
+      notes: client.notes ?? ''
     });
     this.selected = client;
     this.showForm = true;

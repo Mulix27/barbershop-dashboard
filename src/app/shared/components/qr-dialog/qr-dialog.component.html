@@ -1,0 +1,54 @@
+<!-- Estado: generando -->
+<div class="qr-state loading" *ngIf="loading">
+  <div class="qr-spinner"></div>
+  <p>Generando QR...</p>
+</div>
+
+<!-- Estado: error -->
+<div class="qr-state error" *ngIf="error && !loading">
+  <div class="qr-error-icon">!</div>
+  <p>No se pudo generar el QR</p>
+  <button class="qr-retry-btn" (click)="generate()">
+    <i class="pi pi-refresh"></i>
+    Intentar de nuevo
+  </button>
+</div>
+
+<!-- Estado: QR listo -->
+<div class="qr-content" *ngIf="!loading && !error">
+
+  <!-- Canvas del QR -->
+  <div class="qr-canvas-wrap">
+    <canvas #qrCanvas></canvas>
+    <!-- Logo encima del QR -->
+    <div class="qr-logo">✂</div>
+  </div>
+
+  <!-- Timer -->
+  <div class="qr-timer" [class.expiring]="isExpiring" [class.expired]="isExpired">
+    <i class="pi pi-clock"></i>
+    <span *ngIf="!isExpired">Expira en {{ formattedTime }}</span>
+    <span *ngIf="isExpired">QR expirado</span>
+  </div>
+
+  <!-- Botón regenerar si expiró -->
+  <button class="qr-retry-btn" *ngIf="isExpired" (click)="generate()">
+    <i class="pi pi-refresh"></i>
+    Generar nuevo QR
+  </button>
+
+  <!-- URL para copiar -->
+  <div class="qr-url-row" *ngIf="!isExpired">
+    <span class="qr-url-text">{{ shortUrl }}</span>
+    <button class="qr-copy-btn" (click)="copyUrl()">
+      <i class="pi" [class.pi-copy]="!copied" [class.pi-check]="copied"></i>
+      {{ copied ? 'Copiado' : 'Copiar' }}
+    </button>
+  </div>
+
+  <!-- Instrucción -->
+  <p class="qr-instruction">
+    Escanea con la cámara del celular → toma las fotos → cierra este dialog y recarga
+  </p>
+
+</div>

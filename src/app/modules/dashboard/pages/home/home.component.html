@@ -70,11 +70,10 @@
       </div>
       <div class="metric-info">
         <span class="metric-label">Top servicio</span>
-        <span class="metric-value truncate">{{ topServices[0]?.name ?? '—' }}</span>
-        <span class="metric-sub">{{ topServices[0]?.qty ?? 0 }} veces este mes</span>
+        <span class="metric-value truncate"> {{ topServices.length ? topServices[0].name : '—' }}</span>
+        <span class="metric-sub"> {{ topServices.length ? topServices[0].qty : 0 }} veces este mes</span>
       </div>
     </div>
-
   </div>
 
   <!-- Grid principal -->

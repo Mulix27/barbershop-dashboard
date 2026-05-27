@@ -27,9 +27,44 @@ $sidebar-collapsed: 72px;
   min-height: 0;
 }
 
-// ── Responsive mobile ─────────────────────────────────────────
-@media (max-width: 768px) {
+// ── Backdrop (oculto por defecto, solo activo en móvil) ───────
+.sidebar-backdrop {
+  display: none;
+}
+
+// ════════════════════════════════════════════════════════
+//  MÓVIL  (<768px)
+// ════════════════════════════════════════════════════════
+@media (max-width: 767px) {
+
+  // El contenido ocupa todo el ancho — el sidebar flota encima
   .layout-main {
     margin-left: 0 !important;
+  }
+
+  // Backdrop: capa oscura detrás del sidebar cuando está abierto
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+
+  // Cuando el drawer está abierto: mostrar backdrop
+  .layout-wrapper.mobile-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+// ── Ajustes de padding en pantallas muy pequeñas ──────────────
+@media (max-width: 480px) {
+  .layout-content {
+    padding: 1rem .875rem;
   }
 }

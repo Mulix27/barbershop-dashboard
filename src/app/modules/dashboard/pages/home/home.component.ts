@@ -198,17 +198,26 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  statusSeverity(status: string): string {
-    const map: Record<string, string> = {
-      confirmed: 'success',
-      pending: 'warning',
-      in_progress: 'info',
-      completed: 'secondary',
-      cancelled: 'danger',
-      no_show: 'danger'
-    };
-    return map[status] ?? 'secondary';
+  statusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
+  switch (status) {
+    case 'confirmed':
+    case 'completed':
+      return 'success';
+
+    case 'pending':
+      return 'warning';
+
+    case 'cancelled':
+    case 'no_show':
+      return 'danger';
+
+    case 'in_progress':
+      return 'info';
+
+    default:
+      return 'secondary';
   }
+}
 
   statusLabel(status: string): string {
     const map: Record<string, string> = {

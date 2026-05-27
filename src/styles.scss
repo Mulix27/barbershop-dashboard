@@ -9,9 +9,9 @@
 :root {
   --sidebar-width: 260px;
   --topbar-height: 64px;
-  --primary: #6366f1;       // indigo — color principal
-  --surface: #1e1e2e;       // fondo de cards
-  --bg: #13131f;            // fondo general
+  --primary: #6366f1; // indigo — color principal
+  --surface: #1e1e2e; // fondo de cards
+  --bg: #13131f; // fondo general
   --text: #e2e2f0;
   --text-muted: #94a3b8;
   --border: #2e2e48;
@@ -19,6 +19,8 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --radius: 12px;
+  --font-display: 'Clash Display', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 // ── Reset base ────────────────────────────────────────────────
@@ -29,11 +31,19 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.dashboard-hero-title,
+.page-title,
+.brand-title,
+.main-heading {
+  font-family: var(--font-display) !important;
+  letter-spacing: -0.03em;
 }
 
 // ── Utilidades globales ───────────────────────────────────────
@@ -65,15 +75,30 @@ body {
   font-size: 12px;
   font-weight: 500;
 
-  &.badge-success { background: rgba(34,197,94,.15); color: var(--success); }
-  &.badge-warning { background: rgba(245,158,11,.15); color: var(--warning); }
-  &.badge-danger  { background: rgba(239,68,68,.15);  color: var(--danger); }
-  &.badge-info    { background: rgba(99,102,241,.15); color: var(--primary); }
+  &.badge-success {
+    background: rgba(34, 197, 94, .15);
+    color: var(--success);
+  }
+
+  &.badge-warning {
+    background: rgba(245, 158, 11, .15);
+    color: var(--warning);
+  }
+
+  &.badge-danger {
+    background: rgba(239, 68, 68, .15);
+    color: var(--danger);
+  }
+
+  &.badge-info {
+    background: rgba(99, 102, 241, .15);
+    color: var(--primary);
+  }
 }
 
 // ── Overrides PrimeNG ─────────────────────────────────────────
 .p-datatable {
-  .p-datatable-thead > tr > th {
+  .p-datatable-thead>tr>th {
     background: transparent;
     border-color: var(--border);
     color: var(--text-muted);
@@ -81,10 +106,15 @@ body {
     text-transform: uppercase;
     letter-spacing: .05em;
   }
-  .p-datatable-tbody > tr {
+
+  .p-datatable-tbody>tr {
     background: transparent;
-    &:hover { background: rgba(255,255,255,.03); }
-    > td {
+
+    &:hover {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    >td {
       border-color: var(--border);
       color: var(--text);
     }
@@ -100,4 +130,23 @@ body {
 .p-button.p-button-primary {
   background: var(--primary);
   border-color: var(--primary);
+}
+
+.sidebar-tooltip.p-tooltip {
+  margin-left: 10px !important;
+  z-index: 9999 !important;
+}
+
+.sidebar-tooltip .p-tooltip-text {
+  background: #1E1E2C !important;
+  color: #E8E6DE !important;
+  border: 1px solid rgba(201, 168, 76, 0.18) !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35) !important;
+}
+
+.sidebar-tooltip.p-tooltip-right .p-tooltip-arrow {
+  border-right-color: #1E1E2C !important;
 }

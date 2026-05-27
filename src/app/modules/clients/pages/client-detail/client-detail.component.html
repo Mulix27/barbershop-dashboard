@@ -1,1 +1,694 @@
-<p>client-detail works!</p>
+<p-toast position="top-right"></p-toast>
+
+<!-- ── Skeleton ───────────────────────────────────────────── -->
+<ng-container *ngIf="loading">
+  <div class="detail-skeleton">
+    <div class="sk-header">
+      <p-skeleton shape="circle" size="90px"></p-skeleton>
+      <div style="flex: 1">
+        <p-skeleton width="200px" height="24px" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="160px" height="14px" styleClass="mb-1"></p-skeleton>
+        <p-skeleton width="140px" height="14px"></p-skeleton>
+      </div>
+    </div>
+    <div class="sk-grid">
+      <p-skeleton
+        height="180px"
+        borderRadius="14px"
+        *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
+      ></p-skeleton>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ── Contenido ─────────────────────────────────────────── -->
+<ng-container *ngIf="!loading && client">
+  <!-- Topbar -->
+  <div class="detail-topbar">
+    <button class="back-btn" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i>
+      Volver a clientes
+    </button>
+    <div class="topbar-actions">
+      <button class="btn-outline" (click)="openEdit()">
+        <i class="pi pi-pencil"></i>
+        Editar perfil
+      </button>
+      <button class="btn-primary" (click)="goToAgenda()">
+        <i class="pi pi-calendar-plus"></i>
+        Nueva cita
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Perfil del cliente ──────────────────────────────── -->
+  <div class="profile-card">
+    <div class="profile-left">
+      <div class="profile-avatar">{{ getInitials(client.fullName) }}</div>
+      <div class="profile-info">
+        <div class="profile-name-row">
+          <h1>{{ client.fullName }}</h1>
+          <span class="vip-badge" *ngIf="totalVisits >= 10">
+            <i class="pi pi-star-fill"></i> Cliente frecuente
+          </span>
+        </div>
+        <div class="profile-contacts">
+          <span *ngIf="client.phone"
+            ><i class="pi pi-phone"></i> {{ client.phone }}</span
+          >
+          <span *ngIf="client.email"
+            ><i class="pi pi-envelope"></i> {{ client.email }}</span
+          >
+          <span *ngIf="client.birthDate"
+            ><i class="pi pi-gift"></i> {{ formatDate(client.birthDate) }}</span
+          >
+          <span
+            ><i class="pi pi-calendar"></i> Miembro desde
+            {{ memberSince }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-metrics">
+      <div class="metric-item">
+        <i class="pi pi-users"></i>
+        <div>
+          <span class="metric-val">{{ totalVisits }}</span>
+          <span class="metric-lbl">Visitas totales</span>
+          <span class="metric-sub">En todos los servicios</span>
+        </div>
+      </div>
+      <div class="metric-divider"></div>
+      <div class="metric-item">
+        <i class="pi pi-calendar"></i>
+        <div>
+          <span class="metric-val">{{ lastVisit }}</span>
+          <span class="metric-lbl">Última visita</span>
+          <span class="metric-sub" *ngIf="sales.length > 0">{{
+            formatDate(sales[0].createdAt)
+          }}</span>
+        </div>
+      </div>
+      <div class="metric-divider"></div>
+      <div class="metric-item">
+        <i class="pi pi-dollar"></i>
+        <div>
+          <span class="metric-val">{{ formatCurrency(totalSpent) }}</span>
+          <span class="metric-lbl">Total gastado</span>
+          <span class="metric-sub">Historial completo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Layout principal ────────────────────────────────── -->
+  <div class="detail-layout">
+    <!-- Sidebar izquierdo -->
+    <aside class="detail-sidebar">
+      <!-- Corte preferido -->
+      <div class="sidebar-card" *ngIf="preferredHaircut">
+        <div class="sidebar-card-header">
+          <i class="pi pi-star-fill"></i>
+          <h3>Corte favorito</h3>
+        </div>
+        <div class="preferred-haircut">
+          <div
+            class="ph-photo"
+            *ngIf="
+              preferredHaircut.photos && preferredHaircut.photos.length > 0
+            "
+          >
+            <img
+              [src]="preferredHaircut.photos[0].url"
+              [alt]="preferredHaircut.name"
+            />
+          </div>
+          <div
+            class="ph-placeholder"
+            *ngIf="
+              !preferredHaircut.photos || preferredHaircut.photos.length === 0
+            "
+          >
+            <i class="pi pi-scissors"></i>
+          </div>
+          <div class="ph-info">
+            <span class="ph-name">{{ preferredHaircut.name }}</span>
+            <span class="ph-type">{{ typeLabel(preferredHaircut.type) }}</span>
+            <p class="ph-desc" *ngIf="preferredHaircut.description">
+              {{ preferredHaircut.description }}
+            </p>
+          </div>
+          <button
+            class="upload-photo-btn"
+            (click)="openUploadPhoto(preferredHaircut)"
+          >
+            <i class="pi pi-camera"></i> Agregar foto
+          </button>
+        </div>
+      </div>
+
+      <!-- Notas personales -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-header collapsible">
+          <div class="header-left">
+            <i class="pi pi-sliders-h"></i>
+            <h3>Notas personales</h3>
+          </div>
+        </div>
+        <div class="notes-content" *ngIf="client.notes">
+          <p>{{ client.notes }}</p>
+        </div>
+        <div class="notes-empty" *ngIf="!client.notes">
+          <i class="pi pi-file-edit"></i>
+          <p>Sin notas para este cliente</p>
+        </div>
+        <button class="update-notes-btn" (click)="openEdit()">
+          <i class="pi pi-pencil"></i> Actualizar notas
+        </button>
+      </div>
+
+      <!-- Cortes guardados -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-header">
+          <div class="header-left">
+            <i class="pi pi-scissors"></i>
+            <h3>Cortes guardados</h3>
+          </div>
+          <button class="add-haircut-btn" (click)="openAddHaircut()">
+            <i class="pi pi-plus"></i>
+          </button>
+        </div>
+        <div class="haircuts-list">
+          <div
+            class="haircut-item"
+            *ngFor="let h of client.haircuts"
+            [class.preferred]="h.isPreferred"
+          >
+            <div class="hi-thumb" *ngIf="h.photos && h.photos.length > 0">
+              <img [src]="h.photos[0].url" [alt]="h.name" />
+            </div>
+            <div
+              class="hi-thumb placeholder"
+              *ngIf="!h.photos || h.photos.length === 0"
+            >
+              <i class="pi pi-scissors"></i>
+            </div>
+            <div class="hi-info">
+              <span class="hi-name">{{ h.name }}</span>
+              <span class="hi-type">{{ typeLabel(h.type) }}</span>
+            </div>
+            <div class="hi-actions">
+              <button
+                class="hi-btn"
+                (click)="openUploadPhoto(h)"
+                pTooltip="Agregar foto"
+              >
+                <i class="pi pi-camera"></i>
+              </button>
+              <span class="preferred-dot" *ngIf="h.isPreferred">★</span>
+            </div>
+          </div>
+          <div
+            class="haircuts-empty"
+            *ngIf="!client.haircuts || client.haircuts.length === 0"
+          >
+            <p>Sin cortes guardados</p>
+            <button class="btn-outline sm" (click)="openAddHaircut()">
+              Guardar primer corte
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Panel derecho -->
+    <div class="detail-main">
+      <!-- Tabs -->
+      <div class="detail-tabs">
+        <button
+          class="detail-tab"
+          [class.active]="activeSection === 'history'"
+          (click)="activeSection = 'history'"
+        >
+          <i class="pi pi-images"></i> Historial de cortes
+        </button>
+        <button
+          class="detail-tab"
+          [class.active]="activeSection === 'sales'"
+          (click)="activeSection = 'sales'"
+        >
+          <i class="pi pi-shopping-cart"></i> Historial de ventas
+        </button>
+      </div>
+
+      <!-- Style History -->
+      <div class="section-content" *ngIf="activeSection === 'history'">
+        <div class="section-header">
+          <div>
+            <h2>Historial de cortes</h2>
+            <p>Un timeline de los cortes y servicios pasados.</p>
+          </div>
+          <button class="btn-primary sm" (click)="openAddHaircut()">
+            <i class="pi pi-plus"></i> Nuevo estilo
+          </button>
+        </div>
+
+        <div class="photo-gallery" *ngIf="allPhotos.length > 0">
+          <div
+            class="photo-card"
+            *ngFor="let item of visibleGallery"
+            (click)="openPhotoViewer(item.photo, item.haircut)"
+          >
+            <div class="photo-img">
+              <img
+                [src]="item.photo.url"
+                [alt]="item.haircut.name"
+                loading="lazy"
+              />
+              <div class="photo-overlay"><i class="pi pi-eye"></i></div>
+            </div>
+            <div class="photo-meta">
+              <div class="photo-date">
+                <i class="pi pi-calendar"></i>
+                {{ formatDate(item.photo.takenAt) }}
+              </div>
+              <span class="photo-haircut-name">{{ item.haircut.name }}</span>
+              <div class="photo-barber" *ngIf="item.photo.uploadedBy">
+                <div class="barber-mini-avatar">
+                  {{ item.photo.uploadedBy.charAt(0) }}
+                </div>
+                {{ item.photo.uploadedBy }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="load-more-wrap" *ngIf="hasMorePhotos">
+          <button class="load-more-btn" (click)="loadMore()">
+            <span>Ver más</span><i class="pi pi-chevron-down"></i>
+          </button>
+        </div>
+
+        <div class="empty-section" *ngIf="allPhotos.length === 0">
+          <i class="pi pi-images"></i>
+          <h3>Sin fotos en el historial</h3>
+          <p>Agrega fotos a los cortes guardados del cliente</p>
+          <button class="btn-primary sm" (click)="openAddHaircut()">
+            Guardar primer corte
+          </button>
+        </div>
+      </div>
+
+      <!-- Historial de ventas -->
+      <div class="section-content" *ngIf="activeSection === 'sales'">
+        <div class="section-header">
+          <div>
+            <h2>Historial de ventas</h2>
+            <p>{{ sales.length }} transacciones registradas</p>
+          </div>
+        </div>
+        <div class="sales-table" *ngIf="sales.length > 0">
+          <div class="st-header">
+            <span>Fecha</span><span>Items</span><span>Método</span>
+            <span>Total</span><span>Estado</span>
+          </div>
+          <div class="st-row" *ngFor="let sale of sales">
+            <span class="st-date">{{ formatDate(sale.createdAt) }}</span>
+            <span class="st-items">{{ sale.items?.length ?? 0 }} item(s)</span>
+            <span class="st-method">
+              <i
+                class="pi"
+                [class.pi-money-bill]="sale.paymentMethod === 'cash'"
+                [class.pi-credit-card]="sale.paymentMethod === 'card'"
+                [class.pi-send]="sale.paymentMethod === 'transfer'"
+              >
+              </i>
+              {{
+                sale.paymentMethod === "cash"
+                  ? "Efectivo"
+                  : sale.paymentMethod === "card"
+                    ? "Tarjeta"
+                    : "Transferencia"
+              }}
+            </span>
+            <span class="st-total">{{ formatCurrency(sale.total) }}</span>
+            <span>
+              <p-tag
+                [value]="saleStatusLabel(sale.status)"
+                [severity]="saleStatusSeverity(sale.status)"
+              ></p-tag>
+            </span>
+          </div>
+        </div>
+        <div class="empty-section" *ngIf="sales.length === 0">
+          <i class="pi pi-shopping-cart"></i>
+          <h3>Sin ventas registradas</h3>
+          <p>Este cliente aún no tiene historial de compras</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Sin cliente -->
+<div class="not-found" *ngIf="!loading && !client">
+  <i class="pi pi-user-minus"></i>
+  <h3>Cliente no encontrado</h3>
+  <button class="btn-primary" (click)="goBack()">Volver a clientes</button>
+</div>
+
+<!-- ════════════════════════════
+     DIALOG: Editar cliente
+════════════════════════════ -->
+<p-dialog
+  [(visible)]="showEditClient"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px' }"
+  header="Editar perfil"
+  styleClass="dark-dialog"
+>
+  <form [formGroup]="editForm" class="dialog-form">
+    <div class="form-row">
+      <div class="field">
+        <label>Nombre completo *</label>
+        <input pInputText formControlName="fullName" class="w-full" />
+      </div>
+      <div class="field">
+        <label>Teléfono *</label>
+        <input pInputText formControlName="phone" class="w-full" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Email</label>
+        <input pInputText formControlName="email" class="w-full" />
+      </div>
+      <div class="field">
+        <label>Fecha de nacimiento</label>
+        <input
+          pInputText
+          type="date"
+          formControlName="birthDate"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas personales</label>
+      <textarea
+        pInputTextarea
+        formControlName="notes"
+        rows="4"
+        placeholder="Preferencias, alergias, notas del barbero..."
+        class="w-full"
+      ></textarea>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showEditClient = false">
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="saveClient()"
+      [disabled]="editForm.invalid || saving"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
+      {{ saving ? "Guardando..." : "Guardar cambios" }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════════════════════════
+     DIALOG: Nuevo corte
+════════════════════════════ -->
+<p-dialog
+  [(visible)]="showAddHaircut"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '440px' }"
+  header="Guardar estilo"
+  styleClass="dark-dialog"
+>
+  <form [formGroup]="haircutForm" class="dialog-form">
+    <div class="form-row">
+      <div class="field">
+        <label>Nombre del estilo *</label>
+        <input
+          pInputText
+          formControlName="name"
+          placeholder="Fade bajo con raya"
+          class="w-full"
+        />
+      </div>
+      <div class="field">
+        <label>Tipo *</label>
+        <p-dropdown
+          formControlName="type"
+          [options]="serviceTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+        >
+        </p-dropdown>
+      </div>
+    </div>
+    <div class="field">
+      <label>Descripción / instrucciones para el barbero</label>
+      <textarea
+        pInputTextarea
+        formControlName="description"
+        rows="3"
+        placeholder="Fade 2 en los lados, tijera arriba, degradado alto..."
+        class="w-full"
+      ></textarea>
+    </div>
+    <div class="field-check">
+      <input type="checkbox" id="preferred" formControlName="isPreferred" />
+      <label for="preferred">Marcar como estilo favorito</label>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showAddHaircut = false">
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="saveHaircut()"
+      [disabled]="haircutForm.invalid || saving"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
+      {{ saving ? "Guardando..." : "Guardar estilo" }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════════════════════════
+     DIALOG: Subir foto — ACTUALIZADO
+     Incluye: cámara, galería múltiple, cola de fotos, progress
+════════════════════════════ -->
+<p-dialog
+  [(visible)]="showUploadPhoto"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '500px' }"
+  [header]="'Fotos del corte — ' + (selectedHaircut?.name ?? '')"
+  styleClass="dark-dialog"
+  *ngIf="selectedHaircut"
+>
+  <div class="upload-area">
+    <!-- Botones de captura: cámara + galería -->
+    <div class="upload-sources" *ngIf="pendingPhotos.length < 5">
+      <label class="source-btn" for="camera-input-detail">
+        <i class="pi pi-camera"></i>
+        <span>Tomar foto</span>
+        <small>Abre la cámara</small>
+        <input
+          id="camera-input-detail"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          (change)="onMultipleFilesSelected($event)"
+          style="display: none"
+        />
+      </label>
+
+      <label class="source-btn" for="gallery-input-detail">
+        <i class="pi pi-images"></i>
+        <span>Desde galería</span>
+        <small>Selección múltiple</small>
+        <input
+          id="gallery-input-detail"
+          type="file"
+          accept="image/*"
+          multiple
+          (change)="onMultipleFilesSelected($event)"
+          style="display: none"
+        />
+      </label>
+    </div>
+
+    <!-- Después de .upload-sources, agrega esto -->
+    <div class="qr-option">
+      <div class="qr-divider">
+        <span></span>
+        <small>o escanea desde tu celular</small>
+        <span></span>
+      </div>
+      <button class="qr-trigger-btn" (click)="showQrCode = true">
+        <i class="pi pi-qrcode"></i>
+        <span>Generar QR para celular</span>
+        <small>Abre la cámara en tu teléfono</small>
+      </button>
+    </div>
+
+    <!-- Sub-dialog: QR Code -->
+    <p-dialog
+      [(visible)]="showQrCode"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [style]="{ width: '360px' }"
+      header="Escanea con tu celular"
+      styleClass="dark-dialog"
+    >
+      <app-qr-dialog
+        *ngIf="showQrCode && selectedHaircut"
+        type="photo"
+        [clientHaircutId]="selectedHaircut!.id"
+      >
+      </app-qr-dialog>
+
+      <ng-template pTemplate="footer">
+        <button
+          class="btn-primary"
+          (click)="showQrCode = false; showUploadPhoto = false; loadData()"
+        >
+          <i class="pi pi-refresh"></i>
+          Cerrar y recargar fotos
+        </button>
+      </ng-template>
+    </p-dialog>
+
+    <!-- Contador de fotos -->
+    <div class="upload-counter" *ngIf="pendingPhotos.length > 0">
+      <span>{{ pendingPhotos.length }} / 5 fotos listas</span>
+      <div class="counter-dots">
+        <span
+          *ngFor="let i of [0, 1, 2, 3, 4]"
+          class="cdot"
+          [class.filled]="i < pendingPhotos.length"
+        >
+        </span>
+      </div>
+    </div>
+
+    <!-- Grid de fotos pendientes -->
+    <div class="pending-grid" *ngIf="pendingPhotos.length > 0">
+      <div class="pending-item" *ngFor="let p of pendingPhotos; let i = index">
+        <div class="pending-preview">
+          <img [src]="p.preview" [alt]="'Foto ' + (i + 1)" />
+          <button
+            class="remove-pending"
+            (click)="removePendingPhoto(i)"
+            [disabled]="uploadingAll"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <input
+          pInputText
+          [(ngModel)]="p.notes"
+          placeholder="Nota opcional..."
+          class="pending-note"
+          [disabled]="uploadingAll"
+        />
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="upload-empty" *ngIf="pendingPhotos.length === 0">
+      <i class="pi pi-camera"></i>
+      <p>Usa los botones de arriba para agregar fotos</p>
+      <small>Máximo 5 fotos · JPG, PNG, WebP · Máx 10MB c/u</small>
+    </div>
+
+    <!-- Progress bar al subir -->
+    <div class="upload-progress-wrap" *ngIf="uploadingAll">
+      <div class="upload-progress-bar">
+        <div
+          class="upload-progress-fill"
+          [style.width.%]="uploadProgress"
+        ></div>
+      </div>
+      <span>Subiendo {{ uploadProgress }}%...</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      class="btn-outline"
+      (click)="showUploadPhoto = false; pendingPhotos = []"
+      [disabled]="uploadingAll"
+    >
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="uploadAllPhotos()"
+      [disabled]="pendingPhotos.length === 0 || uploadingAll"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="uploadingAll"></i>
+      <i class="pi pi-upload" *ngIf="!uploadingAll"></i>
+      {{
+        uploadingAll
+          ? "Subiendo..."
+          : "Subir " +
+            pendingPhotos.length +
+            " foto" +
+            (pendingPhotos.length !== 1 ? "s" : "")
+      }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════════════════════════
+     DIALOG: Visor de foto
+════════════════════════════ -->
+<p-dialog
+  [(visible)]="showPhotoViewer"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '600px' }"
+  styleClass="dark-dialog photo-viewer-dialog"
+  *ngIf="viewerPhoto && viewerHaircut"
+>
+  <div class="photo-viewer">
+    <img [src]="viewerPhoto!.url" [alt]="viewerHaircut!.name" />
+    <div class="viewer-meta">
+      <div class="vm-left">
+        <span class="vm-haircut">{{ viewerHaircut!.name }}</span>
+        <span class="vm-date">
+          <i class="pi pi-calendar"></i>
+          {{ formatDate(viewerPhoto!.takenAt) }}
+        </span>
+        <span class="vm-barber" *ngIf="viewerPhoto!.uploadedBy">
+          <i class="pi pi-user"></i>
+          {{ viewerPhoto!.uploadedBy }}
+        </span>
+      </div>
+      <span class="vm-type">{{ typeLabel(viewerHaircut!.type) }}</span>
+    </div>
+    <p class="viewer-notes" *ngIf="viewerPhoto!.notes">
+      {{ viewerPhoto!.notes }}
+    </p>
+  </div>
+</p-dialog>

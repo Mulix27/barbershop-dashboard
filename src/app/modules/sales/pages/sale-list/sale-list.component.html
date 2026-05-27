@@ -1,1 +1,316 @@
-<p>sale-list works!</p>
+<p-toast position="top-right"></p-toast>
+
+<div class="sales-page">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1>Sales Analytics</h1>
+      <p class="header-sub">Monitorea el rendimiento y métricas clave de ventas</p>
+    </div>
+    <div class="header-actions">
+
+      <!-- Selector de período -->
+      <div class="period-selector">
+        <button
+          *ngFor="let opt of periodOptions"
+          class="period-btn"
+          [class.active]="selectedPeriod === opt.value"
+          (click)="selectedPeriod = opt.value; onPeriodChange()">
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <!-- Nueva venta -->
+      <button class="btn-primary" (click)="navigateToNew()">
+        <i class="pi pi-plus"></i>
+        Nueva venta
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Skeletons ──────────────────────────────────────── -->
+  <ng-container *ngIf="loading">
+    <div class="metrics-grid">
+      <p-skeleton *ngFor="let i of [1,2,3,4]" height="100px" borderRadius="14px"></p-skeleton>
+    </div>
+    <div class="charts-row">
+      <p-skeleton height="300px" borderRadius="14px"></p-skeleton>
+      <p-skeleton height="300px" borderRadius="14px"></p-skeleton>
+    </div>
+  </ng-container>
+
+  <!-- ── Contenido ──────────────────────────────────────── -->
+  <ng-container *ngIf="!loading && report">
+    <!-- Métricas principales -->
+    <div class="metrics-grid">
+
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon revenue"><i class="pi pi-dollar"></i></div>
+          <div class="metric-info">
+            <span class="metric-label">Total facturado</span>
+            <span class="metric-value">{{ formatCurrency(totalRevenue) }}</span>
+            <span class="metric-period">{{ periodLabel() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon ticket"><i class="pi pi-tag"></i></div>
+          <div class="metric-info">
+            <span class="metric-label">Ticket promedio</span>
+            <span class="metric-value">{{ formatCurrency(avgTicket) }}</span>
+            <span class="metric-period">Por venta</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon sales"><i class="pi pi-shopping-cart"></i></div>
+          <div class="metric-info">
+            <span class="metric-label">Ventas totales</span>
+            <span class="metric-value">{{ totalSales }}</span>
+            <span class="metric-period">Transacciones</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon clients"><i class="pi pi-users"></i></div>
+          <div class="metric-info">
+            <span class="metric-label">Clientes nuevos</span>
+            <span class="metric-value">{{ clientMetrics?.newClients ?? 0 }}</span>
+            <span class="metric-period">
+              {{ clientMetrics?.recurringClients ?? 0 }} recurrentes
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Gráficas principales -->
+    <div class="charts-row">
+
+      <!-- Revenue by Barber -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <h2>Ingresos por barbero</h2>
+          <span class="period-tag">{{ periodLabel() }}</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas baseChart
+            [data]="barberChartData"
+            [options]="barberChartOptions"
+            type="bar">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Revenue Trend -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <div>
+            <h2>Tendencia de ingresos</h2>
+            <p class="chart-total">{{ formatCurrency(totalRevenue) }}</p>
+          </div>
+          <span class="period-tag">{{ periodLabel() }}</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas baseChart
+            [data]="trendChartData"
+            [options]="trendChartOptions"
+            type="line">
+          </canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tablas y datos secundarios -->
+    <div class="data-grid">
+
+      <!-- Top servicios -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Top servicios</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Servicio</th>
+              <th>Cant.</th>
+              <th>Ingresos</th>
+              <th>% Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let svc of topServices; let i = index">
+              <td class="rank">{{ i + 1 }}</td>
+              <td class="svc-name">{{ svc.serviceName }}</td>
+              <td>{{ svc.totalQuantity }}</td>
+              <td class="amount">{{ formatCurrency(svc.totalRevenue) }}</td>
+              <td>
+                <div class="pct-bar">
+                  <div
+                    class="pct-fill"
+                    [style.width.%]="totalRevenue > 0 ? (svc.totalRevenue / totalRevenue * 100) : 0">
+                  </div>
+                  <span>{{ totalRevenue > 0 ? (svc.totalRevenue / totalRevenue * 100 | number:'1.1-1') : 0 }}%</span>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="topServices.length === 0">
+              <td colspan="5" class="empty-row">Sin datos en este período</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rendimiento por barbero -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Rendimiento por barbero</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Barbero</th>
+              <th>Ventas</th>
+              <th>Servicios</th>
+              <th>Ingresos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of barberPerformance">
+              <td>
+                <div class="barber-cell">
+                  <div class="barber-avatar">{{ b.barberName.charAt(0) }}</div>
+                  {{ b.barberName }}
+                </div>
+              </td>
+              <td>{{ b.totalSales }}</td>
+              <td>{{ b.totalServices }}</td>
+              <td class="amount">{{ formatCurrency(b.revenue) }}</td>
+            </tr>
+            <tr *ngIf="barberPerformance.length === 0">
+              <td colspan="4" class="empty-row">Sin datos en este período</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sales Breakdown (dona) + Payment methods -->
+      <div class="card breakdown-card">
+        <div class="card-header">
+          <h2>Métodos de pago</h2>
+        </div>
+
+        <div class="breakdown-content">
+          <!-- Dona -->
+          <div class="donut-wrap">
+            <canvas baseChart
+              [data]="donutData"
+              [options]="donutOptions"
+              type="doughnut">
+            </canvas>
+            <div class="donut-center">
+              <span class="donut-total-label">Total</span>
+              <span class="donut-total">{{ formatCurrency(totalRevenue) }}</span>
+            </div>
+          </div>
+
+          <!-- Lista de métodos -->
+          <div class="payment-list">
+            <div class="payment-item" *ngFor="let p of paymentMethods">
+              <div class="payment-left">
+                <i class="pi"
+                  [class.pi-money-bill]="p.paymentMethod === 'cash'"
+                  [class.pi-credit-card]="p.paymentMethod === 'card'"
+                  [class.pi-send]="p.paymentMethod === 'transfer'">
+                </i>
+                <span>{{ paymentLabel(p.paymentMethod) }}</span>
+              </div>
+              <div class="payment-right">
+                <span class="payment-amount">{{ formatCurrency(p.revenue) }}</span>
+                <span class="payment-count">{{ p.totalSales }} ventas</span>
+              </div>
+            </div>
+            <div class="empty-row" *ngIf="paymentMethods.length === 0">
+              Sin datos aún
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Citas: métricas + horas pico -->
+      <div class="card">
+        <div class="card-header"><h2>Resumen de citas</h2></div>
+
+        <div class="appt-metrics" *ngIf="appointmentMetrics">
+          <div class="appt-row">
+            <span>Total citas</span>
+            <strong>{{ appointmentMetrics.totalAppointments }}</strong>
+          </div>
+          <div class="appt-row success">
+            <span>Completadas</span>
+            <strong>{{ appointmentMetrics.completed }}</strong>
+          </div>
+          <div class="appt-row warning">
+            <span>Canceladas</span>
+            <strong>{{ appointmentMetrics.cancelled }}</strong>
+          </div>
+          <div class="appt-row danger">
+            <span>No asistió</span>
+            <strong>{{ appointmentMetrics.noShow }}</strong>
+          </div>
+          <div class="appt-row muted">
+            <span>Tasa de ausentismo</span>
+            <strong>{{ appointmentMetrics.noShowRate }}%</strong>
+          </div>
+        </div>
+
+        <p-divider styleClass="dark-divider"></p-divider>
+
+        <h3 class="section-sub-title">Horas pico</h3>
+        <div class="peak-list">
+          <div class="peak-item" *ngFor="let h of peakHours; let i = index">
+            <span class="peak-rank">#{{ i + 1 }}</span>
+            <span class="peak-label">{{ h.label }}</span>
+            <div class="peak-bar">
+              <div class="peak-fill"
+                [style.width.%]="peakHours[0] ? (h.totalAppointments / peakHours[0].totalAppointments * 100) : 0">
+              </div>
+            </div>
+            <span class="peak-count">{{ h.totalAppointments }}</span>
+          </div>
+          <div class="empty-row" *ngIf="peakHours.length === 0">Sin datos</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Resumen (bottom strip del mockup) -->
+    <div class="summary-strip" *ngIf="salesByDayOfWeek.length > 0">
+      <div class="strip-item" *ngFor="let d of salesByDayOfWeek">
+        <div class="strip-icon"><i class="pi pi-calendar"></i></div>
+        <div>
+          <span class="strip-label">{{ d.dayName }}</span>
+          <span class="strip-val">{{ formatCurrency(d.revenue) }}</span>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ── Tab: Historial de ventas ────────────────────────── -->
+  <div class="sales-history" *ngIf="activeTab === 1">
+    <!-- (se renderiza al cambiar tab, mantenemos en misma página) -->
+  </div>
+
+</div>

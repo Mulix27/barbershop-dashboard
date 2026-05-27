@@ -1,0 +1,311 @@
+$gold:       #C9A84C;
+$gold-light: #E8C96B;
+$gold-dim:   rgba(201, 168, 76, 0.15);
+$dark:       #0D0D14;
+$surface:    #16161F;
+$border:     rgba(201, 168, 76, 0.15);
+$text:       #E8E6DE;
+$text-muted: rgba(232, 230, 222, 0.5);
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: $dark;
+}
+
+.upload-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  max-width: 480px;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+// ── Header ────────────────────────────────────────────────────
+.upload-header {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: 1rem 0 .5rem;
+
+  h1 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 2px;
+  }
+
+  p {
+    font-size: .75rem;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+.brand-logo {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, $gold, $gold-light);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+// ── Capture buttons ───────────────────────────────────────────
+.capture-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+
+.capture-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .375rem;
+  padding: 1.25rem .75rem;
+  background: $surface;
+  border: 2px dashed $border;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  text-decoration: none;
+
+  &:hover, &:active {
+    border-color: rgba(201,168,76,.5);
+    background: $gold-dim;
+  }
+}
+
+.capture-icon { font-size: 1.75rem; }
+
+.capture-label {
+  font-size: .875rem;
+  font-weight: 700;
+  color: $text;
+}
+
+.capture-hint {
+  font-size: .7rem;
+  color: $text-muted;
+}
+
+// ── Photo count ───────────────────────────────────────────────
+.photo-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .8rem;
+  color: $text-muted;
+}
+
+.count-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  transition: background .2s;
+
+  &.filled { background: $gold; }
+}
+
+// ── Photos grid ───────────────────────────────────────────────
+.photos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+
+.photo-item {
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+}
+
+.photo-preview {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: $surface;
+
+  img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+}
+
+.remove-photo {
+  position: absolute;
+  top: .375rem; right: .375rem;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.75);
+  border: none; border-radius: 50%;
+  color: #fff; font-size: 12px;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: rgba(239,68,68,.85); }
+  &:disabled { opacity: .4; cursor: not-allowed; }
+}
+
+.photo-note {
+  padding: .375rem .5rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  color: $text;
+  font-size: .75rem;
+  width: 100%;
+  box-sizing: border-box;
+
+  &::placeholder { color: $text-muted; }
+  &:focus { outline: none; border-color: rgba(201,168,76,.4); }
+  &:disabled { opacity: .5; }
+}
+
+// ── Empty state ───────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: .75rem;
+  text-align: center;
+  background: $surface;
+  border: 1px dashed $border;
+  border-radius: 14px;
+
+  .empty-icon { font-size: 2.5rem; }
+  p { font-size: .875rem; color: $text-muted; margin: 0; line-height: 1.5; }
+}
+
+// ── Progress ──────────────────────────────────────────────────
+.progress-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+
+  p { font-size: .8rem; color: $text-muted; margin: 0; }
+}
+
+.progress-bar {
+  width: 100%; height: 6px;
+  background: rgba(255,255,255,.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $gold, $gold-light);
+  border-radius: 99px;
+}
+
+@keyframes slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.uploading-anim {
+  width: 60%;
+  animation: slide 1.2s ease-in-out infinite;
+}
+
+// ── Upload button ─────────────────────────────────────────────
+.upload-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, $gold, $gold-light);
+  border: none;
+  border-radius: 14px;
+  color: $dark;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+  margin-top: auto;
+  letter-spacing: .01em;
+
+  &:hover:not(.disabled) { opacity: .92; transform: translateY(-1px); }
+  &.disabled { opacity: .4; cursor: not-allowed; transform: none; }
+}
+
+// ── State cards ───────────────────────────────────────────────
+.state-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  padding: 2rem;
+
+  h2 { font-size: 1.25rem; font-weight: 700; color: $text; margin: 0; }
+  p  { font-size: .9rem; color: $text-muted; margin: 0; line-height: 1.6; max-width: 280px; }
+}
+
+.state-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700;
+}
+
+.success-icon {
+  background: rgba(34,197,94,.15);
+  color: #22c55e;
+  border: 2px solid rgba(34,197,94,.3);
+}
+
+.error-icon {
+  background: rgba(239,68,68,.12);
+  color: #ef4444;
+  border: 2px solid rgba(239,68,68,.25);
+}
+
+.success-hint {
+  font-size: .8rem !important;
+  background: $gold-dim;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  color: $gold !important;
+}
+
+.retry-btn {
+  padding: .625rem 1.5rem;
+  background: none;
+  border: 1px solid rgba(239,68,68,.4);
+  border-radius: 10px;
+  color: #ef4444;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: rgba(239,68,68,.1); }
+}
+
+// ── Spinner ───────────────────────────────────────────────────
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(201,168,76,.2);
+  border-top-color: $gold;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}

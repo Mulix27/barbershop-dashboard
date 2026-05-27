@@ -1,0 +1,239 @@
+<form [formGroup]="form" class="service-form">
+
+  <!-- ── Nombre del servicio ─────────────────────────── -->
+  <div class="form-section">
+    <div class="field">
+      <label>Nombre de la categoría *</label>
+      <div class="name-row">
+        <p-dropdown
+          formControlName="icon"
+          [options]="iconOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="icon-dropdown">
+          <ng-template pTemplate="selectedItem" let-item>
+            <i class="pi {{ item?.value }}"></i>
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            <i class="pi {{ item.value }}"></i>
+          </ng-template>
+        </p-dropdown>
+        <input
+          pInputText
+          formControlName="name"
+          placeholder="Ej: Cabello, Barba, Cejas..."
+          class="flex-1"/>
+      </div>
+    </div>
+
+    <!-- Sugerencias rápidas -->
+    <div class="quick-options">
+      <button
+        type="button"
+        class="quick-btn"
+        *ngFor="let opt of categoryOptions"
+        (click)="form.patchValue({ name: opt.value })">
+        {{ opt.icon }} {{ opt.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Toggle de modo de cobro ─────────────────────── -->
+  <div class="form-section">
+    <label class="section-label">Modo de cobro</label>
+
+    <div class="pricing-toggle">
+      <button
+        type="button"
+        class="toggle-option"
+        [class.active]="isFixed"
+        (click)="form.patchValue({ pricingMode: 'fixed' })">
+        <div class="toggle-icon">💰</div>
+        <div class="toggle-text">
+          <span class="toggle-title">Cobro general</span>
+          <span class="toggle-desc">Un precio fijo por categoría</span>
+        </div>
+        <div class="toggle-check" *ngIf="isFixed">✓</div>
+      </button>
+
+      <button
+        type="button"
+        class="toggle-option"
+        [class.active]="isVariants"
+        (click)="form.patchValue({ pricingMode: 'variants' })">
+        <div class="toggle-icon">🎯</div>
+        <div class="toggle-text">
+          <span class="toggle-title">Cobro por variantes</span>
+          <span class="toggle-desc">Precios por estilo o tipo</span>
+        </div>
+        <div class="toggle-check" *ngIf="isVariants">✓</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       MODO: Cobro general
+  ════════════════════════════════════════════════ -->
+  <div class="form-section" *ngIf="isFixed">
+    <div class="form-row">
+      <div class="field">
+        <label>Precio *</label>
+        <p-inputNumber
+          formControlName="basePrice"
+          mode="currency"
+          currency="MXN"
+          locale="es-MX"
+          placeholder="$150.00"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="field">
+        <label>Duración (min) *</label>
+        <p-inputNumber
+          formControlName="baseDuration"
+          [min]="5"
+          [step]="5"
+          [showButtons]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="price-preview" *ngIf="form.get('basePrice')?.value">
+      <div class="preview-badge">
+        <i class="pi {{ form.get('icon')?.value }}"></i>
+        <span>{{ form.get('name')?.value || 'Servicio' }}</span>
+      </div>
+      <div class="preview-price">
+        <span>{{ formatCurrency(form.get('basePrice')?.value) }}</span>
+        <small>{{ form.get('baseDuration')?.value }} min</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       MODO: Cobro por variantes
+  ════════════════════════════════════════════════ -->
+  <div class="form-section variants-section" *ngIf="isVariants">
+
+    <div class="variants-header">
+      <label class="section-label">Variantes / Estilos</label>
+      <button type="button" class="add-variant-btn" (click)="addVariant()">
+        <i class="pi pi-plus"></i>
+        Agregar variante
+      </button>
+    </div>
+
+    <!-- Lista de variantes -->
+    <div class="variants-list" formArrayName="variants">
+      <div
+        class="variant-card"
+        *ngFor="let variant of variants.controls; let i = index"
+        [formGroupName]="i">
+
+        <!-- Header de la variante -->
+        <div class="variant-header">
+          <span class="variant-num">{{ i + 1 }}</span>
+          <input
+            pInputText
+            formControlName="name"
+            placeholder="Ej: Low Fade, Taper Fade..."
+            class="variant-name-input"/>
+          <div class="variant-controls">
+            <button type="button" class="vc-btn" (click)="moveVariant(i, 'up')" [disabled]="i === 0" pTooltip="Subir">
+              <i class="pi pi-chevron-up"></i>
+            </button>
+            <button type="button" class="vc-btn" (click)="moveVariant(i, 'down')" [disabled]="i === variants.length - 1" pTooltip="Bajar">
+              <i class="pi pi-chevron-down"></i>
+            </button>
+            <button type="button" class="vc-btn danger" (click)="removeVariant(i)" [disabled]="variants.length === 1" pTooltip="Eliminar">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Precio y duración -->
+        <div class="variant-body">
+          <div class="field sm">
+            <label>Precio *</label>
+            <p-inputNumber
+              formControlName="price"
+              mode="currency"
+              currency="MXN"
+              locale="es-MX"
+              placeholder="$120.00"
+              styleClass="w-full"
+              inputStyleClass="w-full">
+            </p-inputNumber>
+          </div>
+          <div class="field sm">
+            <label>Duración (min) *</label>
+            <p-inputNumber
+              formControlName="durationMin"
+              [min]="5"
+              [step]="5"
+              [showButtons]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full">
+            </p-inputNumber>
+          </div>
+          <div class="field sm description-field">
+            <label>Descripción</label>
+            <input
+              pInputText
+              formControlName="description"
+              placeholder="Detalles opcionales..."
+              class="w-full"/>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Preview del menú de variantes -->
+    <div class="variants-preview" *ngIf="variants.length > 0">
+      <span class="preview-title">
+        <i class="pi pi-eye"></i> Vista previa del menú
+      </span>
+      <div class="menu-preview">
+        <div class="menu-category">
+          <i class="pi {{ form.get('icon')?.value }}"></i>
+          <strong>{{ form.get('name')?.value || 'Categoría' }}</strong>
+        </div>
+        <div
+          class="menu-item"
+          *ngFor="let v of variants.controls">
+          <span class="menu-item-name">{{ v.get('name')?.value || 'Variante' }}</span>
+          <div class="menu-item-right">
+            <span class="menu-item-duration" *ngIf="v.get('durationMin')?.value">
+              {{ v.get('durationMin')?.value }} min
+            </span>
+            <span class="menu-item-price">
+              {{ formatCurrency(v.get('price')?.value) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Botones ──────────────────────────────────────── -->
+  <div class="form-actions">
+    <button type="button" class="btn-outline" (click)="cancelled.emit()">
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="save()"
+      [disabled]="form.invalid || saving">
+      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
+      {{ saving ? 'Guardando...' : (editData?.id ? 'Actualizar servicio' : 'Crear servicio') }}
+    </button>
+  </div>
+
+</form>

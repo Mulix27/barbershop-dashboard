@@ -1,1 +1,602 @@
-<p>agenda works!</p>
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="agenda-layout">
+  <!-- ══════════════════════════════════════════════════════
+       COLUMNA PRINCIPAL
+  ══════════════════════════════════════════════════════════ -->
+  <div class="agenda-main">
+    <!-- Header -->
+    <div class="agenda-header">
+      <div class="header-left">
+        <h1>Agenda</h1>
+        <p class="header-sub">Gestiona citas y horarios de la barbería</p>
+      </div>
+
+      <div class="header-controls">
+        <!-- Fila 1: navegación de fecha + selector vista -->
+        <div class="controls-row-nav">
+          <div class="date-nav">
+            <button class="nav-btn" (click)="prevDay()">
+              <i class="pi pi-chevron-left"></i>
+            </button>
+            <button
+              class="today-btn"
+              (click)="goToday()"
+              [class.active]="isToday"
+            >
+              Hoy
+            </button>
+            <button class="nav-btn" (click)="nextDay()">
+              <i class="pi pi-chevron-right"></i>
+            </button>
+          </div>
+
+          <p-selectButton
+            [options]="viewOptions"
+            [(ngModel)]="viewMode"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="view-selector"
+          >
+          </p-selectButton>
+        </div>
+
+        <!-- Fila 2: botones de acción -->
+        <div class="controls-row-actions">
+          <button class="btn-outline" (click)="showSchedule = true">
+            <i class="pi pi-sliders-h"></i>
+            Horarios
+          </button>
+          <button class="btn-primary" (click)="openNewAppt()">
+            <i class="pi pi-plus"></i>
+            Nueva cita
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fecha seleccionada -->
+    <div class="date-display" [class.closed]="!isWorkingDay()">
+      <span class="date-label">{{ selectedDateLabel | titlecase }}</span>
+      <span class="closed-badge" *ngIf="!isWorkingDay()">
+        <i class="pi pi-ban"></i> Día no laborable
+      </span>
+    </div>
+
+    <!-- Grid del calendario -->
+    <div class="calendar-container">
+      <!-- Skeleton -->
+      <ng-container *ngIf="loading">
+        <div class="slots-skeleton">
+          <p-skeleton
+            *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
+            height="56px"
+            borderRadius="10px"
+            styleClass="mb-1"
+          >
+          </p-skeleton>
+        </div>
+      </ng-container>
+
+      <!-- Vista de slots -->
+      <div class="slots-grid" *ngIf="!loading">
+        <div
+          class="slot-row"
+          *ngFor="let slot of timeSlots"
+          [class.current-time]="isCurrentTime(slot.time)"
+          [class.occupied]="isSlotOccupied(slot.time)"
+          [class.past-slot]="isPastSlot(slot.time)"
+        >
+          <!-- Hora -->
+          <div class="slot-time">
+            <span [class.current-label]="isCurrentTime(slot.time)">
+              {{ slot.label }}
+            </span>
+            <div class="current-dot" *ngIf="isCurrentTime(slot.time)"></div>
+          </div>
+
+          <!-- Área de cita o slot vacío -->
+          <div class="slot-content">
+            <!-- Cita existente -->
+            <ng-container *ngIf="getApptAtSlot(slot.time) as appt">
+              <div
+                class="appointment-block"
+                [class]="'status-' + appt.status"
+                (click)="openApptMenu(appt)"
+              >
+                <div class="appt-block-header">
+                  <div class="appt-client-info">
+                    <div class="appt-avatar">
+                      {{ appt.clientName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <span class="appt-client-name">{{
+                        appt.clientName
+                      }}</span>
+                      <span class="appt-service">
+                        {{
+                          appt.haircutName ??
+                            appt.serviceNotes ??
+                            "Servicio no especificado"
+                        }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="appt-block-right">
+                    <span class="appt-time-range">
+                      {{ formatTime(appt.startTime) }} –
+                      {{ formatTime(appt.endTime) }}
+                    </span>
+                    <p-tag
+                      [value]="statusLabel(appt.status)"
+                      [severity]="statusSeverity(appt.status)"
+                      styleClass="appt-tag"
+                    >
+                    </p-tag>
+                  </div>
+                </div>
+
+                <div
+                  class="appt-block-footer"
+                  *ngIf="appt.clientPhone || appt.assignedToName"
+                >
+                  <span *ngIf="appt.clientPhone">
+                    <i class="pi pi-phone"></i> {{ appt.clientPhone }}
+                  </span>
+                  <span *ngIf="appt.assignedToName">
+                    <i class="pi pi-user"></i> {{ appt.assignedToName }}
+                  </span>
+                  <span class="source-badge source-{{ appt.source }}">
+                    {{
+                      appt.source === "web"
+                        ? "Web"
+                        : appt.source === "whatsapp"
+                          ? "WhatsApp"
+                          : "Dashboard"
+                    }}
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Slot vacío — clic para crear cita -->
+            <div
+              class="empty-slot"
+              *ngIf="
+                !isSlotOccupied(slot.time) &&
+                !isPastSlot(slot.time) &&
+                isWorkingDay()
+              "
+              (click)="openNewAppt(slot.time)"
+            >
+              <i class="pi pi-plus"></i>
+              <span>Agendar cita</span>
+            </div>
+
+            <div
+              class="blocked-slot"
+              *ngIf="
+                !isSlotOccupied(slot.time) &&
+                (!isWorkingDay() || isPastSlot(slot.time))
+              "
+            >
+              <i class="pi pi-lock"></i>
+              <span>{{
+                !isWorkingDay() ? "Día no laborable" : "Horario vencido"
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Día no laborable -->
+      <div class="day-closed" *ngIf="!loading && !isWorkingDay()">
+        <i class="pi pi-calendar-times"></i>
+        <h3>Día no laborable</h3>
+        <p>Este día no está configurado como día de trabajo</p>
+        <button class="btn-outline sm" (click)="showSchedule = true">
+          Configurar horarios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANEL DERECHO
+  ══════════════════════════════════════════════════════════ -->
+  <aside class="agenda-sidebar">
+    <!-- Mini calendario PrimeNG -->
+    <div class="mini-calendar-wrap">
+      <p-calendar
+        [(ngModel)]="calendarDate"
+        [inline]="true"
+        (onSelect)="onCalendarSelect($event)"
+        dateFormat="yy-mm-dd"
+        styleClass="mini-calendar"
+        [firstDayOfWeek]="1"
+      >
+      </p-calendar>
+    </div>
+
+    <!-- Resumen del día -->
+    <div class="day-summary">
+      <h3>Resumen del día</h3>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-dot total"></span>
+          <span class="summary-label">Total citas</span>
+          <span class="summary-val">{{ totalAppts }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-dot confirmed"></span>
+          <span class="summary-label">Confirmadas</span>
+          <span class="summary-val">{{ confirmedAppts }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-dot pending"></span>
+          <span class="summary-label">Pendientes</span>
+          <span class="summary-val">{{ pendingAppts }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-dot in_progress"></span>
+          <span class="summary-label">En curso</span>
+          <span class="summary-val">{{ inProgressAppts }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-dot cancelled"></span>
+          <span class="summary-label">Canceladas</span>
+          <span class="summary-val">{{ cancelledAppts }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Próxima cita -->
+    <div class="next-appt" *ngIf="nextAppt">
+      <h3>Próxima cita</h3>
+      <div class="next-appt-card">
+        <div class="next-time">
+          {{ formatTime(nextAppt.startTime) }} –
+          {{ formatTime(nextAppt.endTime) }}
+        </div>
+        <div class="next-client">
+          <div class="next-avatar">
+            {{ nextAppt.clientName.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <span class="next-name">{{ nextAppt.clientName }}</span>
+            <span class="next-service">
+              {{ nextAppt.haircutName ?? "Servicio no especificado" }}
+            </span>
+          </div>
+        </div>
+        <p-tag
+          [value]="statusLabel(nextAppt.status)"
+          [severity]="statusSeverity(nextAppt.status)"
+        >
+        </p-tag>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     DIALOG: Cambiar estado de cita
+════════════════════════════════════════════════════════ -->
+<p-dialog
+  [(visible)]="showStatusMenu"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '380px' }"
+  header="Actualizar cita"
+  styleClass="dark-dialog"
+  *ngIf="selectedAppt"
+>
+  <div class="appt-detail-preview">
+    <div class="detail-avatar">
+      {{ selectedAppt!.clientName.charAt(0).toUpperCase() }}
+    </div>
+    <div>
+      <p class="detail-name">{{ selectedAppt!.clientName }}</p>
+      <p class="detail-info">
+        {{ formatTime(selectedAppt!.startTime) }} ·
+        {{ selectedAppt!.haircutName ?? "Sin servicio" }}
+      </p>
+    </div>
+  </div>
+
+  <div class="status-options">
+    <button
+      *ngFor="let opt of statusOptions"
+      class="status-opt"
+      [class]="'sopt-' + opt.value"
+      (click)="updateStatus(selectedAppt!, opt.value)"
+    >
+      <i class="pi {{ opt.icon }}"></i>
+      {{ opt.label }}
+    </button>
+  </div>
+</p-dialog>
+
+<!-- ════════════════════════════════════════════════════════
+     DIALOG: Nueva cita
+════════════════════════════════════════════════════════ -->
+<p-dialog
+  [(visible)]="showNewAppt"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '520px', maxWidth: '94vw' }"
+  header="Nueva cita"
+  styleClass="dark-dialog"
+>
+  <form [formGroup]="apptForm" class="appt-form">
+    <div class="client-mode-toggle">
+      <button
+        type="button"
+        [class.active]="!isNewClient"
+        (click)="onClientModeChange(false)"
+      >
+        Cliente existente
+      </button>
+
+      <button
+        type="button"
+        [class.active]="isNewClient"
+        (click)="onClientModeChange(true)"
+      >
+        Cliente nuevo
+      </button>
+    </div>
+
+    <div class="form-row" *ngIf="!isNewClient">
+      <div class="field">
+        <label>Cliente registrado *</label>
+        <p-dropdown
+          [options]="clients"
+          optionLabel="fullName"
+          optionValue="id"
+          formControlName="clientId"
+          placeholder="Selecciona un cliente"
+          styleClass="w-full"
+          [filter]="true"
+          filterBy="fullName,phone"
+          appendTo="body"
+          (onChange)="onClientSelected($event.value)"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Teléfono *</label>
+        <input
+          pInputText
+          formControlName="clientPhone"
+          class="w-full"
+          readonly
+        />
+      </div>
+    </div>
+
+    <div class="form-row" *ngIf="isNewClient">
+      <div class="field">
+        <label>Nombre del cliente *</label>
+        <input
+          pInputText
+          formControlName="clientName"
+          placeholder="Nombre completo"
+          class="w-full"
+        />
+      </div>
+
+      <div class="field">
+        <label>Teléfono *</label>
+        <input
+          pInputText
+          formControlName="clientPhone"
+          placeholder="9991234567"
+          class="w-full"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label>Fecha *</label>
+        <p-calendar
+          formControlName="appointmentDate"
+          dateFormat="yy-mm-dd"
+          [firstDayOfWeek]="1"
+          [showIcon]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        >
+        </p-calendar>
+      </div>
+      <div class="field">
+        <label>Hora de inicio *</label>
+        <p-calendar
+          formControlName="startTime"
+          [timeOnly]="true"
+          [stepMinute]="30"
+          [showIcon]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        >
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Servicio *</label>
+
+      <p-dropdown
+        [options]="serviceOptions"
+        optionLabel="displayName"
+        optionValue="categoryId"
+        formControlName="serviceCategoryId"
+        placeholder="Selecciona un servicio"
+        styleClass="w-full service-dropdown"
+        appendTo="body"
+        [loading]="loadingServices"
+        (onChange)="onServiceSelected($event.value)"
+      >
+        <ng-template pTemplate="selectedItem" let-service>
+          <div class="service-selected" *ngIf="selectedService">
+            <div>
+              <span class="service-name">{{
+                selectedService.displayName
+              }}</span>
+              <span class="service-meta">
+                {{ formatCurrency(selectedService.price) }} ·
+                {{ selectedService.durationMin }} min
+              </span>
+            </div>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="item" let-service>
+          <div class="service-option">
+            <div class="service-option-main">
+              <span class="service-option-name">{{ service.displayName }}</span>
+              <span class="service-option-type">
+                {{
+                  service.pricingMode === "variants"
+                    ? "Por variante"
+                    : "Precio fijo"
+                }}
+              </span>
+            </div>
+
+            <div class="service-option-price">
+              <strong>{{ formatCurrency(service.price) }}</strong>
+              <span>{{ service.durationMin }} min</span>
+            </div>
+          </div>
+        </ng-template>
+      </p-dropdown>
+    </div>
+
+    <div class="service-summary" *ngIf="selectedService">
+      <div class="service-summary-item">
+        <span>Servicio</span>
+        <strong>{{ selectedService.displayName }}</strong>
+      </div>
+
+      <div class="service-summary-item">
+        <span>Precio</span>
+        <strong>{{ formatCurrency(selectedService.price) }}</strong>
+      </div>
+
+      <div class="service-summary-item">
+        <span>Duración</span>
+        <strong>{{ selectedService.durationMin }} min</strong>
+      </div>
+
+      <div class="service-summary-item" *ngIf="calculatedEndTime">
+        <span>Termina</span>
+        <strong>{{ calculatedEndTime }}</strong>
+      </div>
+    </div>
+
+    <div class="field" *ngIf="!isNewClient && clientHaircuts.length > 0">
+      <label>Corte guardado</label>
+      <p-dropdown
+        [options]="clientHaircuts"
+        optionLabel="name"
+        optionValue="id"
+        formControlName="clientHaircutId"
+        placeholder="Selecciona un corte guardado"
+        styleClass="w-full"
+        (onChange)="onHaircutSelected($event.value)"
+      >
+      </p-dropdown>
+    </div>
+
+    <div class="field">
+      <label>Servicio / Notas</label>
+      <input
+        pInputText
+        formControlName="serviceNotes"
+        placeholder="Fade + barba, estilo preferido..."
+        class="w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label>Notas del cliente</label>
+      <input
+        pInputText
+        formControlName="clientNotes"
+        placeholder="Indicaciones especiales..."
+        class="w-full"
+      />
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showNewAppt = false">Cancelar</button>
+    <button
+      class="btn-primary"
+      (click)="saveAppt()"
+      [disabled]="apptForm.invalid"
+    >
+      Agendar cita
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- ════════════════════════════════════════════════════════
+     DIALOG: Configurar horarios
+════════════════════════════════════════════════════════ -->
+<p-dialog
+  [(visible)]="showSchedule"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '520px' }"
+  header="Configurar días y horarios"
+  styleClass="dark-dialog"
+>
+  <div class="schedule-config">
+    <p class="schedule-desc">
+      Activa o desactiva los días de trabajo y configura los horarios de
+      atención.
+    </p>
+
+    <div class="day-rows">
+      <div
+        class="day-row"
+        *ngFor="let day of daySchedules"
+        [class.inactive]="!day.active"
+      >
+        <!-- Toggle del día -->
+        <div class="day-toggle" (click)="toggleDay(day)">
+          <div class="toggle-switch" [class.on]="day.active">
+            <div class="toggle-knob"></div>
+          </div>
+          <span class="day-name">{{ day.label }}</span>
+        </div>
+
+        <!-- Horarios (solo si está activo) -->
+        <div class="day-hours" *ngIf="day.active">
+          <input type="time" [(ngModel)]="day.startTime" class="time-input" />
+          <span class="time-sep">—</span>
+          <input type="time" [(ngModel)]="day.endTime" class="time-input" />
+        </div>
+        <span class="day-closed-label" *ngIf="!day.active">Cerrado</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-outline" (click)="showSchedule = false">Cancelar</button>
+    <button class="btn-primary" (click)="saveSchedules()">
+      <i class="pi pi-save"></i>
+      Guardar horarios
+    </button>
+  </ng-template>
+</p-dialog>

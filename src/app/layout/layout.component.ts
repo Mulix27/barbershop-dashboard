@@ -1,20 +1,63 @@
-// layout.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-layout',
+  selector:    'app-layout',
   templateUrl: './layout.component.html',
-  styleUrls: ['./layout.component.scss']
+  styleUrls:   ['./layout.component.scss']
 })
-export class LayoutComponent implements OnInit {
-  collapsed = false;
+export class LayoutComponent implements OnInit, OnDestroy {
+
+  collapsed   = false;
+  mobileOpen  = false;
+  isMobile    = false;
+
+  private routerSub!: Subscription;
+
+  constructor(private router: Router) {}
 
   ngOnInit(): void {
-    this.collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+    // ✅ Detectar móvil PRIMERO antes de restaurar collapsed
+    this.checkMobile();
+
+    // Solo restaurar collapsed si estamos en desktop
+    if (!this.isMobile) {
+      this.collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+    }
+
+    this.routerSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.isMobile) this.mobileOpen = false;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkMobile();
+  }
+
+  private checkMobile(): void {
+    this.isMobile = window.innerWidth < 768;
+    if (!this.isMobile) this.mobileOpen = false;
   }
 
   toggle(): void {
-    this.collapsed = !this.collapsed;
-    localStorage.setItem('sidebar_collapsed', String(this.collapsed));
+    if (this.isMobile) {
+      this.mobileOpen = !this.mobileOpen;
+    } else {
+      this.collapsed = !this.collapsed;
+      localStorage.setItem('sidebar_collapsed', String(this.collapsed));
+    }
+  }
+
+  closeMobile(): void {
+    this.mobileOpen = false;
   }
 }
