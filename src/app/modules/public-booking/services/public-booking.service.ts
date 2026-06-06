@@ -1,35 +1,23 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
 import { environment } from 'src/environments/environment';
-
-import {
-  ApiResponse,
-  AvailableSlot,
-  BackendServiceOption,
-  DayAvailabilityResponse,
-  PublicBarbershop,
-  PublicBookingRequest,
-  PublicBookingResponse,
-  PublicServiceOption
-} from '../models/public-booking.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PublicBookingService {
 
-  private readonly apiUrl = `${environment.apiUrl}/public/barbershops`;
+  private readonly apiUrl = `${environment.apiUrl}/api/public/barbershops`;
 
   constructor(private http: HttpClient) { }
 
-  getBarbershop(barbershopId: string): Observable<PublicBarbershop> {
+  getBarbershop(barbershopId: string): Observable<any> {
     return this.http
-      .get<ApiResponse<PublicBarbershop>>(`${this.apiUrl}/${barbershopId}`)
+      .get<any>(`${this.apiUrl}/${barbershopId}`)
       .pipe(
-        map((response: ApiResponse<PublicBarbershop>) => {
+        map(response => {
           if (!response.success || !response.data) {
             throw new Error(response.message || 'No se pudo cargar la barbería');
           }
@@ -39,18 +27,16 @@ export class PublicBookingService {
       );
   }
 
-  getServices(barbershopId: string): Observable<PublicServiceOption[]> {
+  getServices(barbershopId: string): Observable<any[]> {
     return this.http
-      .get<ApiResponse<BackendServiceOption[]>>(
-        `${this.apiUrl}/${barbershopId}/services`
-      )
+      .get<any>(`${this.apiUrl}/${barbershopId}/services`)
       .pipe(
-        map((response: ApiResponse<BackendServiceOption[]>) => {
+        map(response => {
           if (!response.success || !response.data) {
             return [];
           }
 
-          return response.data.map((service: BackendServiceOption) => ({
+          return response.data.map((service: any) => ({
             serviceCategoryId: service.categoryId,
             serviceVariantId: service.variantId || null,
             displayName: service.displayName,
@@ -65,24 +51,21 @@ export class PublicBookingService {
   getAvailability(
     barbershopId: string,
     date: string,
-    service: PublicServiceOption
-  ): Observable<AvailableSlot[]> {
+    service: any
+  ): Observable<any[]> {
     const params = new HttpParams()
       .set('date', date)
       .set('durationMin', String(service.durationMin));
 
     return this.http
-      .get<ApiResponse<DayAvailabilityResponse>>(
-        `${this.apiUrl}/${barbershopId}/availability`,
-        { params }
-      )
+      .get<any>(`${this.apiUrl}/${barbershopId}/availability`, { params })
       .pipe(
-        map((response: ApiResponse<DayAvailabilityResponse>) => {
+        map(response => {
           if (!response.success || !response.data) {
             return [];
           }
 
-          return response.data.slots.map((slot: AvailableSlot) => ({
+          return response.data.slots.map((slot: any) => ({
             startTime: slot.startTime.substring(0, 5),
             endTime: slot.endTime.substring(0, 5),
             available: slot.available
@@ -91,17 +74,11 @@ export class PublicBookingService {
       );
   }
 
-  createBooking(
-    barbershopId: string,
-    request: PublicBookingRequest
-  ): Observable<PublicBookingResponse> {
+  createBooking(barbershopId: string, request: any): Observable<any> {
     return this.http
-      .post<ApiResponse<PublicBookingResponse>>(
-        `${this.apiUrl}/${barbershopId}/appointments`,
-        request
-      )
+      .post<any>(`${this.apiUrl}/${barbershopId}/appointments`, request)
       .pipe(
-        map((response: ApiResponse<PublicBookingResponse>) => {
+        map(response => {
           if (!response.success || !response.data) {
             throw new Error(response.message || 'No se pudo crear la reserva');
           }
