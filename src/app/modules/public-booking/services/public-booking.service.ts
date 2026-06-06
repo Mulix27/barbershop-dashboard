@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import { environment } from 'src/environments/environment';
+
 import {
   ApiResponse,
   AvailableSlot,
@@ -18,15 +21,13 @@ import {
 })
 export class PublicBookingService {
 
-  private readonly apiUrl = 'http://localhost:8080/api/public/barbershops';
+  private readonly apiUrl = `${environment.apiUrl}/public/barbershops`;
 
   constructor(private http: HttpClient) { }
 
   getBarbershop(barbershopId: string): Observable<PublicBarbershop> {
     return this.http
-      .get<ApiResponse<PublicBarbershop>>(
-        `${this.apiUrl}/${barbershopId}`
-      )
+      .get<ApiResponse<PublicBarbershop>>(`${this.apiUrl}/${barbershopId}`)
       .pipe(
         map((response: ApiResponse<PublicBarbershop>) => {
           if (!response.success || !response.data) {
@@ -44,16 +45,16 @@ export class PublicBookingService {
         `${this.apiUrl}/${barbershopId}/services`
       )
       .pipe(
-        map(response => {
+        map((response: ApiResponse<BackendServiceOption[]>) => {
           if (!response.success || !response.data) {
             return [];
           }
 
-          return response.data.map(service => ({
+          return response.data.map((service: BackendServiceOption) => ({
             serviceCategoryId: service.categoryId,
-            serviceVariantId: service.variantId ?? null,
+            serviceVariantId: service.variantId || null,
             displayName: service.displayName,
-            description: service.variantName ?? service.categoryName,
+            description: service.variantName || service.categoryName,
             price: Number(service.price),
             durationMin: Number(service.durationMin)
           }));
@@ -67,7 +68,8 @@ export class PublicBookingService {
     service: PublicServiceOption
   ): Observable<AvailableSlot[]> {
     const params = new HttpParams()
-      .set('date', date);
+      .set('date', date)
+      .set('durationMin', String(service.durationMin));
 
     return this.http
       .get<ApiResponse<DayAvailabilityResponse>>(
@@ -75,12 +77,12 @@ export class PublicBookingService {
         { params }
       )
       .pipe(
-        map(response => {
+        map((response: ApiResponse<DayAvailabilityResponse>) => {
           if (!response.success || !response.data) {
             return [];
           }
 
-          return response.data.slots.map(slot => ({
+          return response.data.slots.map((slot: AvailableSlot) => ({
             startTime: slot.startTime.substring(0, 5),
             endTime: slot.endTime.substring(0, 5),
             available: slot.available
@@ -99,7 +101,7 @@ export class PublicBookingService {
         request
       )
       .pipe(
-        map(response => {
+        map((response: ApiResponse<PublicBookingResponse>) => {
           if (!response.success || !response.data) {
             throw new Error(response.message || 'No se pudo crear la reserva');
           }
