@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ChartConfiguration, ChartData } from 'chart.js';
-import { MessageService } from 'primeng/api';
+import { ChartData, ChartOptions } from 'chart.js'; import { MessageService } from 'primeng/api';
 
 import { PdfReportRequest, ReportService } from '../../../../core/services/report.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -58,32 +57,67 @@ export class ReportsComponent implements OnInit {
     { name: 'Análisis de Rentabilidad', type: 'Financiero', date: new Date().toLocaleDateString('es-MX'), format: 'PDF' },
     { name: 'Consumo de Insumos', type: 'Inventario', date: new Date().toLocaleDateString('es-MX'), format: 'Excel' },
   ];
-
   // ════════════════════════════════════════════════════════
   //  GRÁFICAS
   // ════════════════════════════════════════════════════════
 
   // Barras: Rentabilidad por barbero
   barberBarData: ChartData<'bar'> = { labels: [], datasets: [] };
-  barberBarOptions: ChartConfiguration['options'] = {
-    responsive: true, maintainAspectRatio: false,
+
+  barberBarOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true, position: 'top',
-        labels: { color: 'rgba(232,230,222,.5)', font: { size: 11 }, boxWidth: 12, padding: 16 }
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
+          boxWidth: 12,
+          padding: 16
+        }
       },
       tooltip: {
-        backgroundColor: '#1E1E2C', borderColor: 'rgba(201,168,76,.3)', borderWidth: 1,
-        titleColor: '#E8E6DE', bodyColor: '#C9A84C',
-        callbacks: { label: (c) => ` $${Number(c.raw).toLocaleString('es-MX', { minimumFractionDigits: 2 })}` }
+        backgroundColor: '#111827',
+        titleColor: '#FFFFFF',
+        bodyColor: '#E5E7EB',
+        borderColor: 'rgba(255,255,255,.12)',
+        borderWidth: 1,
+        padding: 10,
+        callbacks: {
+          label: (c) => ` ${this.formatCurrency(Number(c.raw || 0))}`
+        }
       }
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: 'rgba(232,230,222,.35)', font: { size: 11 } } },
-      y: {
-        grid: { color: 'rgba(255,255,255,.04)' },
+      x: {
+        grid: {
+          color: 'rgba(15,23,42,.06)'
+        },
         ticks: {
-          color: 'rgba(232,230,222,.35)', font: { size: 11 },
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMax: 100,
+        grid: {
+          color: 'rgba(15,23,42,.08)'
+        },
+        ticks: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
           callback: (v) => `$${Number(v).toLocaleString('es-MX')}`
         }
       }
@@ -92,63 +126,149 @@ export class ReportsComponent implements OnInit {
 
   // Línea: Tendencia de ocupación y cancelaciones
   occupancyLineData: ChartData<'line'> = { labels: [], datasets: [] };
-  occupancyLineOptions: ChartConfiguration['options'] = {
-    responsive: true, maintainAspectRatio: false,
+
+  occupancyLineOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true, position: 'top',
-        labels: { color: 'rgba(232,230,222,.5)', font: { size: 11 }, boxWidth: 12, padding: 16 }
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
+          boxWidth: 12,
+          padding: 16
+        }
       },
       tooltip: {
-        backgroundColor: '#1E1E2C', borderColor: 'rgba(201,168,76,.3)', borderWidth: 1,
-        titleColor: '#E8E6DE',
-        callbacks: { label: (c) => ` ${Number(c.raw).toFixed(1)}%` }
+        backgroundColor: '#111827',
+        titleColor: '#FFFFFF',
+        bodyColor: '#E5E7EB',
+        borderColor: 'rgba(255,255,255,.12)',
+        borderWidth: 1,
+        padding: 10,
+        callbacks: {
+          label: (c) => ` ${Number(c.raw || 0).toFixed(1)}%`
+        }
       }
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: 'rgba(232,230,222,.35)', font: { size: 11 } } },
-      y: {
-        min: 0, max: 100,
-        grid: { color: 'rgba(255,255,255,.04)' },
+      x: {
+        grid: {
+          color: 'rgba(15,23,42,.06)'
+        },
         ticks: {
-          color: 'rgba(232,230,222,.35)', font: { size: 11 },
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        }
+      },
+      y: {
+        min: 0,
+        max: 100,
+        grid: {
+          color: 'rgba(15,23,42,.08)'
+        },
+        ticks: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
           callback: (v) => `${v}%`
         }
       }
     },
     elements: {
-      line: { tension: 0.4, borderWidth: 2, fill: true },
-      point: { radius: 4, hoverRadius: 6 }
+      line: {
+        tension: 0.38,
+        borderWidth: 3
+      },
+      point: {
+        radius: 4,
+        hoverRadius: 6,
+        borderWidth: 2
+      }
     }
   };
 
-  // Línea: Revenue vs Expenses (personal insights)
+  // Línea: Revenue vs Expenses
   revenueExpensesData: ChartData<'line'> = { labels: [], datasets: [] };
-  revenueExpensesOptions: ChartConfiguration['options'] = {
-    responsive: true, maintainAspectRatio: false,
+
+  revenueExpensesOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true, position: 'top',
-        labels: { color: 'rgba(232,230,222,.5)', font: { size: 11 }, boxWidth: 12, padding: 16 }
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
+          boxWidth: 12,
+          padding: 16
+        }
       },
       tooltip: {
-        backgroundColor: '#1E1E2C', borderColor: 'rgba(201,168,76,.3)', borderWidth: 1,
-        callbacks: { label: (c) => ` $${Number(c.raw).toLocaleString('es-MX', { minimumFractionDigits: 2 })}` }
+        backgroundColor: '#111827',
+        titleColor: '#FFFFFF',
+        bodyColor: '#E5E7EB',
+        borderColor: 'rgba(255,255,255,.12)',
+        borderWidth: 1,
+        padding: 10,
+        callbacks: {
+          label: (c) => ` ${this.formatCurrency(Number(c.raw || 0))}`
+        }
       }
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: 'rgba(232,230,222,.35)', font: { size: 11 } } },
-      y: {
-        grid: { color: 'rgba(255,255,255,.04)' },
+      x: {
+        grid: {
+          color: 'rgba(15,23,42,.06)'
+        },
         ticks: {
-          color: 'rgba(232,230,222,.35)', font: { size: 11 },
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMax: 100,
+        grid: {
+          color: 'rgba(15,23,42,.08)'
+        },
+        ticks: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
           callback: (v) => `$${Number(v).toLocaleString('es-MX')}`
         }
       }
     },
     elements: {
-      line: { tension: 0.4, borderWidth: 2 },
-      point: { radius: 4, hoverRadius: 6 }
+      line: {
+        tension: 0.38,
+        borderWidth: 3
+      },
+      point: {
+        radius: 4,
+        hoverRadius: 6,
+        borderWidth: 2
+      }
     }
   };
 
@@ -201,40 +321,40 @@ export class ReportsComponent implements OnInit {
     const barbers = data.barberPerformance ?? [];
 
     if (this.isSingleBarber) {
-      // Single-barbero: una sola barra con servicios vs total
       const months = data.salesByMonth?.slice(-6) ?? [];
+
       this.barberBarData = {
         labels: months.map(m => m.period),
-        datasets: [{
-          label: 'Ingresos por Servicios',
-          data: months.map(m => Number(m.revenue) * 0.82),
-          backgroundColor: '#C9A84C99', borderColor: '#C9A84C', borderWidth: 1, borderRadius: 4
-        }, {
-          label: 'Ingresos por Productos',
-          data: months.map(m => Number(m.revenue) * 0.18),
-          backgroundColor: '#6366f199', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4
-        }]
+        datasets: [
+          {
+            label: 'Ingresos',
+            data: months.map(m => Number(m.revenue ?? 0)),
+            backgroundColor: 'rgba(37,99,235,.18)',
+            borderColor: '#2563EB',
+            borderWidth: 2,
+            borderRadius: 6
+          }
+        ]
       };
-    } else {
-      // Multi-barbero: una barra por barbero
-      const COLORS = ['#C9A84C', '#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#94a3b8'];
-      this.barberBarData = {
-        labels: barbers.map(b => b.barberName.split(' ')[0]),
-        datasets: [{
-          label: 'Servicios',
-          data: barbers.map(b => Number(b.revenue) * 0.82),
-          backgroundColor: barbers.map((_, i) => COLORS[i % COLORS.length] + '99'),
-          borderColor: barbers.map((_, i) => COLORS[i % COLORS.length]),
-          borderWidth: 1, borderRadius: 4
-        }, {
-          label: 'Productos',
-          data: barbers.map(b => Number(b.revenue) * 0.18),
-          backgroundColor: '#ffffff20',
-          borderColor: '#ffffff40',
-          borderWidth: 1, borderRadius: 4
-        }]
-      };
+
+      return;
     }
+
+    const colors = ['#2563EB', '#7C3AED', '#16A34A', '#BE4778', '#F97316', '#64748B'];
+
+    this.barberBarData = {
+      labels: barbers.map(b => b.barberName.split(' ')[0]),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: barbers.map(b => Number(b.revenue ?? 0)),
+          backgroundColor: barbers.map((_, i) => `${colors[i % colors.length]}26`),
+          borderColor: barbers.map((_, i) => colors[i % colors.length]),
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    };
   }
 
   buildOccupancyChart(data: FullReport): void {
@@ -257,14 +377,22 @@ export class ReportsComponent implements OnInit {
       datasets: [{
         label: 'Tasa de Ocupación (%)',
         data: labels.map(() => occupancyRate + (Math.random() * 10 - 5)),
-        borderColor: '#C9A84C',
-        backgroundColor: 'rgba(201,168,76,.1)',
+        borderColor: '#2563EB',
+        backgroundColor: 'rgba(37,99,235,.12)',
+        pointBackgroundColor: '#2563EB',
+        pointBorderColor: '#FFFFFF',
+        pointHoverBackgroundColor: '#1D4ED8',
+        pointHoverBorderColor: '#FFFFFF',
         fill: true
       }, {
         label: 'Tasa de Cancelaciones (%)',
         data: labels.map(() => cancelRate + (Math.random() * 5 - 2.5)),
-        borderColor: '#94a3b8',
-        backgroundColor: 'rgba(148,163,184,.05)',
+        borderColor: '#DC2626',
+        backgroundColor: 'rgba(220,38,38,.08)',
+        pointBackgroundColor: '#DC2626',
+        pointBorderColor: '#FFFFFF',
+        pointHoverBackgroundColor: '#B91C1C',
+        pointHoverBorderColor: '#FFFFFF',
         fill: false
       }]
     };
@@ -282,14 +410,22 @@ export class ReportsComponent implements OnInit {
       datasets: [{
         label: 'Ingresos',
         data: months.map(m => Number(m.revenue)),
-        borderColor: '#C9A84C',
-        backgroundColor: 'rgba(201,168,76,.08)',
+        borderColor: '#2563EB',
+        backgroundColor: 'rgba(37,99,235,.12)',
+        pointBackgroundColor: '#2563EB',
+        pointBorderColor: '#FFFFFF',
+        pointHoverBackgroundColor: '#1D4ED8',
+        pointHoverBorderColor: '#FFFFFF',
         fill: true
       }, {
         label: 'Gastos (est.)',
         data: months.map(m => Number(m.revenue) * 0.35),
-        borderColor: '#94a3b8',
-        backgroundColor: 'rgba(148,163,184,.05)',
+        borderColor: '#64748B',
+        backgroundColor: 'rgba(100,116,139,.08)',
+        pointBackgroundColor: '#64748B',
+        pointBorderColor: '#FFFFFF',
+        pointHoverBackgroundColor: '#475569',
+        pointHoverBorderColor: '#FFFFFF',
         fill: false
       }]
     };
@@ -306,7 +442,9 @@ export class ReportsComponent implements OnInit {
   get clientMetrics() { return this.report?.clientMetrics; }
 
   get totalRevenue(): number { return Number(this.summary?.totalRevenue ?? 0); }
-  get netProfit(): number { return this.totalRevenue * 0.41; }
+  get netProfit(): number {
+    return this.totalRevenue;
+  }
   get occupancyRate(): number {
     const a = this.apptMetrics;
     if (!a || a.totalAppointments === 0) return 0;
@@ -520,5 +658,11 @@ export class ReportsComponent implements OnInit {
 
   profitPerMinute(svc: TopService): number {
     return this.safeDiv(this.safeDiv(svc.totalRevenue, svc.totalQuantity), 30);
+  }
+
+  get totalTopServicesRevenue(): number {
+    return this.topServices.reduce((sum, service) => {
+      return sum + Number(service.totalRevenue ?? 0);
+    }, 0);
   }
 }

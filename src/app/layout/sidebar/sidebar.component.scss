@@ -1,73 +1,146 @@
-$gold: #C9A84C;
-$gold-light: #E8C96B;
-$gold-dim: rgba(201, 168, 76, 0.12);
-$dark: #0D0D14;
-$surface: #13131E;
-$border: rgba(201, 168, 76, 0.12);
-$text: #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.45);
+$accent: #2563EB;
+$accent-light: #60A5FA;
+$accent-soft: rgba(37, 99, 235, 0.14);
+
+$sidebar-bg: #080B16;
+$sidebar-hover: rgba(255, 255, 255, 0.055);
+$sidebar-active: rgba(37, 99, 235, 0.14);
+
+$border: rgba(255, 255, 255, 0.075);
+$border-soft: rgba(255, 255, 255, 0.05);
+$border-accent: rgba(37, 99, 235, 0.24);
+
+$text: #FFFFFF;
+$text-muted: rgba(255, 255, 255, 0.64);
+$text-soft: rgba(255, 255, 255, 0.42);
+
+$danger: #E06A6A;
 
 :host {
   display: block;
   height: 100vh;
 }
 
-// ── Sidebar container ─────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
   width: var(--sidebar-width, 240px);
-  background: $surface;
-  border-right: 1px solid $border;
-  display: flex;
-  flex-direction: column;
-  transition: width .3s cubic-bezier(.4, 0, .2, 1);
   z-index: 100;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: $sidebar-bg;
+  border-right: 1px solid $border;
+  color: $text;
+  transition:
+    width .28s cubic-bezier(.4, 0, .2, 1),
+    transform .28s cubic-bezier(.4, 0, .2, 1);
 
   &.collapsed {
     width: 72px;
+
+    .sidebar-logo {
+      justify-content: center;
+      align-items: center;
+      padding: .9rem .5rem;
+      min-height: 78px;
+      gap: 0;
+    }
+
+    .logo-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+
+      img {
+        transform: none;
+        object-fit: cover;
+      }
+    }
+
+    .sidebar-nav {
+      padding-left: .55rem;
+      padding-right: .55rem;
+    }
+
+    .nav-item {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+
+      &.active::before {
+        top: 24%;
+        bottom: 24%;
+      }
+    }
+
+    .sidebar-footer {
+      padding-left: .55rem;
+      padding-right: .55rem;
+    }
+
+    .logout-btn {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 }
 
-// ── Logo ──────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Logo / Marca
+───────────────────────────────────────────── */
+
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: .75rem;
-  padding: 1.25rem 1rem;
-  min-height: 72px;
-  border-bottom: 1px solid $border;
+  gap: .85rem;
+  padding: 1.15rem 1.1rem;
+  min-height: 128px;
+  border-bottom: 1px solid $border-soft;
 }
 
 .logo-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #60A5FA 100%);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, .30),
+    inset 0 1px 0 rgba(255, 255, 255, .22);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    transform: scale(1.08);
   }
 
   &.has-logo {
-    background: rgba(255, 255, 255, .04);
-    border: 1px solid rgba(201, 168, 76, .18);
+    background: rgba(255, 255, 255, .045);
+    border: 1px solid $border-accent;
+    box-shadow:
+      0 12px 26px rgba(0, 0, 0, .26),
+      inset 0 1px 0 rgba(255, 255, 255, .06);
   }
 
   .pi {
-    font-size: 16px;
-    color: $dark;
+    font-size: 20px;
+    color: #FFFFFF;
   }
 }
 
@@ -75,119 +148,158 @@ $text-muted: rgba(232, 230, 222, 0.45);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 .shop-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: .84rem;
+  font-weight: 850;
   color: $text;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 160px;
+  letter-spacing: -.015em;
 }
 
 .shop-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .15em;
-  color: $gold;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  color: $text-soft;
   text-transform: uppercase;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
-// ── Navegación ────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Navegación
+───────────────────────────────────────────── */
+
 .sidebar-nav {
   flex: 1;
-  padding: .75rem .5rem;
+  padding: .85rem .55rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: .25rem;
   overflow-y: auto;
   overflow-x: hidden;
 
-  &::-webkit-scrollbar { width: 3px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: $border; border-radius: 2px; }
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(96, 165, 250, .28);
+    border-radius: 999px;
+  }
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: .875rem;
-  padding: .625rem .875rem;
-  border-radius: 10px;
+  min-height: 42px;
+  padding: .65rem .875rem;
+  border-radius: 13px;
   color: $text-muted;
   text-decoration: none;
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: .84rem;
+  font-weight: 750;
   cursor: pointer;
-  transition: background .15s, color .15s;
   white-space: nowrap;
   overflow: hidden;
   position: relative;
+  transition:
+    background .15s ease,
+    color .15s ease,
+    transform .15s ease;
 
   .pi {
     font-size: 15px;
     flex-shrink: 0;
     width: 18px;
     text-align: center;
+    color: $text-soft;
+    transition: color .15s ease;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, .04);
-    color: rgba(232, 230, 222, 0.8);
+    background: $sidebar-hover;
+    color: rgba(255, 255, 255, .88);
+
+    .pi {
+      color: rgba(255, 255, 255, .76);
+    }
   }
 
   &.active {
-    background: $gold-dim;
-    color: $gold;
+    background: $sidebar-active;
+    color: $accent-light;
 
     &::before {
       content: '';
       position: absolute;
       left: 0;
-      top: 20%;
-      bottom: 20%;
+      top: 18%;
+      bottom: 18%;
       width: 3px;
-      background: $gold;
-      border-radius: 0 2px 2px 0;
+      background: $accent-light;
+      border-radius: 0 999px 999px 0;
     }
 
-    .pi { color: $gold; }
+    .pi {
+      color: $accent-light;
+    }
   }
 }
 
-.nav-label { flex: 1; }
+.nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-// ── Footer ────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Footer / Usuario
+───────────────────────────────────────────── */
+
 .sidebar-footer {
-  padding: .75rem .5rem 1rem;
-  border-top: 1px solid $border;
+  padding: .85rem .55rem 1rem;
+  border-top: 1px solid $border-soft;
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: .55rem;
+  background: transparent;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: .625rem;
-  padding: .5rem .75rem;
+  gap: .65rem;
+  padding: .62rem .75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .04);
+  min-width: 0;
 }
 
 .user-avatar {
   width: 34px;
   height: 34px;
-  background: $gold-dim;
-  border: 1px solid $border;
+  background: $accent-soft;
+  border: 1px solid $border-accent;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: $gold;
+  font-size: .72rem;
+  font-weight: 900;
+  color: $accent-light;
   flex-shrink: 0;
 
   &.solo {
@@ -200,11 +312,12 @@ $text-muted: rgba(232, 230, 222, 0.45);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 .user-name {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: .78rem;
+  font-weight: 850;
   color: $text;
   white-space: nowrap;
   overflow: hidden;
@@ -212,14 +325,15 @@ $text-muted: rgba(232, 230, 222, 0.45);
 }
 
 .user-role {
-  font-size: 11px;
-  color: $gold;
+  font-size: .68rem;
+  color: $text-soft;
   text-transform: capitalize;
+  margin-top: 1px;
 }
 
 .footer-divider {
   height: 1px;
-  background: $border;
+  background: $border-soft;
   margin: 0 .5rem;
 }
 
@@ -228,64 +342,120 @@ $text-muted: rgba(232, 230, 222, 0.45);
   align-items: center;
   gap: .875rem;
   width: 100%;
-  padding: .625rem .875rem;
-  background: none;
+  min-height: 40px;
+  padding: .65rem .875rem;
+  background: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: 13px;
   color: $text-muted;
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: .84rem;
+  font-weight: 750;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition:
+    background .15s ease,
+    color .15s ease;
   white-space: nowrap;
+  overflow: hidden;
 
-  .pi { font-size: 15px; flex-shrink: 0; }
+  .pi {
+    font-size: 15px;
+    width: 18px;
+    flex-shrink: 0;
+    color: $text-soft;
+    transition: color .15s ease;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   &:hover {
-    background: rgba(239, 68, 68, .08);
-    color: #EF6C6C;
+    background: rgba(224, 106, 106, .10);
+    color: $danger;
+
+    .pi {
+      color: $danger;
+    }
   }
 }
 
-// ── Tooltip override ──────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Tooltip
+───────────────────────────────────────────── */
+
 :host ::ng-deep .sidebar-tooltip.p-tooltip {
   .p-tooltip-text {
-    background: #1E1E2C !important;
-    color: #E8E6DE !important;
-    border: 1px solid $border !important;
+    background: #111827 !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(96, 165, 250, .22) !important;
     font-size: 12px !important;
-    border-radius: 8px !important;
-    padding: 4px 10px !important;
+    font-weight: 700 !important;
+    border-radius: 9px !important;
+    padding: 5px 10px !important;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, .32) !important;
   }
+
   .p-tooltip-arrow {
-    border-right-color: #1E1E2C !important;
+    border-right-color: #111827 !important;
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  MÓVIL — Sidebar como drawer deslizable
-// ════════════════════════════════════════════════════════
-@media (max-width: 767px) {
+/* ─────────────────────────────────────────────
+   Responsive
+───────────────────────────────────────────── */
 
+@media (max-width: 767px) {
   :host {
-    height: auto;  // no bloquea el layout
+    height: auto;
   }
 
   .sidebar {
-    // Siempre ancho completo en móvil (no collapsed)
-    width: 240px !important;
-
-    // Oculto por defecto: desplazado fuera de pantalla a la izquierda
+    width: 250px !important;
     transform: translateX(-100%);
-    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
-
-    // Sombra para dar profundidad cuando está abierto
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+    box-shadow:
+      8px 0 34px rgba(0, 0, 0, .62),
+      inset -1px 0 0 rgba(255, 255, 255, .04);
   }
 
-  // Cuando el layout tiene .mobile-open → mostrar el sidebar
-  // Usamos :host-context para detectar la clase en el padre
   :host-context(.mobile-open) .sidebar {
     transform: translateX(0);
+
+    .sidebar-logo {
+      min-height: 128px;
+      padding: 1.15rem 1.1rem;
+    }
+
+    .logo-mark {
+      width: 100px;
+      height: 100px;
+      border-radius: 16px;
+
+      img {
+        transform: scale(1.08);
+      }
+    }
+  }
+
+  .sidebar-logo {
+    min-height: 72px;
+  }
+
+  .sidebar-nav {
+    padding-top: .75rem;
+  }
+
+  .nav-item {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .sidebar {
+    width: 236px !important;
+  }
+
+  .shop-name {
+    max-width: 145px;
   }
 }

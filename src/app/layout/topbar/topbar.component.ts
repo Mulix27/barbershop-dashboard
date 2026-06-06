@@ -1,4 +1,3 @@
-// topbar.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
 

@@ -7,7 +7,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { BarberStaffComponent } from './pages/barber-staff/barber-staff.component';
-import { MinPipe }              from './pipes/min.pipe';   // pipe {{ [a,b] | min }}
+import { MinPipe } from './pipes/min.pipe';   // pipe {{ [a,b] | min }}
 
 // PrimeNG
 import { ButtonModule }        from 'primeng/button';

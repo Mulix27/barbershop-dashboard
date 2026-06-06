@@ -1,16 +1,28 @@
-$gold:       #C9A84C;
-$gold-light: #E8C96B;
-$gold-dim:   rgba(201, 168, 76, 0.15);
-$dark:       #0D0D14;
-$surface:    #16161F;
-$border:     rgba(201, 168, 76, 0.15);
-$text:       #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.5);
+$accent: #2563EB;
+$accent-light: #60A5FA;
+$accent-soft: rgba(37, 99, 235, 0.10);
+$accent-soft-strong: rgba(37, 99, 235, 0.16);
+
+$bg: #F3F6FA;
+$surface: #FFFFFF;
+$surface-soft: #F8FAFC;
+
+$border: rgba(15, 23, 42, 0.10);
+$border-strong: rgba(37, 99, 235, 0.22);
+
+$text: #0F172A;
+$text-muted: #64748B;
+$text-soft: #94A3B8;
+
+$success: #16A34A;
+$danger: #DC2626;
 
 :host {
   display: block;
   min-height: 100vh;
-  background: $dark;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, .08), transparent 34%),
+    $bg;
 }
 
 .upload-page {
@@ -18,12 +30,13 @@ $text-muted: rgba(232, 230, 222, 0.5);
   display: flex;
   flex-direction: column;
   padding: 1.25rem;
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
   gap: 1rem;
 }
 
-// ── Header ────────────────────────────────────────────────────
+/* Header */
+
 .upload-header {
   display: flex;
   align-items: center;
@@ -31,33 +44,42 @@ $text-muted: rgba(232, 230, 222, 0.5);
   padding: 1rem 0 .5rem;
 
   h1 {
-    font-size: 1.125rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 850;
     color: $text;
     margin: 0 0 2px;
+    letter-spacing: -.025em;
   }
 
   p {
-    font-size: .75rem;
+    font-size: .82rem;
     color: $text-muted;
     margin: 0;
+    font-weight: 600;
   }
 }
 
 .brand-logo {
-  width: 44px; height: 44px;
-  background: linear-gradient(135deg, $gold, $gold-light);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
+  width: 52px;
+  height: 52px;
+  background: $accent-soft;
+  border: 1px solid $border-strong;
+  color: $accent;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
   flex-shrink: 0;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, .12);
 }
 
-// ── Capture buttons ───────────────────────────────────────────
+/* Botones de captura */
+
 .capture-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: .75rem;
+  gap: .85rem;
 }
 
 .capture-btn {
@@ -65,42 +87,66 @@ $text-muted: rgba(232, 230, 222, 0.5);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .375rem;
-  padding: 1.25rem .75rem;
+  gap: .42rem;
+  min-height: 140px;
+  padding: 1.25rem .85rem;
   background: $surface;
-  border: 2px dashed $border;
-  border-radius: 14px;
+  border: 1px solid $border;
+  border-radius: 18px;
   cursor: pointer;
-  transition: all .2s;
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease;
   text-align: center;
   text-decoration: none;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
 
-  &:hover, &:active {
-    border-color: rgba(201,168,76,.5);
-    background: $gold-dim;
+  &:hover,
+  &:active {
+    background: $accent-soft;
+    border-color: $border-strong;
+    transform: translateY(-1px);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, .12);
   }
 }
 
-.capture-icon { font-size: 1.75rem; }
+.capture-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: $surface-soft;
+  border: 1px solid rgba(15, 23, 42, .08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+  margin-bottom: .15rem;
+}
 
 .capture-label {
-  font-size: .875rem;
-  font-weight: 700;
+  font-size: .92rem;
+  font-weight: 850;
   color: $text;
 }
 
 .capture-hint {
-  font-size: .7rem;
+  font-size: .75rem;
   color: $text-muted;
+  font-weight: 600;
 }
 
-// ── Photo count ───────────────────────────────────────────────
+/* Contador */
+
 .photo-count {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: .8rem;
+  font-size: .82rem;
   color: $text-muted;
+  font-weight: 700;
+  padding: .15rem .1rem;
 }
 
 .count-dots {
@@ -109,113 +155,187 @@ $text-muted: rgba(232, 230, 222, 0.5);
 }
 
 .dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,.12);
-  transition: background .2s;
+  background: rgba(100, 116, 139, .20);
+  transition:
+    background .2s ease,
+    transform .2s ease;
 
-  &.filled { background: $gold; }
+  &.filled {
+    background: $accent;
+    transform: scale(1.12);
+  }
 }
 
-// ── Photos grid ───────────────────────────────────────────────
+/* Grid de fotos */
+
 .photos-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: .75rem;
+  gap: .85rem;
 }
 
 .photo-item {
   display: flex;
   flex-direction: column;
-  gap: .375rem;
+  gap: .45rem;
 }
 
 .photo-preview {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: $surface;
+  border: 1px solid $border;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
 
   img {
-    width: 100%; height: 100%;
-    object-fit: cover; display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 }
 
 .remove-photo {
   position: absolute;
-  top: .375rem; right: .375rem;
-  width: 26px; height: 26px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.75);
-  border: none; border-radius: 50%;
-  color: #fff; font-size: 12px;
+  top: .45rem;
+  right: .45rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, .78);
+  border: none;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-size: 12px;
   cursor: pointer;
-  transition: background .15s;
+  transition:
+    background .15s ease,
+    transform .15s ease;
 
-  &:hover { background: rgba(239,68,68,.85); }
-  &:disabled { opacity: .4; cursor: not-allowed; }
+  &:hover {
+    background: rgba(220, 38, 38, .92);
+    transform: scale(1.04);
+  }
+
+  &:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
 .photo-note {
-  padding: .375rem .5rem;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 8px;
+  padding: .55rem .65rem;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
   color: $text;
-  font-size: .75rem;
+  font-size: .78rem;
   width: 100%;
   box-sizing: border-box;
+  font-weight: 600;
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
 
-  &::placeholder { color: $text-muted; }
-  &:focus { outline: none; border-color: rgba(201,168,76,.4); }
-  &:disabled { opacity: .5; }
+  &::placeholder {
+    color: $text-soft;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(37, 99, 235, .45);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+  }
+
+  &:disabled {
+    opacity: .55;
+  }
 }
 
-// ── Empty state ───────────────────────────────────────────────
+/* Empty state */
+
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 180px;
   padding: 2.5rem 1rem;
   gap: .75rem;
   text-align: center;
   background: $surface;
-  border: 1px dashed $border;
-  border-radius: 14px;
+  border: 1px dashed rgba(100, 116, 139, .28);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .05);
 
-  .empty-icon { font-size: 2.5rem; }
-  p { font-size: .875rem; color: $text-muted; margin: 0; line-height: 1.5; }
+  .empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: $surface-soft;
+    border: 1px solid rgba(15, 23, 42, .08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+
+  p {
+    font-size: .9rem;
+    color: $text-muted;
+    margin: 0;
+    line-height: 1.5;
+    font-weight: 600;
+    max-width: 310px;
+  }
 }
 
-// ── Progress ──────────────────────────────────────────────────
+/* Progreso */
+
 .progress-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .5rem;
+  gap: .55rem;
 
-  p { font-size: .8rem; color: $text-muted; margin: 0; }
+  p {
+    font-size: .82rem;
+    color: $text-muted;
+    margin: 0;
+    font-weight: 700;
+  }
 }
 
 .progress-bar {
-  width: 100%; height: 6px;
-  background: rgba(255,255,255,.07);
+  width: 100%;
+  height: 7px;
+  background: rgba(100, 116, 139, .16);
   border-radius: 99px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, $gold, $gold-light);
+  background: linear-gradient(90deg, $accent, $accent-light);
   border-radius: 99px;
 }
 
 @keyframes slide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
 }
 
 .uploading-anim {
@@ -223,28 +343,47 @@ $text-muted: rgba(232, 230, 222, 0.5);
   animation: slide 1.2s ease-in-out infinite;
 }
 
-// ── Upload button ─────────────────────────────────────────────
+/* Botón subir */
+
 .upload-btn {
   width: 100%;
+  min-height: 56px;
   padding: 1rem;
-  background: linear-gradient(135deg, $gold, $gold-light);
+  background: $accent;
   border: none;
-  border-radius: 14px;
-  color: $dark;
+  border-radius: 16px;
+  color: #FFFFFF;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 850;
   cursor: pointer;
-  transition: opacity .2s, transform .15s;
+  transition:
+    background .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease,
+    opacity .2s ease;
   margin-top: auto;
-  letter-spacing: .01em;
+  letter-spacing: -.01em;
+  box-shadow: 0 16px 32px rgba(37, 99, 235, .22);
 
-  &:hover:not(.disabled) { opacity: .92; transform: translateY(-1px); }
-  &.disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  &:hover:not(.disabled) {
+    background: #1D4ED8;
+    transform: translateY(-1px);
+    box-shadow: 0 20px 38px rgba(37, 99, 235, .28);
+  }
+
+  &.disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
-// ── State cards ───────────────────────────────────────────────
+/* Estados */
+
 .state-card {
   flex: 1;
+  min-height: 420px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -252,60 +391,159 @@ $text-muted: rgba(232, 230, 222, 0.5);
   gap: 1rem;
   text-align: center;
   padding: 2rem;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 22px;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, .08);
 
-  h2 { font-size: 1.25rem; font-weight: 700; color: $text; margin: 0; }
-  p  { font-size: .9rem; color: $text-muted; margin: 0; line-height: 1.6; max-width: 280px; }
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 850;
+    color: $text;
+    margin: 0;
+    letter-spacing: -.025em;
+  }
+
+  p {
+    font-size: .92rem;
+    color: $text-muted;
+    margin: 0;
+    line-height: 1.6;
+    max-width: 300px;
+    font-weight: 600;
+  }
 }
 
 .state-icon {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; font-weight: 700;
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 850;
 }
 
 .success-icon {
-  background: rgba(34,197,94,.15);
-  color: #22c55e;
-  border: 2px solid rgba(34,197,94,.3);
+  background: rgba(22, 163, 74, .10);
+  color: $success;
+  border: 1px solid rgba(22, 163, 74, .22);
 }
 
 .error-icon {
-  background: rgba(239,68,68,.12);
-  color: #ef4444;
-  border: 2px solid rgba(239,68,68,.25);
+  background: rgba(220, 38, 38, .10);
+  color: $danger;
+  border: 1px solid rgba(220, 38, 38, .22);
 }
 
 .success-hint {
-  font-size: .8rem !important;
-  background: $gold-dim;
-  border: 1px solid $border;
-  border-radius: 10px;
-  padding: .75rem 1rem;
-  color: $gold !important;
+  font-size: .82rem !important;
+  background: $accent-soft;
+  border: 1px solid $border-strong;
+  border-radius: 12px;
+  padding: .8rem 1rem;
+  color: $accent !important;
+  font-weight: 800 !important;
 }
 
 .retry-btn {
-  padding: .625rem 1.5rem;
-  background: none;
-  border: 1px solid rgba(239,68,68,.4);
-  border-radius: 10px;
-  color: #ef4444;
-  font-size: .875rem;
-  font-weight: 600;
+  padding: .7rem 1.5rem;
+  background: rgba(220, 38, 38, .08);
+  border: 1px solid rgba(220, 38, 38, .22);
+  border-radius: 12px;
+  color: $danger;
+  font-size: .9rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background .15s;
+  transition:
+    background .15s ease,
+    transform .15s ease;
 
-  &:hover { background: rgba(239,68,68,.1); }
+  &:hover {
+    background: rgba(220, 38, 38, .12);
+    transform: translateY(-1px);
+  }
 }
 
-// ── Spinner ───────────────────────────────────────────────────
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Spinner */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .spinner {
-  width: 40px; height: 40px;
-  border: 3px solid rgba(201,168,76,.2);
-  border-top-color: $gold;
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(37, 99, 235, .16);
+  border-top-color: $accent;
   border-radius: 50%;
   animation: spin .8s linear infinite;
+}
+
+/* Responsive */
+
+@media (max-width: 420px) {
+  .upload-page {
+    padding: 1rem;
+  }
+
+  .capture-buttons {
+    gap: .7rem;
+  }
+
+  .capture-btn {
+    min-height: 128px;
+    padding: 1rem .65rem;
+  }
+
+  .upload-header h1 {
+    font-size: 1.08rem;
+  }
+
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.brand-logo,
+.capture-icon,
+.empty-icon,
+.state-icon {
+  .pi {
+    line-height: 1;
+  }
+}
+
+.upload-btn {
+  span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+
+  .pi {
+    font-size: 1rem;
+  }
+}
+
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+
+  .pi {
+    font-size: .9rem;
+  }
+}
+
+.remove-photo {
+  .pi {
+    font-size: .72rem;
+  }
 }

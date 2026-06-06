@@ -22,7 +22,7 @@ import { NgChartsModule } from 'ng2-charts';
     HttpClientModule,
     AppRoutingModule,
     ToastModule,
-    ConfirmDialogModule,
+    ConfirmDialogModule
   ],
   providers: [
     NgChartsModule,

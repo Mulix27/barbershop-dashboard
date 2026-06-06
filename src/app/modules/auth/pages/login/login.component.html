@@ -2,28 +2,17 @@
 
 <div class="login-page">
 
-  <!-- Fondo decorativo con patrón diagonal -->
+  <!-- Fondo decorativo -->
   <div class="login-bg">
     <div class="bg-pattern"></div>
     <div class="bg-diamond"></div>
+    <div class="bg-glow"></div>
   </div>
 
   <!-- Card central -->
   <div class="login-card">
 
-    <!-- Logo / Icono -->
-    <div class="login-logo">
-      <div class="logo-icon">
-        <i class="pi pi-tag"></i>
-      </div>
-      <div class="logo-divider">
-        <span></span>
-        <span class="logo-brand">BARBERSHOP</span>
-        <span></span>
-      </div>
-    </div>
 
-    <!-- Título -->
     <h1 class="login-title">Bienvenido de vuelta</h1>
     <p class="login-subtitle">Inicia sesión para gestionar tu barbería</p>
 
@@ -34,7 +23,7 @@
       <div class="field">
         <label for="email">Email</label>
         <span class="p-input-icon-left w-full">
-          <i class="pi pi-user"></i>
+          <i class="pi pi-envelope"></i>
           <input
             id="email"
             type="email"
@@ -44,14 +33,12 @@
             class="w-full"
             [class.ng-invalid]="emailCtrl.invalid && emailCtrl.touched"/>
         </span>
-        <small
-          class="field-error"
-          *ngIf="emailCtrl.invalid && emailCtrl.touched">
+        <small class="field-error" *ngIf="emailCtrl.invalid && emailCtrl.touched">
           Ingresa un email válido
         </small>
       </div>
 
-      <!-- Password -->
+      <!-- Contraseña -->
       <div class="field">
         <label for="password">Contraseña</label>
         <p-password
@@ -64,14 +51,12 @@
           inputStyleClass="w-full"
           [class.ng-invalid]="passwordCtrl.invalid && passwordCtrl.touched">
         </p-password>
-        <small
-          class="field-error"
-          *ngIf="passwordCtrl.invalid && passwordCtrl.touched">
+        <small class="field-error" *ngIf="passwordCtrl.invalid && passwordCtrl.touched">
           La contraseña es requerida
         </small>
       </div>
 
-      <!-- Remember me -->
+      <!-- Recordarme -->
       <div class="field-row">
         <div class="remember-me">
           <p-checkbox
@@ -83,7 +68,7 @@
         </div>
       </div>
 
-      <!-- Submit -->
+      <!-- Botón -->
       <p-button
         type="submit"
         label="Iniciar sesión"

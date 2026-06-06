@@ -14,17 +14,17 @@
       <div class="tab-switcher">
         <button
           class="tab-btn"
-          [class.active]="activeTab === 'products'"
-          (click)="activeTab = 'products'"
-        >
-          <i class="pi pi-box"></i> Productos
-        </button>
-        <button
-          class="tab-btn"
           [class.active]="activeTab === 'services'"
           (click)="activeTab = 'services'"
         >
           <i class="pi pi-scissors"></i> Servicios
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'products'"
+          (click)="activeTab = 'products'"
+        >
+          <i class="pi pi-box"></i> Productos
         </button>
       </div>
       <button

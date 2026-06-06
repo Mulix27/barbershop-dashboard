@@ -17,31 +17,40 @@ const routes: Routes = [
     path: '',
     component: LayoutComponent,
     children: [
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
-      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
       {
         path: 'dashboard',
         loadChildren: () =>
           import('../modules/dashboard/dashboard.module').then(m => m.DashboardModule)
       },
-      {
-        path: 'clients',
-        loadChildren: () =>
-          import('../modules/clients/clients.module').then(m => m.ClientsModule)
-      },
-      {
-        path: 'sales',
-        loadChildren: () =>
-          import('../modules/sales/sales.module').then(m => m.SalesModule)
-      },
+
+      // Agenda: todos los roles
       {
         path: 'agenda',
         loadChildren: () =>
           import('../modules/agenda/agenda.module').then(m => m.AgendaModule)
       },
+
+      // Clientes: owner, secretary, cashier — barber NO
+      {
+        path: 'clients',
+        canActivate: [RoleGuard],
+        data: { roles: ['owner', 'secretary', 'cashier'] },
+        loadChildren: () =>
+          import('../modules/clients/clients.module').then(m => m.ClientsModule)
+      },
+
+      // Ventas: owner, secretary, cashier — barber NO
+      {
+        path: 'sales',
+        canActivate: [RoleGuard],
+        data: { roles: ['owner', 'secretary', 'cashier'] },
+        loadChildren: () =>
+          import('../modules/sales/sales.module').then(m => m.SalesModule)
+      },
+
+      // Catálogo: solo owner
       {
         path: 'catalog',
         canActivate: [RoleGuard],
@@ -49,10 +58,21 @@ const routes: Routes = [
         loadChildren: () =>
           import('../modules/catalog/catalog.module').then(m => m.CatalogModule)
       },
+
+      // Staff: solo owner, y solo si no es singleBarber (lo controla el sidebar)
+      {
+        path: 'staff',
+        canActivate: [RoleGuard],
+        data: { roles: ['owner'] },
+        loadChildren: () =>
+          import('../modules/barber-staff/barber-staff.module').then(m => m.BarberStaffModule)
+      },
+
+      // Reportes: owner y secretary
       {
         path: 'reports',
         canActivate: [RoleGuard],
-        data: { roles: ['owner'] },
+        data: { roles: ['owner', 'secretary'] },
         loadChildren: () =>
           import('../modules/reports/reports.module').then(m => m.ReportsModule)
       }
@@ -71,4 +91,4 @@ const routes: Routes = [
     MenuModule
   ]
 })
-export class LayoutModule {}
+export class LayoutModule { }

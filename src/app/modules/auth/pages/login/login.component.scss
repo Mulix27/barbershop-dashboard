@@ -1,26 +1,42 @@
-// ── Variables locales ──────────────────────────────────────────
-$gold:       #C9A84C;
-$gold-light: #E8C96B;
-$gold-dim:   rgba(201, 168, 76, 0.15);
-$dark:       #0D0D14;
-$dark-card:  #16161F;
-$dark-input: #1E1E2C;
-$border:     rgba(201, 168, 76, 0.2);
-$text:       #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.5);
+$primary: #111827;
+$primary-hover: #0B1220;
+$primary-soft: rgba(17, 24, 39, 0.22);
 
-// ── Página completa ───────────────────────────────────────────
+$accent: #2563EB;
+$accent-light: #60A5FA;
+$accent-hover: #1D4ED8;
+$accent-soft: rgba(37, 99, 235, 0.14);
+
+$dark: #080B16;
+$dark-card: #0F172A;
+$dark-input: #111827;
+
+$border: rgba(255, 255, 255, 0.10);
+$border-accent: rgba(96, 165, 250, 0.22);
+
+$text: #FFFFFF;
+$text-muted: rgba(255, 255, 255, 0.62);
+$text-soft: rgba(255, 255, 255, 0.42);
+
+$danger: #EF6C6C;
+
+/* ── Página ───────────────────────────────────────────────── */
+
 .login-page {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $dark;
+  background:
+    radial-gradient(circle at top, rgba(37, 99, 235, .12), transparent 34%),
+    linear-gradient(180deg, #080B16 0%, #020617 100%);
   overflow: hidden;
+  padding: 1rem;
 }
 
-// ── Fondo decorativo ──────────────────────────────────────────
+/* ── Fondo ────────────────────────────────────────────────── */
+
 .login-bg {
   position: absolute;
   inset: 0;
@@ -30,74 +46,94 @@ $text-muted: rgba(232, 230, 222, 0.5);
 .bg-pattern {
   position: absolute;
   inset: 0;
+  opacity: .55;
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(201, 168, 76, 0.03) 0px,
-    rgba(201, 168, 76, 0.03) 1px,
+    rgba(96, 165, 250, .035) 0px,
+    rgba(96, 165, 250, .035) 1px,
     transparent 1px,
-    transparent 40px
+    transparent 42px
   );
 }
 
-// Diamante dorado decorativo (como en el mockup)
 .bg-diamond {
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 640px;
+  height: 640px;
   transform: translate(-50%, -50%) rotate(45deg);
-  width: 600px;
-  height: 600px;
-  border: 1px solid rgba(201, 168, 76, 0.08);
-  border-radius: 40px;
+  border: 1px solid rgba(96, 165, 250, .10);
+  border-radius: 48px;
 
-  &::before, &::after {
+  &::before,
+  &::after {
     content: '';
     position: absolute;
-    inset: 40px;
-    border: 1px solid rgba(201, 168, 76, 0.05);
-    border-radius: 32px;
+    inset: 48px;
+    border: 1px solid rgba(96, 165, 250, .065);
+    border-radius: 34px;
   }
 
   &::after {
-    inset: 80px;
-    border-color: rgba(201, 168, 76, 0.03);
+    inset: 96px;
+    border-color: rgba(96, 165, 250, .04);
   }
 }
 
-// ── Card de login ─────────────────────────────────────────────
+.bg-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 520px;
+  height: 520px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(37, 99, 235, .16) 0%, transparent 68%);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+
 .login-card {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 440px;
-  padding: 2.5rem;
-  background: $dark-card;
-  border: 1px solid $border;
-  border-radius: 20px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6),
-              0 0 0 1px rgba(201, 168, 76, 0.05);
-  margin: 1rem;
+  padding: 2.75rem 2.5rem 2.25rem;
+  background: rgba(15, 23, 42, .92);
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 24px;
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, .62),
+    0 0 0 1px rgba(255, 255, 255, .035),
+    inset 0 1px 0 rgba(255, 255, 255, .06);
+  backdrop-filter: blur(18px);
 }
 
-// ── Logo ──────────────────────────────────────────────────────
+/* ── Logo ─────────────────────────────────────────────────── */
+
 .login-logo {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
 }
 
 .logo-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, $gold 0%, $gold-light 100%);
-  border-radius: 16px;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(145deg, #1D4ED8 0%, #60A5FA 100%);
+  border-radius: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: .75rem;
+  margin-bottom: .875rem;
+  box-shadow:
+    0 12px 28px rgba(37, 99, 235, .32),
+    inset 0 1px 0 rgba(255, 255, 255, .22);
 
   .pi {
     font-size: 24px;
-    color: $dark;
+    color: #FFFFFF;
   }
 }
 
@@ -105,42 +141,53 @@ $text-muted: rgba(232, 230, 222, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
-  margin-top: .375rem;
+  gap: .625rem;
+  margin-top: .25rem;
 
   span:not(.logo-brand) {
     flex: 1;
-    max-width: 40px;
+    max-width: 44px;
     height: 1px;
-    background: $border;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, .22));
+
+    &:last-child {
+      background: linear-gradient(90deg, rgba(96, 165, 250, .22), transparent);
+    }
   }
 }
 
 .logo-brand {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .2em;
-  color: $gold;
+  font-weight: 850;
+  letter-spacing: .22em;
+  color: $accent-light;
   text-transform: uppercase;
+  opacity: .95;
 }
 
-// ── Títulos ───────────────────────────────────────────────────
+/* ── Títulos ───────────────────────────────────────────────── */
+
 .login-title {
   text-align: center;
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: 1.55rem;
+  font-weight: 800;
   color: $text;
-  margin-bottom: .375rem;
+  margin-bottom: .4rem;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
 }
 
 .login-subtitle {
   text-align: center;
-  font-size: .875rem;
+  font-size: .9rem;
+  font-weight: 450;
   color: $text-muted;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
+  line-height: 1.45;
 }
 
-// ── Formulario ────────────────────────────────────────────────
+/* ── Formulario ─────────────────────────────────────────────── */
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -153,10 +200,10 @@ $text-muted: rgba(232, 230, 222, 0.5);
   gap: .5rem;
 
   label {
-    font-size: .8125rem;
-    font-weight: 600;
-    color: rgba(232, 230, 222, 0.7);
-    letter-spacing: .02em;
+    font-size: .83rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .74);
+    letter-spacing: .01em;
   }
 }
 
@@ -164,127 +211,270 @@ $text-muted: rgba(232, 230, 222, 0.5);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: -.125rem;
 }
 
 .field-error {
-  font-size: .75rem;
-  color: #EF6C6C;
+  font-size: .76rem;
+  color: $danger;
+  font-weight: 500;
+  margin-top: .125rem;
 }
 
-// ── Overrides PrimeNG para tema oscuro dorado ─────────────────
+.remember-me {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+
+.login-footer {
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: .84rem;
+  color: $text-muted;
+
+  a {
+    color: $accent-light;
+    text-decoration: none;
+    font-weight: 700;
+    margin-left: .25rem;
+    transition: color .15s ease;
+
+    &:hover {
+      color: #93C5FD;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   PRIMENG OVERRIDES
+════════════════════════════════════════════════════════ */
+
 :host ::ng-deep {
-
-  // Input text
   .p-inputtext {
-    background: $dark-input !important;
-    border-color: $border !important;
+    background: rgba(17, 24, 39, .94) !important;
+    border: 1px solid rgba(255, 255, 255, .11) !important;
     color: $text !important;
-    border-radius: 10px !important;
-    padding: .75rem 1rem !important;
-    font-size: .875rem !important;
+    border-radius: 12px !important;
+    padding: .78rem 1rem !important;
+    font-size: .92rem !important;
+    font-weight: 500 !important;
+    transition:
+      border-color .2s ease,
+      box-shadow .2s ease,
+      background .2s ease !important;
 
-    &::placeholder { color: $text-muted !important; }
-    &:focus {
-      border-color: $gold !important;
-      box-shadow: 0 0 0 2px $gold-dim !important;
+    &::placeholder {
+      color: rgba(255, 255, 255, .38) !important;
+    }
+
+    &:enabled:hover {
+      border-color: rgba(96, 165, 250, .36) !important;
+    }
+
+    &:enabled:focus {
+      background: rgba(15, 23, 42, .98) !important;
+      border-color: $accent-light !important;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .20) !important;
+      outline: none !important;
     }
   }
 
-  // Input con ícono
   .p-input-icon-left {
-    > i {
-      color: $text-muted !important;
-      font-size: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-top: 0;
+    width: 100%;
+
+    > .p-inputtext {
+      padding-left: 2.75rem !important;
     }
-    > input { padding-left: 2.5rem !important; }
+
+    > i,
+    > svg {
+      color: $text-soft !important;
+      font-size: 15px !important;
+      top: 50% !important;
+      left: 1rem !important;
+      transform: translateY(-50%) !important;
+      margin-top: 0 !important;
+    }
   }
 
-  // Password
-  .p-password-input {
-    background: $dark-input !important;
-    border-color: $border !important;
-    color: $text !important;
-    border-radius: 10px !important;
-    padding: .75rem 1rem !important;
+  .p-password {
+    position: relative !important;
+    display: block !important;
     width: 100% !important;
+  }
 
-    &:focus {
-      border-color: $gold !important;
-      box-shadow: 0 0 0 2px $gold-dim !important;
+  .p-password-input {
+    background: rgba(17, 24, 39, .94) !important;
+    border: 1px solid rgba(255, 255, 255, .11) !important;
+    color: $text !important;
+    border-radius: 12px !important;
+    padding: .78rem 3rem .78rem 1rem !important;
+    font-size: .92rem !important;
+    font-weight: 500 !important;
+    width: 100% !important;
+    transition:
+      border-color .2s ease,
+      box-shadow .2s ease,
+      background .2s ease !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, .38) !important;
+    }
+
+    &:enabled:hover {
+      border-color: rgba(96, 165, 250, .36) !important;
+    }
+
+    &:enabled:focus {
+      background: rgba(15, 23, 42, .98) !important;
+      border-color: $accent-light !important;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .20) !important;
+      outline: none !important;
+    }
+  }
+
+  .p-password eyeslashicon,
+  .p-password eyeicon,
+  .p-password .p-icon-wrapper {
+    position: absolute !important;
+    top: 50% !important;
+    right: .875rem !important;
+    transform: translateY(-50%) !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 2 !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+
+    svg {
+      width: 16px !important;
+      height: 16px !important;
+      fill: none !important;
+      stroke: rgba(255, 255, 255, .50) !important;
+      transition: stroke .15s ease !important;
+    }
+
+    &:hover svg {
+      stroke: $accent-light !important;
     }
   }
 
   .p-password-panel {
-    background: $dark-card !important;
-    border-color: $border !important;
+    display: none !important;
   }
 
-  .p-password { width: 100%; }
+  .p-checkbox {
+    width: 18px !important;
+    height: 18px !important;
 
-  // Checkbox
-  .p-checkbox .p-checkbox-box {
-    background: $dark-input !important;
-    border-color: $border !important;
-    border-radius: 6px !important;
+    .p-checkbox-box {
+      width: 18px !important;
+      height: 18px !important;
+      background: rgba(17, 24, 39, .94) !important;
+      border: 1px solid rgba(96, 165, 250, .36) !important;
+      border-radius: 5px !important;
+      transition: all .15s ease !important;
 
-    &.p-highlight {
-      background: $gold !important;
-      border-color: $gold !important;
+      &:hover {
+        border-color: $accent-light !important;
+      }
+
+      &.p-highlight {
+        background: $accent !important;
+        border-color: $accent !important;
+
+        .p-checkbox-icon {
+          color: #FFFFFF !important;
+          font-size: 11px !important;
+          font-weight: 800 !important;
+        }
+      }
     }
   }
 
   .p-checkbox-label {
     color: $text-muted !important;
-    font-size: .8125rem !important;
+    font-size: .82rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    margin-left: .5rem !important;
+    line-height: 1 !important;
+    user-select: none !important;
   }
 
-  // Botón principal — dorado
-  .login-btn.p-button {
-    background: linear-gradient(135deg, $gold 0%, $gold-light 100%) !important;
-    border: none !important;
-    border-radius: 10px !important;
-    color: $dark !important;
-    font-weight: 700 !important;
-    font-size: .9375rem !important;
-    padding: .875rem !important;
-    letter-spacing: .02em;
-    transition: opacity .2s, transform .15s !important;
+  .remember-me .p-checkbox-wrapper,
+  .remember-me .p-field-checkbox {
+    display: flex !important;
+    align-items: center !important;
+  }
 
-    &:hover:not(:disabled) {
-      opacity: .92 !important;
+  .login-btn.p-button {
+    background: $accent !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    font-size: .95rem !important;
+    padding: .9rem !important;
+    letter-spacing: -.01em !important;
+    box-shadow: 0 12px 28px rgba(37, 99, 235, .30) !important;
+    transition:
+      background .2s ease,
+      transform .15s ease,
+      box-shadow .2s ease !important;
+
+    &:enabled:hover {
+      background: $accent-hover !important;
       transform: translateY(-1px) !important;
+      box-shadow: 0 16px 34px rgba(37, 99, 235, .38) !important;
     }
 
-    &:active:not(:disabled) { transform: translateY(0) !important; }
+    &:enabled:active {
+      transform: translateY(0) !important;
+    }
 
-    &:disabled { opacity: .5 !important; }
+    &:disabled {
+      background: #475569 !important;
+      opacity: .75 !important;
+      box-shadow: none !important;
+    }
 
-    .p-button-icon { color: $dark !important; }
+    .p-button-label {
+      font-weight: 800 !important;
+      color: #FFFFFF !important;
+    }
+
+    .p-button-loading-icon {
+      color: #FFFFFF !important;
+    }
   }
 }
 
-// ── Footer ─────────────────────────────────────────────────────
-.login-footer {
-  margin-top: 1.75rem;
-  text-align: center;
-  font-size: .8125rem;
-  color: $text-muted;
+/* ── Responsive ─────────────────────────────────────────────── */
 
-  a {
-    color: $gold;
-    text-decoration: none;
-    font-weight: 600;
-    margin-left: .25rem;
-
-    &:hover { color: $gold-light; }
-  }
-}
-
-// ── Responsive ────────────────────────────────────────────────
 @media (max-width: 480px) {
-  .login-card { padding: 2rem 1.5rem; }
-  .bg-diamond { width: 400px; height: 400px; }
+  .login-card {
+    padding: 2rem 1.375rem;
+    border-radius: 20px;
+  }
+
+  .bg-diamond {
+    width: 380px;
+    height: 380px;
+  }
+
+  .login-title {
+    font-size: 1.38rem;
+  }
+
+  .login-subtitle {
+    font-size: .86rem;
+  }
 }

@@ -1,16 +1,52 @@
-// ── Variables ─────────────────────────────────────────────────
-$gold:       #C9A84C;
-$gold-light: #E8C96B;
-$gold-dim:   rgba(201, 168, 76, 0.12);
-$surface:    #13131E;
-$card:       #16161F;
-$border:     rgba(201, 168, 76, 0.1);
-$border-sub: rgba(255, 255, 255, 0.06);
-$text:       #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.45);
-$dark:       #0D0D14;
+$primary: #111827;
+$primary-hover: #0B1220;
+$primary-soft: rgba(17, 24, 39, 0.08);
 
-// ── Header ────────────────────────────────────────────────────
+$accent: #2563EB;
+$accent-light: #3B82F6;
+$accent-soft: rgba(37, 99, 235, 0.10);
+
+$app-bg: #F4F6F8;
+$surface: #FFFFFF;
+$surface-soft: #F8FAFC;
+$surface-hover: #F3F4F6;
+
+$border: rgba(15, 23, 42, 0.08);
+$border-strong: rgba(15, 23, 42, 0.12);
+
+$text: #111827;
+$text-muted: rgba(17, 24, 39, 0.62);
+$text-soft: rgba(17, 24, 39, 0.42);
+
+$success: #16A34A;
+$success-soft: rgba(22, 163, 74, 0.10);
+
+$info: #2563EB;
+$info-soft: rgba(37, 99, 235, 0.10);
+
+$purple: #7C3AED;
+$purple-soft: rgba(124, 58, 237, 0.10);
+
+$pink: #BE4778;
+$pink-soft: rgba(190, 71, 120, 0.10);
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 72px);
+  margin: -1.5rem;
+  padding: 1.5rem;
+  background: $app-bg;
+  color: $text;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .dashboard-header {
   display: flex;
   align-items: flex-start;
@@ -19,55 +55,98 @@ $dark:       #0D0D14;
   gap: 1rem;
 
   h1 {
-    font-size: 1.375rem;
-    font-weight: 700;
+    font-size: 1.55rem;
+    font-weight: 850;
     color: $text;
-    margin: 0 0 .25rem;
+    margin: 0 0 .35rem;
+    letter-spacing: -.035em;
   }
 }
 
 .header-sub {
-  font-size: .8125rem;
+  font-size: .875rem;
   color: $text-muted;
   margin: 0;
 }
 
-// ── Métricas ──────────────────────────────────────────────────
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
 .metric-card {
-  background: $card;
+  background: $surface;
   border: 1px solid $border;
-  border-radius: 14px;
-  padding: 1.125rem 1.25rem;
+  border-radius: 18px;
+  padding: 1.15rem 1.2rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: border-color .2s;
+  min-width: 0;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, .045),
+    0 1px 2px rgba(15, 23, 42, .04);
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    transform .15s ease,
+    background .15s ease;
 
-  &:hover { border-color: rgba(201, 168, 76, 0.25); }
+  &:hover {
+    border-color: rgba(37, 99, 235, .22);
+    box-shadow:
+      0 16px 34px rgba(15, 23, 42, .07),
+      0 1px 2px rgba(15, 23, 42, .05);
+    transform: translateY(-1px);
+  }
 }
 
 .metric-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
-  .pi { font-size: 18px; }
+  .pi {
+    font-size: 18px;
+  }
 
-  &.appt    { background: rgba(201,168,76,.12); .pi { color: $gold; } }
-  &.revenue { background: rgba(34,197,94,.12);  .pi { color: #22c55e; } }
-  &.ticket  { background: rgba(99,102,241,.12); .pi { color: #818cf8; } }
-  &.services{ background: rgba(236,72,153,.12); .pi { color: #f472b6; } }
+  &.appt {
+    background: $accent-soft;
+
+    .pi {
+      color: $accent;
+    }
+  }
+
+  &.revenue {
+    background: $success-soft;
+
+    .pi {
+      color: $success;
+    }
+  }
+
+  &.ticket {
+    background: $info-soft;
+
+    .pi {
+      color: $info;
+    }
+  }
+
+  &.services {
+    background: $pink-soft;
+
+    .pi {
+      color: $pink;
+    }
+  }
 }
 
 .metric-info {
@@ -78,18 +157,19 @@ $dark:       #0D0D14;
 }
 
 .metric-label {
-  font-size: .75rem;
-  color: $text-muted;
-  font-weight: 500;
+  font-size: .72rem;
+  color: $text-soft;
+  font-weight: 850;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .055em;
 }
 
 .metric-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.38rem;
+  font-weight: 850;
   color: $text;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: -.035em;
 
   &.truncate {
     white-space: nowrap;
@@ -100,472 +180,725 @@ $dark:       #0D0D14;
 }
 
 .metric-sub {
-  font-size: .7rem;
+  font-size: .72rem;
   color: $text-muted;
+  line-height: 1.25;
 }
 
-// ── Grid principal ────────────────────────────────────────────
-.main-grid {
+.main-grid,
+.secondary-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
+}
+
+.main-grid {
   margin-bottom: 1.25rem;
 }
 
-// ── Cards base ────────────────────────────────────────────────
 .card {
-  background: $card;
+  background: $surface;
   border: 1px solid $border;
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 1.25rem;
+  min-width: 0;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, .055),
+    0 1px 2px rgba(15, 23, 42, .04);
 }
 
 .card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: .75rem;
   margin-bottom: 1rem;
+  min-width: 0;
 
   h2 {
-    font-size: .9375rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 850;
     color: $text;
     margin: 0;
+    letter-spacing: -.02em;
   }
 }
 
-// ── Agenda ────────────────────────────────────────────────────
-.date-nav { margin-bottom: .875rem; }
+.date-nav {
+  margin-bottom: .9rem;
+}
 
 .date-label {
-  font-size: .8rem;
-  color: $gold;
-  font-weight: 600;
+  font-size: .82rem;
+  color: $primary;
+  font-weight: 850;
+  text-transform: capitalize;
 }
 
-.agenda-list {
+.agenda-list,
+.sales-list,
+.services-list {
   display: flex;
   flex-direction: column;
-  gap: .125rem;
 }
 
-.agenda-item {
+.agenda-list,
+.sales-list {
+  gap: .18rem;
+}
+
+.services-list {
+  gap: .8rem;
+}
+
+.agenda-item,
+.sale-item {
   display: flex;
   align-items: center;
-  gap: .875rem;
-  padding: .625rem .5rem;
-  border-radius: 10px;
-  transition: background .15s;
+  gap: .85rem;
+  padding: .72rem .6rem;
+  border-radius: 13px;
+  min-width: 0;
+  transition: background .15s ease;
 
-  &:hover { background: rgba(255,255,255,.03); }
+  &:hover {
+    background: $surface-hover;
+  }
 }
 
 .appt-time {
-  font-size: .8125rem;
-  font-weight: 700;
-  color: $gold;
-  width: 44px;
+  font-size: .8rem;
+  font-weight: 850;
+  color: $accent;
+  width: 46px;
   flex-shrink: 0;
 }
 
 .appt-dot {
-  width: 8px;
-  height: 8px;
-  background: $gold;
+  width: 7px;
+  height: 7px;
+  background: $accent;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(201,168,76,.5);
+  box-shadow: 0 0 10px rgba(37, 99, 235, .25);
 }
 
-.appt-info {
+.appt-info,
+.sale-info,
+.service-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
   min-width: 0;
 }
 
-.appt-client {
-  font-size: .875rem;
-  font-weight: 600;
+.appt-info,
+.sale-info {
+  gap: 2px;
+}
+
+.service-info {
+  gap: 6px;
+}
+
+.appt-client,
+.sale-client,
+.service-name {
+  font-size: .89rem;
+  font-weight: 800;
   color: $text;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.appt-service {
-  font-size: .75rem;
+.appt-service,
+.sale-method {
+  font-size: .76rem;
   color: $text-muted;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// ── Gráfica ───────────────────────────────────────────────────
 .chart-total {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.6rem;
+  font-weight: 850;
   color: $text;
-  margin: .25rem 0 0;
+  margin: .3rem 0 0;
+  letter-spacing: -.04em;
 }
 
 .chart-period {
-  font-size: .8rem;
+  font-size: .82rem;
   color: $text-muted;
-  font-weight: 400;
+  font-weight: 500;
   margin-left: .375rem;
 }
 
 .chart-container {
-  height: 200px;
+  height: 210px;
   margin-top: .75rem;
-}
-
-// ── Grid secundario ───────────────────────────────────────────
-.secondary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-}
-
-// ── Top servicios ─────────────────────────────────────────────
-.services-list {
-  display: flex;
-  flex-direction: column;
-  gap: .75rem;
 }
 
 .service-item {
   display: flex;
   align-items: center;
   gap: .75rem;
-}
-
-.service-rank {
-  width: 20px;
-  font-size: .75rem;
-  font-weight: 700;
-  color: $text-muted;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.service-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
   min-width: 0;
 }
 
-.service-name {
-  font-size: .8125rem;
-  font-weight: 500;
-  color: $text;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.service-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: $surface-soft;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  font-weight: 850;
+  color: $text-muted;
+  flex-shrink: 0;
 }
 
 .service-bar {
-  height: 4px;
-  background: rgba(255,255,255,.07);
-  border-radius: 99px;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .service-fill {
   height: 100%;
-  background: linear-gradient(90deg, $gold 0%, $gold-light 100%);
-  border-radius: 99px;
+  background: linear-gradient(90deg, $primary 0%, $accent 100%);
+  border-radius: 999px;
   transition: width .6s ease;
 }
 
 .service-pct {
   font-size: .75rem;
-  font-weight: 700;
-  color: $gold;
-  width: 32px;
+  font-weight: 850;
+  color: $accent;
+  width: 34px;
   text-align: right;
   flex-shrink: 0;
-}
-
-// ── Ventas recientes ──────────────────────────────────────────
-.sales-list {
-  display: flex;
-  flex-direction: column;
-  gap: .125rem;
-}
-
-.sale-item {
-  display: flex;
-  align-items: center;
-  gap: .875rem;
-  padding: .625rem .5rem;
-  border-radius: 10px;
-  transition: background .15s;
-
-  &:hover { background: rgba(255,255,255,.03); }
 }
 
 .sale-avatar {
   width: 36px;
   height: 36px;
-  background: $gold-dim;
-  border: 1px solid rgba(201,168,76,.2);
+  background: $primary-soft;
+  border: 1px solid rgba(15, 23, 42, .10);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: $gold;
+  font-size: .78rem;
+  font-weight: 850;
+  color: $primary;
   flex-shrink: 0;
-}
-
-.sale-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.sale-client {
-  font-size: .875rem;
-  font-weight: 600;
-  color: $text;
-}
-
-.sale-method {
-  font-size: .75rem;
-  color: $text-muted;
 }
 
 .sale-total {
-  font-size: .9375rem;
-  font-weight: 700;
-  color: $gold;
+  font-size: .95rem;
+  font-weight: 850;
+  color: $primary;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-// ── Botones ───────────────────────────────────────────────────
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: .5rem;
-  padding: .625rem 1.125rem;
-  background: linear-gradient(135deg, #C9A84C 0%, #E8C96B 100%);
+  padding: .68rem 1.15rem;
+  background: $primary;
   border: none;
-  border-radius: 10px;
-  color: #0D0D14;
+  border-radius: 13px;
+  color: #FFFFFF;
   font-size: .875rem;
-  font-weight: 700;
+  font-weight: 850;
   cursor: pointer;
-  transition: opacity .2s, transform .15s;
+  transition:
+    background .2s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+  white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, .12);
 
-  &:hover { opacity: .9; transform: translateY(-1px); }
-  &.sm { padding: .5rem .875rem; font-size: .8125rem; }
+  &:hover {
+    background: $primary-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, .16);
+  }
+
+  &.sm {
+    padding: .52rem .9rem;
+    font-size: .8125rem;
+  }
 }
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: .375rem;
-  padding: .375rem .625rem;
-  background: none;
+  padding: .38rem .65rem;
+  background: transparent;
   border: none;
-  border-radius: 8px;
-  color: $gold;
+  border-radius: 10px;
+  color: $accent;
   font-size: .8rem;
-  font-weight: 600;
+  font-weight: 850;
   cursor: pointer;
-  transition: background .15s;
-  white-space: nowrap;   // ← evita que se rompa en dos líneas
+  transition: background .15s ease;
+  white-space: nowrap;
 
-  .pi { font-size: 11px; }
-  &:hover { background: $gold-dim; }
+  .pi {
+    font-size: 11px;
+  }
+
+  &:hover {
+    background: $accent-soft;
+  }
 }
 
-// ── Estado vacío ──────────────────────────────────────────────
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 210px;
   padding: 2rem 1rem;
   gap: .75rem;
   text-align: center;
 
-  .pi { font-size: 2rem; color: $text-muted; opacity: .5; }
-  p   { font-size: .875rem; color: $text-muted; margin: 0; }
+  .pi {
+    font-size: 2rem;
+    color: $text-soft;
+    opacity: .8;
+  }
 
-  &.sm { padding: 1rem; p { font-size: .8rem; } }
+  p {
+    font-size: .875rem;
+    color: $text-muted;
+    margin: 0;
+  }
+
+  &.sm {
+    min-height: 120px;
+    padding: 1rem;
+
+    p {
+      font-size: .8rem;
+    }
+  }
 }
 
-// ── PrimeNG Overrides ─────────────────────────────────────────
+.agenda-card,
+.chart-card {
+  min-height: 310px;
+}
+
 :host ::ng-deep {
   .appt-badge.p-tag {
     font-size: 11px !important;
     padding: 2px 8px !important;
     border-radius: 999px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
     white-space: nowrap !important;
   }
 
   .p-skeleton {
-    background: rgba(255,255,255,.05) !important;
+    background: rgba(15, 23, 42, .08) !important;
+
     &::after {
-      background: linear-gradient(90deg, transparent, rgba(201,168,76,.06), transparent) !important;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, .45),
+          transparent) !important;
     }
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  RESPONSIVE
-// ════════════════════════════════════════════════════════
-
-// ── Tablet ────────────────────────────────────────────────────
 @media (max-width: 1200px) {
-  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  :host {
+    margin: -1.25rem;
+    padding: 1.25rem;
+  }
 }
 
 @media (max-width: 900px) {
+
   .main-grid,
-  .secondary-grid { grid-template-columns: 1fr; }
+  .secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-card,
+  .chart-card {
+    min-height: auto;
+  }
 }
 
-// ── Móvil grande (640px) ──────────────────────────────────────
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  :host {
+    margin: -1rem;
+    padding: 1rem;
+  }
+}
 
+@media (max-width: 640px) {
   .dashboard-header {
     flex-direction: column;
     margin-bottom: 1rem;
 
-    h1 { font-size: 1.25rem; }
+    h1 {
+      font-size: 1.28rem;
+    }
 
-    // Botón "Nueva cita" ocupa todo el ancho
     .btn-primary {
       width: 100%;
-      justify-content: center;
     }
   }
 
-  // 2 columnas todavía caben en 640
   .metrics-grid {
     grid-template-columns: 1fr 1fr;
-    gap: .625rem;
-  }
-}
-
-// ── Móvil pequeño (480px) — aquí estaban los problemas ────────
-@media (max-width: 480px) {
-
-  // Métricas: reducir padding e icono para que quepan en 2 columnas
-  .metrics-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: .5rem;
-    margin-bottom: 1rem;
+    gap: .65rem;
   }
 
   .metric-card {
-    padding: .875rem .75rem;
-    gap: .625rem;
-    border-radius: 12px;
+    padding: .9rem .8rem;
+    gap: .65rem;
+    border-radius: 15px;
   }
 
   .metric-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
 
-    .pi { font-size: 15px; }
+    .pi {
+      font-size: 15px;
+    }
   }
 
   .metric-label {
     font-size: .65rem;
-    letter-spacing: .02em;
+    letter-spacing: .025em;
   }
 
   .metric-value {
-    font-size: 1rem;      // antes 1.25rem → se desbordaba
-    line-height: 1.2;
+    font-size: 1.05rem;
 
-    &.truncate { font-size: .875rem; }
+    &.truncate {
+      font-size: .875rem;
+    }
   }
 
   .metric-sub {
     font-size: .65rem;
-    // Permitir 2 líneas en móvil (mejor que truncar)
-    white-space: normal;
-    line-height: 1.3;
+    line-height: 1.25;
   }
 
-  // Grids a 1 columna en pantallas muy pequeñas
   .main-grid,
   .secondary-grid {
-    grid-template-columns: 1fr;
-    gap: .875rem;
+    gap: .9rem;
   }
 
-  // Cards: reducir padding
   .card {
-    padding: 1rem .875rem;
-    border-radius: 12px;
+    padding: 1rem .9rem;
+    border-radius: 16px;
   }
 
   .card-header {
-    h2 { font-size: .875rem; }
+    h2 {
+      font-size: .92rem;
+    }
 
-    // "Ver todo →" más pequeño para no chocar con el título
     .btn-ghost {
       font-size: .75rem;
       padding: .25rem .5rem;
     }
   }
 
-  // Gráfica: altura menor para que no ocupe toda la pantalla
-  .chart-container { height: 160px; }
+  .chart-container {
+    height: 165px;
+  }
 
-  .chart-total { font-size: 1.25rem; }
+  .chart-total {
+    font-size: 1.25rem;
+  }
 
-  // Agenda: ajustar el badge de estado para que no se corte
   .agenda-item {
-    gap: .5rem;
-    flex-wrap: nowrap;
+    gap: .55rem;
   }
 
-  .appt-time { width: 40px; font-size: .75rem; }
+  .appt-time {
+    width: 42px;
+    font-size: .75rem;
+  }
 
-  // Ocultar el dot en pantallas muy pequeñas (ahorra espacio)
-  .appt-dot { display: none; }
+  .appt-dot {
+    display: none;
+  }
 
-  // Ventas recientes: ocultar avatar en pantallas muy pequeñas
   .sale-avatar {
-    width: 30px;
-    height: 30px;
-    font-size: 11px;
+    width: 32px;
+    height: 32px;
+    font-size: .72rem;
   }
 
-  .sale-total { font-size: .875rem; }
+  .sale-total {
+    font-size: .875rem;
+  }
 }
 
-// ── Móvil muy pequeño (360px) ─────────────────────────────────
-@media (max-width: 380px) {
+@media (max-width: 480px) {
+  :host {
+    margin: -.875rem;
+    padding: .875rem;
+  }
+}
 
-  // En 360px las 2 columnas todavía pueden ser muy pequeñas
-  // Cambiamos a 1 columna para máxima legibilidad
+@media (max-width: 380px) {
   .metrics-grid {
     grid-template-columns: 1fr;
-    gap: .5rem;
   }
 
   .metric-card {
-    flex-direction: row;   // mantener horizontal con 1 columna
-    padding: .75rem 1rem;
+    padding: .85rem 1rem;
   }
 
-  .metric-value { font-size: 1.125rem; }
+  .metric-value {
+    font-size: 1.15rem;
+  }
+
+  .card-header {
+    align-items: center;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Mejora de legibilidad / tipografía Home
+───────────────────────────────────────────── */
+
+:host {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Header */
+.dashboard-header {
+  h1 {
+    font-size: 1.68rem;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    color: #020617;
+  }
+}
+
+.header-sub {
+  font-size: .92rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #475569;
+}
+
+/* Cards superiores */
+.metric-label {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  color: #64748B;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  color: #020617;
+
+  &.truncate {
+    font-size: 1.05rem;
+    font-weight: 750;
+  }
+}
+
+.metric-sub {
+  font-size: .76rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #64748B;
+}
+
+/* Títulos de cards */
+.card-header {
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #020617;
+  }
+}
+
+.date-label {
+  font-size: .86rem;
+  font-weight: 750;
+  color: #0F172A;
+}
+
+/* Links */
+.btn-ghost {
+  font-size: .84rem;
+  font-weight: 750;
+  color: #1D4ED8;
+
+  &:hover {
+    color: #1E40AF;
+  }
+}
+
+/* Agenda / listas */
+.appt-client,
+.sale-client,
+.service-name {
+  font-size: .93rem;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+  color: #020617;
+}
+
+.appt-service,
+.sale-method {
+  font-size: .8rem;
+  font-weight: 500;
+  color: #64748B;
+}
+
+/* Gráfica */
+.chart-total {
+  font-size: 1.78rem;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  color: #020617;
+}
+
+.chart-period {
+  font-size: .85rem;
+  font-weight: 500;
+  color: #64748B;
+}
+
+/* Ventas recientes */
+.sale-total {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #020617;
+}
+
+.sale-avatar {
+  color: #0F172A;
+  font-weight: 800;
+}
+
+/* Empty states */
+.empty-state {
+  .pi {
+    color: #94A3B8;
+    opacity: 1;
+  }
+
+  p {
+    font-size: .92rem;
+    font-weight: 500;
+    color: #64748B;
+    line-height: 1.45;
+  }
+}
+
+/* Botones */
+.btn-primary {
+  font-size: .9rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.btn-primary.sm {
+  font-size: .84rem;
+  font-weight: 750;
+}
+
+/* Mejor contraste en iconos suaves */
+.metric-icon {
+
+  &.appt .pi,
+  &.ticket .pi {
+    color: #2563EB;
+  }
+
+  &.revenue .pi {
+    color: #15803D;
+  }
+
+  &.services .pi {
+    color: #BE4778;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .dashboard-header h1 {
+    font-size: 1.38rem;
+  }
+
+  .metric-value {
+    font-size: 1.18rem;
+  }
+
+  .metric-label {
+    font-size: .68rem;
+  }
+
+  .metric-sub {
+    font-size: .7rem;
+  }
+
+  .card-header h2 {
+    font-size: .98rem;
+  }
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  min-height: 240px;
+
+  canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
 }

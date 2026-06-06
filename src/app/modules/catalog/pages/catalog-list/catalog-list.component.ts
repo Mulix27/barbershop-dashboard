@@ -20,7 +20,7 @@ export class CatalogListComponent implements OnInit {
 
   // ── Estado ────────────────────────────────────────────────
   loading = true;
-  activeTab = 'products';
+  activeTab = 'services';
   viewMode = 'grid';
 
   // ── Datos ──────────────────────────────────────────────────

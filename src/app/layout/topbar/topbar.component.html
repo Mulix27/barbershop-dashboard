@@ -1,23 +1,13 @@
 <header class="topbar">
-
-  <!-- Botón hamburguesa -->
   <button class="toggle-btn" (click)="toggleSidebar.emit()">
     <i class="pi" [class.pi-bars]="sidebarCollapsed" [class.pi-times]="!sidebarCollapsed"></i>
   </button>
-
-  <!-- Saludo -->
   <div class="topbar-greeting">
-    <h2>{{ greeting }}, {{ userName }}! 👋</h2>
+    <h2>{{ greeting }}, {{ userName }}!</h2>
     <span class="topbar-date">{{ today }}</span>
   </div>
-
-  <!-- Spacer -->
   <div class="topbar-spacer"></div>
-
-  <!-- Nombre de la barbería -->
   <div class="shop-badge">
-    <i class="pi pi-tag"></i>
     <span>{{ barbershopName }}</span>
   </div>
-
 </header>

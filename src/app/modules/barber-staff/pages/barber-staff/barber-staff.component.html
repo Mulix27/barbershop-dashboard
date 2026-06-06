@@ -1,13 +1,9 @@
 <p-toast position="top-right"></p-toast>
 <p-confirmDialog></p-confirmDialog>
-
 <div class="staff-page">
-
-  <!-- ── Header ──────────────────────────────────────────── -->
   <div class="staff-header">
     <div class="header-left">
       <div class="header-title-row">
-        <div class="title-icon"><i class="pi pi-users"></i></div>
         <div>
           <h1>Barber Staff</h1>
           <p class="header-sub">Gestiona tus barberos, perfiles, horarios y desempeño.</p>
@@ -18,8 +14,6 @@
       <i class="pi pi-plus"></i> Agregar barbero
     </button>
   </div>
-
-  <!-- ── Métricas rápidas ───────────────────────────────── -->
   <div class="staff-metrics">
     <div class="metric-pill">
       <i class="pi pi-users"></i>
@@ -42,11 +36,8 @@
       <span class="mp-lbl">Cortes totales</span>
     </div>
   </div>
-
-  <!-- ── Toolbar ────────────────────────────────────────── -->
   <div class="staff-toolbar">
     <div class="toolbar-left">
-      <!-- Búsqueda -->
       <div class="search-wrap">
         <i class="pi pi-search"></i>
         <input
@@ -56,17 +47,13 @@
           [(ngModel)]="searchQuery"
           (ngModelChange)="onSearch()"/>
       </div>
-
-      <!-- Filtros toggle -->
       <button class="btn-filter" [class.active]="showFilters" (click)="showFilters = !showFilters">
         <i class="pi pi-filter"></i>
         Filtros
         <span class="filter-dot" *ngIf="statusFilter !== 'all'"></span>
       </button>
     </div>
-
     <div class="toolbar-right">
-      <!-- Sort -->
       <div class="sort-wrap">
         <span class="sort-label">Sort:</span>
         <p-dropdown
@@ -79,8 +66,6 @@
           [style]="{ minWidth: '170px' }">
         </p-dropdown>
       </div>
-
-      <!-- View toggle -->
       <div class="view-toggle">
         <button class="vt-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'">
           <i class="pi pi-th-large"></i>
@@ -91,8 +76,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Filtros expandibles -->
   <div class="filter-bar" *ngIf="showFilters">
     <span class="filter-title">Estado:</span>
     <button
@@ -106,21 +89,13 @@
       <i class="pi pi-times"></i> Limpiar
     </button>
   </div>
-
-  <!-- Contador -->
   <div class="results-row">
     <span class="results-count">
       Mostrando {{ (page-1)*pageSize + 1 }}–{{ [page*pageSize, filtered.length] | min }}
       de {{ filtered.length }} barberos
     </span>
   </div>
-
-  <!-- ════════════════════════════════════════════════════
-       GRID de barberos
-  ════════════════════════════════════════════════════ -->
   <ng-container *ngIf="viewMode === 'grid'">
-
-    <!-- Skeletons -->
     <div class="barbers-grid" *ngIf="loading">
       <div class="barber-card skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]">
         <div class="sk-avatar"></div>
@@ -133,20 +108,14 @@
         </div>
       </div>
     </div>
-
-    <!-- Grid real -->
     <div class="barbers-grid" *ngIf="!loading">
       <div
         class="barber-card"
         *ngFor="let barber of paginated"
         [class.inactive]="barber.status === 'inactive'">
-
-        <!-- Menu de opciones -->
         <button class="card-menu-btn" (click)="openStatusChange(barber)" pTooltip="Cambiar estado">
           <i class="pi pi-ellipsis-v"></i>
         </button>
-
-        <!-- Foto de perfil -->
         <div class="card-avatar-wrap">
           <div class="card-avatar">
             <img *ngIf="barber.profilePhotoUrl"
@@ -157,8 +126,6 @@
           </div>
           <div class="avatar-ring"></div>
         </div>
-
-        <!-- Info -->
         <div class="card-info">
           <h3 class="card-name">{{ barber.fullName }}</h3>
           <p class="card-specialty">{{ barber.specialty ?? 'Barbero' }}</p>
@@ -166,11 +133,7 @@
             {{ statusLabel(barber.status) }}
           </span>
         </div>
-
-        <!-- Separador -->
         <div class="card-divider"></div>
-
-        <!-- Métricas -->
         <div class="card-metrics">
           <div class="metric-item">
             <i class="pi pi-star-fill"></i>
@@ -190,9 +153,7 @@
             <span class="metric-lbl">Next Appt.</span>
           </div>
         </div>
-
-        <!-- Botones -->
-        <div class="card-actions">
+         <div class="card-actions">
           <button class="card-btn outline" (click)="openEdit(barber)">
             <i class="pi pi-pencil"></i>
             Editar perfil
@@ -201,11 +162,11 @@
             <i class="pi pi-calendar"></i>
             Ver horario
           </button>
+          <button class="card-btn danger" (click)="confirmDelete(barber)">
+            <i class="pi pi-trash"></i>
+          </button>
         </div>
-
       </div>
-
-      <!-- Empty state -->
       <div class="empty-grid" *ngIf="filtered.length === 0">
         <i class="pi pi-users"></i>
         <h3>Sin barberos</h3>
@@ -213,12 +174,7 @@
         <button class="btn-primary sm" (click)="resetFilters()">Limpiar filtros</button>
       </div>
     </div>
-
   </ng-container>
-
-  <!-- ════════════════════════════════════════════════════
-       LISTA de barberos
-  ════════════════════════════════════════════════════ -->
   <ng-container *ngIf="viewMode === 'list' && !loading">
     <div class="barbers-list">
       <div class="list-header">
@@ -231,7 +187,6 @@
         <span>Acciones</span>
       </div>
       <div class="list-row" *ngFor="let barber of paginated" [class.inactive]="barber.status === 'inactive'">
-        <!-- Barbero -->
         <div class="list-barber">
           <div class="list-avatar">
             <img *ngIf="barber.profilePhotoUrl" [src]="barber.profilePhotoUrl" [alt]="barber.fullName"/>
@@ -253,7 +208,7 @@
         </span>
         <span class="list-cuts">{{ formatNumber(barber.totalCuts) }}</span>
         <span class="list-time">{{ barber.nextAppointmentTime ?? '—' }}</span>
-        <div class="list-actions">
+          <div class="list-actions">
           <button class="icon-btn" pTooltip="Editar" (click)="openEdit(barber)">
             <i class="pi pi-pencil"></i>
           </button>
@@ -263,12 +218,13 @@
           <button class="icon-btn" pTooltip="Cambiar estado" (click)="openStatusChange(barber)">
             <i class="pi pi-ellipsis-v"></i>
           </button>
+          <button class="icon-btn danger" pTooltip="Eliminar" (click)="confirmDelete(barber)">
+            <i class="pi pi-trash"></i>
+          </button>
         </div>
       </div>
     </div>
   </ng-container>
-
-  <!-- ── Paginación ─────────────────────────────────────── -->
   <div class="pagination-wrap" *ngIf="!loading && filtered.length > pageSize">
     <span class="page-info">
       Showing {{ (page-1)*pageSize + 1 }} to
@@ -290,20 +246,36 @@
       </button>
     </div>
   </div>
-
 </div>
-
-
-<!-- ════════════════════════════════════════════════════════
-     DIALOG: Crear / Editar barbero
-════════════════════════════════════════════════════════ -->
 <p-dialog
   [(visible)]="showBarberForm"
   [modal]="true" [draggable]="false" [resizable]="false"
   [style]="{ width: '500px' }"
   [header]="isEdit ? 'Editar barbero' : 'Agregar barbero'"
   styleClass="dark-dialog">
-
+    <form [formGroup]="barberForm" class="barber-form">
+     <div class="photo-upload-section">
+      <div class="photo-preview" (click)="photoInput.click()">
+         <img *ngIf="photoPreview" [src]="photoPreview" alt="Foto de perfil"/>
+         <div class="photo-placeholder" *ngIf="!photoPreview">
+          <i class="pi pi-camera"></i>
+          <span>Foto de perfil</span>
+        </div>
+         <div class="photo-overlay">
+          <i class="pi pi-upload"></i>
+        </div>
+      </div>
+       <input
+        #photoInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style="display:none"
+        (change)="onFileSelected($event)"/>
+      <p class="photo-hint">JPG, PNG o WebP · Máx. 5 MB</p>
+    </div>
+     <div class="form-row">
+    </div>
+  </form>
   <form [formGroup]="barberForm" class="barber-form">
     <div class="form-row">
       <div class="field">
@@ -339,7 +311,6 @@
       <input pInputText type="password" formControlName="password" placeholder="Mínimo 6 caracteres" class="w-full"/>
     </div>
   </form>
-
   <ng-template pTemplate="footer">
     <button class="btn-outline" (click)="showBarberForm = false">Cancelar</button>
     <button class="btn-primary" (click)="saveBarber()" [disabled]="barberForm.invalid || saving">
@@ -348,11 +319,6 @@
     </button>
   </ng-template>
 </p-dialog>
-
-
-<!-- ════════════════════════════════════════════════════════
-     DIALOG: Cambiar estado
-════════════════════════════════════════════════════════ -->
 <p-dialog
   [(visible)]="showStatusDialog"
   [modal]="true" [draggable]="false" [resizable]="false"
@@ -360,7 +326,6 @@
   header="Cambiar estado"
   styleClass="dark-dialog"
   *ngIf="selectedBarber">
-
   <div class="status-preview">
     <div class="sp-avatar">{{ getInitials(selectedBarber!.fullName) }}</div>
     <div>
@@ -370,7 +335,6 @@
       </span>
     </div>
   </div>
-
   <div class="status-opts">
     <button class="sopt active" (click)="setStatus('active')">
       <i class="pi pi-check-circle"></i> Activo
@@ -382,31 +346,60 @@
       <i class="pi pi-times-circle"></i> Inactivo
     </button>
   </div>
-
   <ng-template pTemplate="footer">
     <button class="btn-outline" (click)="showStatusDialog = false">Cancelar</button>
   </ng-template>
 </p-dialog>
-
-
-<!-- ════════════════════════════════════════════════════════
-     DIALOG: Ver horario (placeholder)
-════════════════════════════════════════════════════════ -->
 <p-dialog
   [(visible)]="showScheduleView"
   [modal]="true" [draggable]="false" [resizable]="false"
-  [style]="{ width: '480px' }"
-  [header]="'Horario — ' + (selectedBarber?.fullName ?? '')"
+  [style]="{ width: '520px', maxWidth: '94vw' }"
+  [header]="'Horario — ' + selectedBarber.fullName"
   styleClass="dark-dialog"
   *ngIf="selectedBarber">
-
-  <div class="schedule-placeholder">
-    <i class="pi pi-calendar"></i>
-    <p>El horario detallado estará disponible próximamente.</p>
-    <small>Configura los horarios desde el módulo de Agenda.</small>
+   <ng-container *ngIf="scheduleLoading">
+    <div style="display:flex;flex-direction:column;gap:.75rem;padding:.25rem 0">
+      <p-skeleton
+        *ngFor="let i of [1,2,3,4,5,6,7]"
+        height="52px"
+        borderRadius="10px">
+      </p-skeleton>
+    </div>
+  </ng-container>
+   <div class="schedule-config" *ngIf="!scheduleLoading">
+    <p class="schedule-desc">
+      Activa los días que trabaja <strong>{{ selectedBarber!.fullName }}</strong>
+      y configura sus horarios de atención.
+    </p>
+    <div class="day-rows">
+      <div
+        class="day-row"
+        *ngFor="let day of daySchedules"
+        [class.inactive]="!day.active">
+         <div class="day-toggle" (click)="toggleDay(day)">
+          <div class="toggle-switch" [class.on]="day.active">
+            <div class="toggle-knob"></div>
+          </div>
+          <span class="day-name">{{ day.label }}</span>
+        </div>
+         <div class="day-hours" *ngIf="day.active">
+          <input type="time" [(ngModel)]="day.startTime" class="time-input"/>
+          <span class="time-sep">—</span>
+          <input type="time" [(ngModel)]="day.endTime"   class="time-input"/>
+        </div>
+        <span class="day-closed-label" *ngIf="!day.active">Cerrado</span>
+      </div>
+    </div>
   </div>
-
   <ng-template pTemplate="footer">
-    <button class="btn-outline" (click)="showScheduleView = false">Cerrar</button>
+    <button class="btn-outline" (click)="showScheduleView = false">Cancelar</button>
+    <button
+      class="btn-primary"
+      (click)="saveSchedules()"
+      [disabled]="scheduleLoading || savingSchedule">
+      <i class="pi pi-spin pi-spinner" *ngIf="savingSchedule"></i>
+      <i class="pi pi-save"            *ngIf="!savingSchedule"></i>
+      {{ savingSchedule ? 'Guardando...' : 'Guardar horarios' }}
+    </button>
   </ng-template>
 </p-dialog>
