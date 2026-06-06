@@ -1,52 +1,110 @@
-$gold:       #C9A84C;
-$gold-light: #E8C96B;
-$gold-dim:   rgba(201, 168, 76, 0.12);
-$text:       #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.45);
-$border-sub: rgba(255, 255, 255, 0.06);
-$dark:       #0D0D14;
+$primary: #111827;
+$primary-hover: #0B1220;
+$primary-soft: rgba(17, 24, 39, 0.08);
+
+$accent: #2563EB;
+$accent-hover: #1D4ED8;
+$accent-soft: rgba(37, 99, 235, 0.10);
+
+$surface: #FFFFFF;
+$surface-soft: #F8FAFC;
+$surface-hover: #F1F5F9;
+
+$border: rgba(15, 23, 42, 0.10);
+$border-strong: rgba(15, 23, 42, 0.16);
+
+$text: #020617;
+$text-muted: #64748B;
+$text-soft: #94A3B8;
+
+$success: #16A34A;
+$success-soft: rgba(22, 163, 74, 0.10);
+
+$warning: #F97316;
+$warning-soft: rgba(249, 115, 22, 0.10);
+
+$danger: #DC2626;
+$danger-soft: rgba(220, 38, 38, 0.10);
 
 :host {
   display: block;
   padding: .5rem 0;
+  color: $text;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
 }
 
-// ── Estados de carga / error ──────────────────────────────────
+/* ─────────────────────────────────────────────
+   Estados: loading / error
+───────────────────────────────────────────── */
+
 .qr-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: .875rem;
+  min-height: 280px;
   padding: 2rem;
   text-align: center;
 
-  p { font-size: .875rem; color: $text-muted; margin: 0; }
+  p {
+    font-size: .9rem;
+    font-weight: 550;
+    color: $text-muted;
+    margin: 0;
+  }
 
-  &.loading { }
-  &.error   { }
+  &.error {
+    p {
+      color: $text;
+      font-weight: 700;
+    }
+  }
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .qr-spinner {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(201,168,76,.2);
-  border-top-color: $gold;
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(37, 99, 235, .12);
+  border-top-color: $accent;
   border-radius: 50%;
   animation: spin .8s linear infinite;
 }
 
 .qr-error-icon {
-  width: 48px; height: 48px;
-  background: rgba(239,68,68,.1);
-  border: 2px solid rgba(239,68,68,.3);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.25rem; font-weight: 700; color: #ef4444;
+  width: 52px;
+  height: 52px;
+  background: $danger-soft;
+  border: 1px solid rgba(220, 38, 38, .20);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: $danger;
+  box-shadow: 0 10px 22px rgba(220, 38, 38, .08);
 }
 
-// ── Contenido QR ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Contenido QR
+───────────────────────────────────────────── */
+
 .qr-content {
   display: flex;
   flex-direction: column;
@@ -54,120 +112,246 @@ $dark:       #0D0D14;
   gap: 1rem;
 }
 
-// ── Canvas ────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   QR Canvas
+───────────────────────────────────────────── */
+
 .qr-canvas-wrap {
   position: relative;
-  padding: 10px;
-  background: #fff;
-  border-radius: 14px;
+  padding: 12px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 20px;
   display: inline-block;
-  box-shadow: 0 0 0 1px rgba(201,168,76,.2),
-              0 8px 24px rgba(0,0,0,.4);
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, .10),
+    0 2px 8px rgba(15, 23, 42, .04);
 
-  canvas { display: block; border-radius: 6px; }
+  canvas {
+    display: block;
+    border-radius: 10px;
+  }
 }
 
 .qr-logo {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
+  width: 38px;
+  height: 38px;
   transform: translate(-50%, -50%);
-  width: 34px; height: 34px;
-  background: $gold;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  border: 3px solid #fff;
-  pointer-events: none;
-}
-
-// ── Timer ─────────────────────────────────────────────────────
-.qr-timer {
+  background: $primary;
+  border: 4px solid $surface;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: .375rem;
-  padding: .375rem .875rem;
-  background: rgba(255,255,255,.04);
-  border: 1px solid $border-sub;
-  border-radius: 999px;
-  font-size: .8125rem;
-  color: $text-muted;
-  transition: all .3s;
+  justify-content: center;
+  font-size: 17px;
+  color: #FFFFFF;
+  pointer-events: none;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .18);
+}
 
-  .pi { font-size: 13px; }
+/* ─────────────────────────────────────────────
+   Timer
+───────────────────────────────────────────── */
+
+.qr-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .95rem;
+  background: $surface-soft;
+  border: 1px solid $border;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: $text-muted;
+  transition:
+    background .2s ease,
+    color .2s ease,
+    border-color .2s ease;
+
+  .pi {
+    font-size: 13px;
+    color: $accent;
+  }
 
   &.expiring {
-    color: #f59e0b;
-    border-color: rgba(245,158,11,.35);
-    background: rgba(245,158,11,.08);
+    color: $warning;
+    border-color: rgba(249, 115, 22, .24);
+    background: $warning-soft;
+
+    .pi {
+      color: $warning;
+    }
   }
 
   &.expired {
-    color: #ef4444;
-    border-color: rgba(239,68,68,.3);
-    background: rgba(239,68,68,.08);
+    color: $danger;
+    border-color: rgba(220, 38, 38, .24);
+    background: $danger-soft;
+
+    .pi {
+      color: $danger;
+    }
   }
 }
 
-// ── URL row ───────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   URL row
+───────────────────────────────────────────── */
+
 .qr-url-row {
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: .55rem;
   width: 100%;
-  max-width: 300px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid $border-sub;
-  border-radius: 8px;
-  padding: .375rem .75rem;
+  max-width: 340px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: .5rem .55rem .5rem .8rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .04);
 }
 
 .qr-url-text {
   flex: 1;
-  font-size: .72rem;
+  min-width: 0;
+  font-size: .78rem;
   color: $text-muted;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* ─────────────────────────────────────────────
+   Botón copiar
+───────────────────────────────────────────── */
+
 .qr-copy-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: .25rem;
-  background: none; border: none;
-  color: $gold; font-size: .75rem; font-weight: 700;
-  cursor: pointer; white-space: nowrap; padding: 0;
+  justify-content: center;
+  gap: .35rem;
+  min-height: 32px;
+  padding: .4rem .75rem;
+  background: $accent-soft;
+  border: 1px solid rgba(37, 99, 235, .16);
+  border-radius: 10px;
+  color: $accent;
+  font-size: .76rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
   flex-shrink: 0;
-  transition: color .15s;
+  transition:
+    background .15s ease,
+    color .15s ease,
+    border-color .15s ease,
+    transform .15s ease;
 
-  .pi { font-size: 12px; }
-  &:hover { color: $gold-light; }
+  .pi {
+    font-size: 12px;
+  }
+
+  &:hover {
+    background: rgba(37, 99, 235, .16);
+    border-color: rgba(37, 99, 235, .24);
+    transform: translateY(-1px);
+  }
+
+  .pi-check {
+    color: $success;
+  }
 }
 
-// ── Instrucción ───────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Instrucción
+───────────────────────────────────────────── */
+
 .qr-instruction {
-  font-size: .78rem;
-  color: $text-muted;
-  text-align: center;
-  max-width: 280px;
+  max-width: 330px;
   margin: 0;
-  line-height: 1.5;
+  padding: .8rem .95rem;
+  background: $surface-soft;
+  border: 1px solid $border;
+  border-radius: 14px;
+  color: $text-muted;
+  font-size: .82rem;
+  font-weight: 550;
+  line-height: 1.45;
+  text-align: center;
 }
 
-// ── Botón retry ───────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   Botón retry
+───────────────────────────────────────────── */
+
 .qr-retry-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: .5rem;
-  padding: .5rem 1.125rem;
-  background: $gold-dim;
-  border: 1px solid rgba(201,168,76,.3);
-  border-radius: 10px;
-  color: $gold;
-  font-size: .875rem; font-weight: 600;
+  min-height: 40px;
+  padding: .62rem 1.15rem;
+  background: $primary;
+  border: none;
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: .86rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background .15s;
+  transition:
+    background .2s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, .12);
 
-  .pi { font-size: 13px; }
-  &:hover { background: rgba(201,168,76,.2); }
+  .pi {
+    font-size: 13px;
+  }
+
+  &:hover {
+    background: $primary-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, .16);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Responsive
+───────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .qr-state {
+    min-height: 240px;
+    padding: 1.5rem 1rem;
+  }
+
+  .qr-content {
+    gap: .875rem;
+  }
+
+  .qr-canvas-wrap {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .qr-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 15px;
+  }
+
+  .qr-url-row {
+    max-width: 100%;
+  }
+
+  .qr-instruction {
+    max-width: 100%;
+    font-size: .78rem;
+  }
 }

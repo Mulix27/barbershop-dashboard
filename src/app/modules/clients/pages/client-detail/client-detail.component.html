@@ -315,7 +315,7 @@
           </div>
           <div class="st-row" *ngFor="let sale of sales">
             <span class="st-date">{{ formatDate(sale.createdAt) }}</span>
-            <span class="st-items">{{ sale.items?.length ?? 0 }} item(s)</span>
+            <span class="st-items">{{ sale.items.length }} item(s)</span>            
             <span class="st-method">
               <i
                 class="pi"
@@ -499,7 +499,7 @@
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '500px' }"
-  [header]="'Fotos del corte — ' + (selectedHaircut?.name ?? '')"
+  [header]="'Fotos del corte — ' + selectedHaircut.name"
   styleClass="dark-dialog"
   *ngIf="selectedHaircut"
 >

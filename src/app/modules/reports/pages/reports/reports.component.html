@@ -1,11 +1,9 @@
 <p-toast position="top-right"></p-toast>
-
 <div class="reports-page">
-  <!-- ── Header ──────────────────────────────────────────── -->
   <div class="page-header">
     <div>
       <h1>
-        {{ isSingleBarber ? "Personal Business Insights" : "Business Reports" }}
+        {{ isSingleBarber ? "Insights Personales" : "Reportes del Negocio" }}
       </h1>
       <p class="header-sub">
         {{
@@ -15,9 +13,7 @@
         }}
       </p>
     </div>
-
     <div class="header-actions">
-      <!-- Selector período -->
       <div class="period-selector">
         <button
           *ngFor="let opt of periodOptions"
@@ -28,22 +24,16 @@
           {{ opt.label }}
         </button>
       </div>
-
-      <!-- Generar informe -->
       <button class="btn-primary" (click)="generateReport()">
         <i class="pi pi-plus"></i>
         Generar Informe
       </button>
     </div>
   </div>
-
-  <!-- Rango de fechas activo -->
   <div class="date-range-badge" *ngIf="!loading && report">
     <i class="pi pi-calendar"></i>
     <span>{{ report.periodLabel }}</span>
   </div>
-
-  <!-- ── Skeletons ──────────────────────────────────────── -->
   <ng-container *ngIf="loading">
     <div class="metrics-grid">
       <p-skeleton
@@ -57,11 +47,7 @@
       <p-skeleton height="320px" borderRadius="14px"></p-skeleton>
     </div>
   </ng-container>
-
   <ng-container *ngIf="!loading && report">
-    <!-- ════════════════════════════════════════════════════
-         MÉTRICAS PRINCIPALES
-    ════════════════════════════════════════════════════ -->
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-icon revenue"><i class="pi pi-dollar"></i></div>
@@ -79,7 +65,6 @@
           </span>
         </div>
       </div>
-
       <div class="metric-card">
         <div class="metric-icon profit"><i class="pi pi-chart-line"></i></div>
         <div class="metric-body">
@@ -88,11 +73,10 @@
           </span>
           <span class="metric-value">{{ formatCurrency(netProfit) }}</span>
           <span class="metric-trend up">
-            <i class="pi pi-arrow-up"></i> Estimado 41%
+            <i class="pi pi-arrow-up"></i> Sin costos aplicados
           </span>
         </div>
       </div>
-
       <div class="metric-card">
         <div class="metric-icon occupancy">
           <i class="pi pi-calendar-clock"></i>
@@ -115,7 +99,6 @@
           </span>
         </div>
       </div>
-
       <div class="metric-card">
         <div class="metric-icon tickets"><i class="pi pi-ticket"></i></div>
         <div class="metric-body">
@@ -139,12 +122,7 @@
         </div>
       </div>
     </div>
-
-    <!-- ════════════════════════════════════════════════════
-         GRÁFICAS PRINCIPALES
-    ════════════════════════════════════════════════════ -->
     <div class="charts-row">
-      <!-- Barras: Rentabilidad por barbero / Por mes (single) -->
       <div class="card chart-card">
         <div class="card-header">
           <h2>
@@ -166,8 +144,6 @@
           </canvas>
         </div>
       </div>
-
-      <!-- Línea: Tendencia ocupación / Revenue vs Expenses -->
       <div class="card chart-card">
         <div class="card-header">
           <h2>
@@ -192,12 +168,7 @@
         </div>
       </div>
     </div>
-
-    <!-- ════════════════════════════════════════════════════
-         TABLAS DE DATOS
-    ════════════════════════════════════════════════════ -->
     <div class="tables-row">
-      <!-- Rendimiento de Servicios -->
       <div class="card table-card">
         <div class="card-header">
           <div class="ch-left">
@@ -211,7 +182,6 @@
             </h2>
           </div>
         </div>
-
         <table class="data-table">
           <thead>
             <tr>
@@ -234,7 +204,7 @@
               </td>
               <td *ngIf="!isSingleBarber">{{ svc.totalQuantity }}</td>
               <td class="gold-td">
-                {{ formatCurrency(svc.totalRevenue * 0.82) }}
+                {{ formatCurrency(svc.totalRevenue) }}
               </td>
               <td>
                 <span class="pct-badge" [class.high]="profitability(svc) > 85">
@@ -254,25 +224,21 @@
                 <strong>{{ totalTopServicesQty }}</strong>
               </td>
               <td class="gold-td">
-                <strong>{{ formatCurrency(totalRevenue * 0.82) }}</strong>
+                <strong>{{ formatCurrency(totalTopServicesRevenue) }}</strong>
               </td>
               <td></td>
             </tr>
           </tbody>
         </table>
-
         <div class="empty-table" *ngIf="topServices.length === 0">
           Sin datos en este período
         </div>
-
         <div class="table-footer">
           <button class="view-all-btn">
             Ver todo <i class="pi pi-arrow-right"></i>
           </button>
         </div>
       </div>
-
-      <!-- Rendimiento de Barberos (multi) / Consumo de Insumos (single) -->
       <div class="card table-card">
         <div class="card-header">
           <div class="ch-left">
@@ -286,8 +252,6 @@
             </h2>
           </div>
         </div>
-
-        <!-- Multi: tabla de barberos -->
         <ng-container *ngIf="!isSingleBarber">
           <table class="data-table">
             <thead>
@@ -354,8 +318,6 @@
             Sin datos en este período
           </div>
         </ng-container>
-
-        <!-- Single: tabla de insumos/productos -->
         <ng-container *ngIf="isSingleBarber">
           <table class="data-table">
             <thead>
@@ -388,12 +350,7 @@
         </ng-container>
       </div>
     </div>
-
-    <!-- ════════════════════════════════════════════════════
-         HORAS PICO + MÉTODOS DE PAGO + INFORMES GUARDADOS
-    ════════════════════════════════════════════════════ -->
     <div class="bottom-row">
-      <!-- Horas pico -->
       <div class="card">
         <div class="card-header">
           <div class="ch-left">
@@ -420,10 +377,7 @@
           </div>
           <div class="empty-sm" *ngIf="peakHours.length === 0">Sin datos</div>
         </div>
-
         <p-divider styleClass="dark-divider"></p-divider>
-
-        <!-- Métodos de pago -->
         <h3 class="sub-title">Métodos de pago</h3>
         <div class="payment-list">
           <div class="payment-item" *ngFor="let p of paymentMethods">
@@ -450,8 +404,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Métricas de citas -->
       <div class="card">
         <div class="card-header">
           <div class="ch-left">
@@ -485,10 +437,7 @@
             <strong>{{ apptMetrics.noShowRate }}%</strong>
           </div>
         </div>
-
         <p-divider styleClass="dark-divider"></p-divider>
-
-        <!-- Clientes -->
         <h3 class="sub-title">Clientes</h3>
         <div class="client-metrics" *ngIf="clientMetrics">
           <div class="cm-item">
@@ -507,8 +456,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Informes guardados -->
       <div class="card">
         <div class="card-header">
           <div class="ch-left">

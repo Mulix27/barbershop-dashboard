@@ -19,7 +19,7 @@
   <!-- Header -->
   <div class="dashboard-header">
     <div>
-      <h1>{{ greeting }}, {{ userName }}! 👋</h1>
+      <h1>{{ greeting }}, {{ userName }}!</h1>
       <p class="header-sub">Aquí está lo que pasa en tu barbería hoy</p>
     </div>
     <button class="btn-primary" (click)="navigateTo('/agenda')">
@@ -99,7 +99,7 @@
           <div class="appt-dot"></div>
           <div class="appt-info">
             <span class="appt-client">{{ appt.clientName }}</span>
-            <span class="appt-service">{{ appt.haircutName ?? appt.serviceNotes ?? 'Servicio no especificado' }}</span>
+            <span class="appt-service">{{ appt.serviceName ?? appt.serviceNotes ?? 'Servicio no especificado' }}</span>
           </div>
           <p-tag
             [value]="statusLabel(appt.status)"

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ChartConfiguration, ChartData } from 'chart.js';
+import { ChartConfiguration, ChartData, ChartOptions } from 'chart.js';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../../core/services/auth.service';
@@ -53,49 +53,78 @@ export class HomeComponent implements OnInit {
 
   // ── Gráfica de ventas (semana) ────────────────────────────
   salesChartData: ChartData<'line'> = { labels: [], datasets: [] };
-  salesChartOptions: ChartConfiguration['options'] = {
+  salesChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: false
+      },
       tooltip: {
-        backgroundColor: '#1E1E2C',
-        borderColor: 'rgba(201,168,76,.3)',
+        enabled: true,
+        backgroundColor: '#111827',
+        titleColor: '#FFFFFF',
+        bodyColor: '#E5E7EB',
+        borderColor: 'rgba(255,255,255,.12)',
         borderWidth: 1,
-        titleColor: '#E8E6DE',
-        bodyColor: '#C9A84C',
+        padding: 10,
+        displayColors: false,
         callbacks: {
-          label: (ctx) => ` $${Number(ctx.raw).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+          label: (ctx) => {
+            const value = Number(ctx.raw || 0);
+            return `Ingresos: ${this.formatCurrency(value)}`;
+          }
         }
       }
     },
     scales: {
       x: {
-        grid: { color: 'rgba(255,255,255,.05)' },
-        ticks: { color: 'rgba(232,230,222,.4)', font: { size: 11 } }
+        ticks: {
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        },
+        grid: {
+          color: 'rgba(15,23,42,.06)',
+          drawTicks: false
+        },
+        border: {
+          color: 'rgba(15,23,42,.14)'
+        }
       },
       y: {
-        grid: { color: 'rgba(255,255,255,.05)' },
+        beginAtZero: true,
+        suggestedMax: 100,
         ticks: {
-          color: 'rgba(232,230,222,.4)',
-          font: { size: 11 },
+          color: '#475569',
+          font: {
+            size: 12,
+            weight: 600
+          },
           callback: (v) => `$${Number(v).toLocaleString('es-MX')}`
+        },
+        grid: {
+          color: 'rgba(15,23,42,.08)',
+          drawTicks: false
+        },
+        border: {
+          color: 'rgba(15,23,42,.14)'
         }
       }
     },
     elements: {
       line: {
-        tension: 0.4,
-        borderColor: '#C9A84C',
-        borderWidth: 2,
-        fill: true,
-        backgroundColor: 'rgba(201,168,76,.08)'
+        tension: 0.38,
+        borderWidth: 3,
+        borderJoinStyle: 'round',
+        borderCapStyle: 'round'
       },
       point: {
-        radius: 3,
-        backgroundColor: '#C9A84C',
-        borderColor: '#C9A84C',
-        hoverRadius: 6
+        radius: 4,
+        hoverRadius: 6,
+        borderWidth: 2
       }
     }
   };
@@ -163,17 +192,39 @@ export class HomeComponent implements OnInit {
 
         // ── Gráfica semanal ───────────────────────────────
         if (weekReport.success && weekReport.data) {
-          const days = weekReport.data.salesByDay ?? [];
+          const days: SalesByDay[] = weekReport.data.salesByDay ?? [];
           const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+          const chartDays: SalesByDay[] = days.length
+            ? days
+            : [
+              { period: '2026-06-01', totalSales: 0, revenue: 0 },
+              { period: '2026-06-02', totalSales: 0, revenue: 0 },
+              { period: '2026-06-03', totalSales: 0, revenue: 0 },
+              { period: '2026-06-04', totalSales: 0, revenue: 0 },
+              { period: '2026-06-05', totalSales: 0, revenue: 0 },
+              { period: '2026-06-06', totalSales: 0, revenue: 0 },
+              { period: '2026-06-07', totalSales: 0, revenue: 0 }
+            ];
+
           this.salesChartData = {
-            labels: days.map(d => {
+            labels: chartDays.map(d => {
               const date = new Date(d.period + 'T12:00:00');
               return DAY_NAMES[date.getDay()];
             }),
-            datasets: [{
-              data: days.map(d => Number(d.revenue)),
-              label: 'Ingresos'
-            }]
+            datasets: [
+              {
+                data: chartDays.map(d => Number(d.revenue)),
+                label: 'Ingresos',
+                borderColor: '#2563EB',
+                backgroundColor: 'rgba(37,99,235,.12)',
+                pointBackgroundColor: '#2563EB',
+                pointBorderColor: '#FFFFFF',
+                pointHoverBackgroundColor: '#1D4ED8',
+                pointHoverBorderColor: '#FFFFFF',
+                fill: true
+              }
+            ]
           };
         }
 
@@ -199,25 +250,25 @@ export class HomeComponent implements OnInit {
   }
 
   statusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
-  switch (status) {
-    case 'confirmed':
-    case 'completed':
-      return 'success';
+    switch (status) {
+      case 'confirmed':
+      case 'completed':
+        return 'success';
 
-    case 'pending':
-      return 'warning';
+      case 'pending':
+        return 'warning';
 
-    case 'cancelled':
-    case 'no_show':
-      return 'danger';
+      case 'cancelled':
+      case 'no_show':
+        return 'danger';
 
-    case 'in_progress':
-      return 'info';
+      case 'in_progress':
+        return 'info';
 
-    default:
-      return 'secondary';
+      default:
+        return 'secondary';
+    }
   }
-}
 
   statusLabel(status: string): string {
     const map: Record<string, string> = {

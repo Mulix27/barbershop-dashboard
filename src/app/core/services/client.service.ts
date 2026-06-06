@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { ApiResponse } from '../models/auth.model';
 import { Client, ClientHaircut, HaircutPhoto } from '../models/client.model';
 import { environment } from '../../../environments/environment';
@@ -13,32 +12,12 @@ export class ClientService {
 
   constructor(private http: HttpClient) {}
 
-  // El backend retorna Client[] directamente — lo mapeamos a ApiResponse
   getAll(): Observable<ApiResponse<Client[]>> {
-    return this.http.get<any>(`${API}/api/clients`).pipe(
-      map(res => {
-        // Detectar si ya viene con wrapper o como array directo
-        if (res && 'success' in res) return res as ApiResponse<Client[]>;
-        return {
-          success: true, message: 'OK',
-          data: Array.isArray(res) ? res : [],
-          timestamp: new Date().toISOString()
-        } as ApiResponse<Client[]>;
-      })
-    );
+    return this.http.get<ApiResponse<Client[]>>(`${API}/api/clients`);
   }
 
   getById(id: string): Observable<ApiResponse<Client>> {
-    return this.http.get<any>(`${API}/api/clients/${id}`).pipe(
-      map(res => {
-        if (res && 'success' in res) return res as ApiResponse<Client>;
-        return {
-          success: true, message: 'OK',
-          data: res as Client,
-          timestamp: new Date().toISOString()
-        } as ApiResponse<Client>;
-      })
-    );
+    return this.http.get<ApiResponse<Client>>(`${API}/api/clients/${id}`);
   }
 
   getByPhone(phone: string): Observable<ApiResponse<Client>> {

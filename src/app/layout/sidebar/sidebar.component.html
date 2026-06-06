@@ -1,19 +1,14 @@
 <aside class="sidebar" [class.collapsed]="collapsed && !isMobile">
-
-  <!-- Logo de la barbería -->
   <div class="sidebar-logo">
     <div class="logo-mark" [class.has-logo]="barbershopLogoUrl">
       <img *ngIf="barbershopLogoUrl" [src]="barbershopLogoUrl" [alt]="barbershopName"/>
       <i *ngIf="!barbershopLogoUrl" class="pi pi-tag"></i>
     </div>
-    <!-- ✅ Mostrar texto si: no collapsed, O si estamos en móvil -->
     <div class="logo-text" *ngIf="!collapsed || isMobile">
       <span class="shop-name">{{ barbershopName }}</span>
       <span class="shop-label">BARBER SHOP</span>
     </div>
   </div>
-
-  <!-- Navegación -->
   <nav class="sidebar-nav">
     <a
       *ngFor="let item of visibleItems"
@@ -26,15 +21,10 @@
       tooltipStyleClass="sidebar-tooltip"
     >
       <i class="pi {{ item.icon }}"></i>
-      <!-- ✅ Mostrar label si: no collapsed, O si estamos en móvil -->
       <span class="nav-label" *ngIf="!collapsed || isMobile">{{ item.label }}</span>
     </a>
   </nav>
-
-  <!-- Footer: usuario + logout -->
   <div class="sidebar-footer">
-
-    <!-- ✅ Mostrar info completa si: no collapsed, O si estamos en móvil -->
     <div class="user-info" *ngIf="!collapsed || isMobile">
       <div class="user-avatar">{{ userInitials }}</div>
       <div class="user-meta">
@@ -42,8 +32,6 @@
         <span class="user-role">{{ userRole }}</span>
       </div>
     </div>
-
-    <!-- Avatar solo — solo en desktop collapsed -->
     <div
       class="user-avatar solo"
       *ngIf="collapsed && !isMobile"
@@ -52,10 +40,7 @@
     >
       {{ userInitials }}
     </div>
-
     <div class="footer-divider"></div>
-
-    <!-- Botón cerrar sesión -->
     <button
       class="logout-btn"
       (click)="logout()"
@@ -63,9 +48,7 @@
       tooltipPosition="right"
     >
       <i class="pi pi-sign-out"></i>
-      <!-- ✅ Mostrar texto si: no collapsed, O si estamos en móvil -->
       <span *ngIf="!collapsed || isMobile">Cerrar sesión</span>
     </button>
-
   </div>
 </aside>

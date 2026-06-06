@@ -8,6 +8,11 @@ export interface Appointment {
   assignedToId?: string;
   haircutName?: string;
   serviceNotes?: string;
+  serviceCategoryId?: string;
+  serviceVariantId?: string;
+  serviceName?: string;
+  servicePrice?: number;
+  serviceDurationMin?: number;
   appointmentDate: string;
   startTime: string;
   endTime: string;
@@ -17,13 +22,13 @@ export interface Appointment {
   createdAt: string;
   saleId?: string;
 }
- 
+
 export interface TimeSlot {
   startTime: string;
   endTime: string;
   available: boolean;
 }
- 
+
 export interface DayAvailability {
   date: string;
   dayName: string;

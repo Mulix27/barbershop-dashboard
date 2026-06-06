@@ -1,9 +1,22 @@
-$gold:       #C9A84C;
-$gold-dim:   rgba(201, 168, 76, 0.12);
-$surface:    #13131E;
-$border:     rgba(201, 168, 76, 0.12);
-$text:       #E8E6DE;
-$text-muted: rgba(232, 230, 222, 0.45);
+$primary: #111827;
+$primary-hover: #0B1220;
+$primary-soft: rgba(17, 24, 39, 0.08);
+
+$accent: #2563EB;
+$accent-hover: #1D4ED8;
+$accent-light: #60A5FA;
+$accent-soft: rgba(37, 99, 235, 0.10);
+
+$surface: #FFFFFF;
+$surface-soft: #F8FAFC;
+$surface-hover: #F3F4F6;
+
+$border: rgba(15, 23, 42, 0.08);
+$border-strong: rgba(15, 23, 42, 0.14);
+
+$text: #020617;
+$text-muted: #64748B;
+$text-soft: #94A3B8;
 
 .topbar {
   position: sticky;
@@ -14,77 +27,163 @@ $text-muted: rgba(232, 230, 222, 0.45);
   align-items: center;
   gap: 1rem;
   padding: 0 1.5rem;
-  background: $surface;
+  background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid $border;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 28px rgba(15, 23, 42, 0.035);
 }
 
-// ── Hamburguesa ───────────────────────────────────────────────
 .toggle-btn {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
+  background: $surface;
   border: 1px solid $border;
-  border-radius: 8px;
+  border-radius: 12px;
   color: $text-muted;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition:
+    background .15s ease,
+    color .15s ease,
+    border-color .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
   flex-shrink: 0;
 
-  .pi { font-size: 14px; }
+  .pi {
+    font-size: 14px;
+  }
 
   &:hover {
-    background: $gold-dim;
-    color: $gold;
-    border-color: rgba(201, 168, 76, 0.3);
+    background: $accent-soft;
+    color: $accent;
+    border-color: rgba(37, 99, 235, 0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
   }
 }
 
-// ── Saludo ────────────────────────────────────────────────────
 .topbar-greeting {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 
   h2 {
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 800;
     color: $text;
-    line-height: 1.2;
+    line-height: 1.15;
     margin: 0;
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 .topbar-date {
   font-size: .75rem;
   color: $text-muted;
+  font-weight: 500;
   text-transform: capitalize;
-  margin-top: 2px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-// ── Spacer ────────────────────────────────────────────────────
-.topbar-spacer { flex: 1; }
+.topbar-spacer {
+  flex: 1;
+}
 
-// ── Badge barbería ────────────────────────────────────────────
 .shop-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: .5rem;
-  padding: .375rem .875rem;
-  background: $gold-dim;
-  border: 1px solid rgba(201, 168, 76, 0.25);
+  max-width: 260px;
+  padding: .45rem .9rem;
+  background: $primary;
+  border: 1px solid $primary;
   border-radius: 999px;
-  color: $gold;
+  color: #FFFFFF;
   font-size: .8125rem;
-  font-weight: 600;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
 
-  .pi { font-size: 13px; }
+  .pi {
+    font-size: 13px;
+    flex-shrink: 0;
+    color: #FFFFFF;
+  }
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &:hover {
+    background: $primary-hover;
+    border-color: $primary-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.16);
+  }
 }
 
-// ── Responsive ────────────────────────────────────────────────
-@media (max-width: 640px) {
-  .topbar-greeting h2 { font-size: .875rem; }
-  .shop-badge span { display: none; }
+@media (max-width: 768px) {
+  .topbar {
+    height: 68px;
+    padding: 0 1rem;
+    gap: .75rem;
+  }
+
+  .toggle-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .topbar-greeting {
+    flex: 1;
+  }
+
+  .topbar-greeting h2 {
+    font-size: .95rem;
+  }
+
+  .shop-badge {
+    padding: .45rem;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    border-radius: 12px;
+
+    span {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    padding: 0 .875rem;
+  }
+
+  .topbar-greeting h2 {
+    font-size: .88rem;
+  }
+
+  .topbar-date {
+    font-size: .7rem;
+  }
 }
