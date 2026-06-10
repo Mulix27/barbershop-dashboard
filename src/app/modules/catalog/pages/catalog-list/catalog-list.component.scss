@@ -660,7 +660,7 @@ $pink-soft: rgba(190, 71, 120, 0.10);
 /* ── Tabla ─────────────────────────────────────────────────── */
 
 :host ::ng-deep .dark-table {
-  .p-datatable-thead > tr > th {
+  .p-datatable-thead>tr>th {
     background: $surface-soft !important;
     border-color: $border !important;
     color: $text-muted !important;
@@ -671,7 +671,7 @@ $pink-soft: rgba(190, 71, 120, 0.10);
     padding: .7rem .875rem !important;
   }
 
-  .p-datatable-tbody > tr {
+  .p-datatable-tbody>tr {
     background: $surface !important;
     border-color: $border !important;
 
@@ -679,7 +679,7 @@ $pink-soft: rgba(190, 71, 120, 0.10);
       background: $surface-hover !important;
     }
 
-    > td {
+    >td {
       border-color: $border !important;
       color: $text !important;
       font-size: .875rem !important;
@@ -1256,6 +1256,7 @@ $pink-soft: rgba(190, 71, 120, 0.10);
   }
 
   &.danger {
+
     &:hover,
     &.active {
       background: $danger-soft;
@@ -1493,14 +1494,19 @@ $pink-soft: rgba(190, 71, 120, 0.10);
 
 @media (max-width: 768px) {
   :host {
-    margin: -1rem;
+    margin: 0;
     padding: 1rem;
+    min-height: auto;
+  }
+
+  .catalog-page {
+    padding-top: .25rem;
   }
 }
 
 @media (max-width: 480px) {
   :host {
-    margin: -.875rem;
+    margin: 0;
     padding: .875rem;
   }
 
@@ -1514,7 +1520,13 @@ $pink-soft: rgba(190, 71, 120, 0.10);
 
     h1 {
       font-size: 1.25rem;
+      line-height: 1.15;
+      margin-top: 0;
     }
+  }
+
+  .header-sub {
+    font-size: .88rem;
   }
 
   .header-actions {
@@ -1534,8 +1546,8 @@ $pink-soft: rgba(190, 71, 120, 0.10);
     padding: .55rem .5rem;
   }
 
-  .page-header > div + .btn-primary,
-  .header-actions > .btn-primary {
+  .page-header>div+.btn-primary,
+  .header-actions>.btn-primary {
     width: 100%;
     justify-content: center;
   }
@@ -1681,4 +1693,165 @@ $pink-soft: rgba(190, 71, 120, 0.10);
   .product-image {
     height: 120px;
   }
+}
+
+@media (max-width: 480px) {
+  .categories-grid {
+    grid-template-columns: 1fr !important;
+    gap: .875rem;
+  }
+
+  .category-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .cat-header {
+    position: relative;
+    padding: 1rem;
+    min-height: 76px;
+    align-items: flex-start;
+    gap: .75rem;
+  }
+
+  .cat-icon-name {
+    width: 100%;
+    min-width: 0;
+    padding-right: 86px;
+    align-items: flex-start;
+  }
+
+  .cat-title-wrap {
+    min-width: 0;
+    padding-top: .15rem;
+  }
+
+  .cat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .cat-name {
+    font-size: 1rem;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    margin-bottom: 0;
+  }
+
+  .cat-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    gap: .35rem;
+  }
+
+  .card-action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+
+    .pi {
+      font-size: 13px;
+    }
+  }
+
+  .cat-fixed-price {
+    padding: 1rem;
+  }
+
+  .fixed-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+
+  .fixed-price {
+    font-size: 1.65rem;
+    line-height: 1;
+  }
+
+  .fixed-duration {
+    font-size: .86rem;
+    white-space: nowrap;
+  }
+
+  .cat-footer {
+    padding: .75rem 1rem;
+    gap: .5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cat-footer-left {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-wrap: wrap;
+  }
+
+  .cat-status,
+  .cat-variants-count,
+  .cat-mode-badge {
+    white-space: nowrap;
+  }
+
+  .cat-mode-badge {
+    position: static !important;
+    width: fit-content;
+    max-width: 100%;
+    font-size: .68rem;
+    padding: 4px 9px;
+    line-height: 1.1;
+  }
+
+  .cat-variants {
+    padding: .85rem 1rem;
+  }
+
+  .variant-row {
+    align-items: flex-start;
+    gap: .5rem;
+  }
+
+  .variant-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .variant-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .metric-card {
+    min-height: 86px;
+  }
+}
+
+.cat-title-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cat-footer-left {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }

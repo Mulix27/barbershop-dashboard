@@ -1,12 +1,9 @@
 <div class="booking-page">
-
   <div class="booking-card" *ngIf="!isLoading">
-
     <ng-container *ngIf="barbershop as shop">
-
       <header class="booking-brand">
         <div class="brand-logo" [class.has-logo]="shop.logoUrl">
-          <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name">
+          <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
           <i *ngIf="!shop.logoUrl" class="pi pi-scissors"></i>
         </div>
 
@@ -34,9 +31,7 @@
             <div class="service-info">
               <strong>{{ service.displayName }}</strong>
 
-              <span class="duration-pill">
-                {{ service.durationMin }} min
-              </span>
+              <span class="duration-pill"> {{ service.durationMin }} min </span>
 
               <p>
                 {{ service.description || service.displayName }}
@@ -51,9 +46,7 @@
 
       <!-- Paso 2: calendario + horarios -->
       <section class="step-section" *ngIf="currentStep === 2">
-
         <ng-container *ngIf="selectedService as service">
-
           <button class="back-link" (click)="goBack()">
             <i class="pi pi-arrow-left"></i>
             <span>{{ service.displayName }}</span>
@@ -66,7 +59,6 @@
           <div class="divider"></div>
 
           <div class="booking-grid">
-
             <div class="calendar-panel">
               <div class="calendar-header">
                 <h3>{{ monthLabel | titlecase }}</h3>
@@ -114,37 +106,32 @@
 
               <div class="slots-list" *ngIf="availableSlots.length > 0">
                 <button
-                    type="button"
-                    class="slot-btn"
-                    *ngFor="let slot of availableSlots"
-                    [disabled]="!slot.available"
-                    [class.selected]="selectedSlot?.startTime === slot.startTime"
-                    (click)="selectSlot(slot)"
+                  type="button"
+                  class="slot-btn"
+                  *ngFor="let slot of availableSlots"
+                  [disabled]="!slot.available"
+                  [class.selected]="selectedSlot?.startTime === slot.startTime"
+                  (click)="selectSlot(slot)"
                 >
-                    <span class="slot-dot"></span>
-                    {{ formatTime(slot.startTime) }}
+                  <span class="slot-dot"></span>
+                  {{ formatTime(slot.startTime) }}
                 </button>
-                </div>
+              </div>
 
-                <div class="no-slots" *ngIf="availableSlots.length === 0">
+              <div class="no-slots" *ngIf="availableSlots.length === 0">
                 <i class="pi pi-clock"></i>
                 <strong>No hay horarios disponibles</strong>
                 <span>Selecciona otra fecha para reservar tu cita.</span>
-                </div>
+              </div>
             </div>
-
           </div>
-
         </ng-container>
-
       </section>
 
       <!-- Paso 3: datos -->
       <section class="step-section" *ngIf="currentStep === 3">
-
         <ng-container *ngIf="selectedService as service">
           <ng-container *ngIf="selectedSlot as slot">
-
             <button class="back-link" (click)="goBack()">
               <i class="pi pi-arrow-left"></i>
               <span>Finaliza tu reserva</span>
@@ -163,17 +150,15 @@
 
               <div class="summary-row">
                 <i class="pi pi-calendar"></i>
-                <span>{{ finalDateLabel }} {{ formatTime(slot.startTime) }}</span>
+                <span
+                  >{{ finalDateLabel }} {{ formatTime(slot.startTime) }}</span
+                >
               </div>
             </div>
 
             <label class="form-field">
               ¿Cuál es tu nombre?
-              <input
-                type="text"
-                [(ngModel)]="clientName"
-                autocomplete="name"
-              >
+              <input type="text" [(ngModel)]="clientName" autocomplete="name" />
             </label>
 
             <label class="form-field">
@@ -186,11 +171,15 @@
                 </div>
 
                 <input
-                  type="tel"
-                  [(ngModel)]="clientPhone"
+                  type="text"
+                  [value]="clientPhone"
+                  (input)="onPhoneInput($event)"
+                  (keydown)="blockNonNumericKeys($event)"
                   placeholder="Escribe tu número de WhatsApp"
-                  autocomplete="tel"
-                >
+                  autocomplete="tel-national"
+                  inputmode="numeric"
+                  maxlength="10"
+                />
               </div>
             </label>
 
@@ -204,20 +193,19 @@
 
             <button
               class="reserve-btn"
-              [disabled]="isSaving"
+              [disabled]="
+                isSaving || !clientName.trim() || clientPhone.length !== 10
+              "
               (click)="confirmBooking()"
             >
-              {{ isSaving ? 'Reservando...' : 'Reservar' }}
+              {{ isSaving ? "Reservando..." : "Reservar" }}
             </button>
-
           </ng-container>
         </ng-container>
-
       </section>
 
       <!-- Paso 4: confirmación -->
       <section class="success-section" *ngIf="currentStep === 4">
-
         <div class="success-icon">
           <i class="pi pi-check"></i>
         </div>
@@ -225,7 +213,8 @@
         <h2>¡Reserva confirmada!</h2>
 
         <p>
-          Te esperamos en <strong>{{ shop.name }}</strong>.
+          Te esperamos en <strong>{{ shop.name }}</strong
+          >.
         </p>
 
         <ng-container *ngIf="selectedSlot as slot">
@@ -233,19 +222,16 @@
             Tu cita quedó para el
             <strong>{{ finalDateLabel }}</strong>
             a las
-            <strong>{{ formatTime(slot.startTime) }}</strong>.
+            <strong>{{ formatTime(slot.startTime) }}</strong
+            >.
           </p>
         </ng-container>
-
       </section>
-
     </ng-container>
-
   </div>
 
   <div class="loading-state" *ngIf="isLoading">
     <div class="spinner"></div>
     <p>Cargando reservas...</p>
   </div>
-
 </div>

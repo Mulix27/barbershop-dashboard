@@ -335,19 +335,8 @@
                 <div class="cat-icon">
                   <i class="pi {{ cat.icon || 'pi-scissors' }}"></i>
                 </div>
-                <div>
+                <div class="cat-title-wrap">
                   <span class="cat-name">{{ cat.name }}</span>
-                  <span
-                    class="cat-mode-badge"
-                    [class.fixed]="cat.pricingMode === 'fixed'"
-                    [class.variants]="cat.pricingMode === 'variants'"
-                  >
-                    {{
-                      cat.pricingMode === "fixed"
-                        ? "Precio fijo"
-                        : "Por variantes"
-                    }}
-                  </span>
                 </div>
               </div>
               <div class="cat-actions">
@@ -411,19 +400,36 @@
 
             <!-- Footer con total de variantes y estado -->
             <div class="cat-footer">
-              <span
-                class="cat-variants-count"
-                *ngIf="cat.pricingMode === 'variants'"
-              >
-                {{ activeVariants(cat) }} variantes activas
-              </span>
-              <span
-                class="cat-status"
-                [class.active]="cat.isActive"
-                [class.inactive-status]="!cat.isActive"
-              >
-                {{ cat.isActive ? "Activo" : "Inactivo" }}
-              </span>
+              <div class="cat-footer">
+                <div class="cat-footer-left">
+                  <span
+                    class="cat-status"
+                    [class.active]="cat.isActive"
+                    [class.inactive-status]="!cat.isActive"
+                  >
+                    {{ cat.isActive ? "Activo" : "Inactivo" }}
+                  </span>
+
+                  <span
+                    class="cat-mode-badge"
+                    [class.fixed]="cat.pricingMode === 'fixed'"
+                    [class.variants]="cat.pricingMode === 'variants'"
+                  >
+                    {{
+                      cat.pricingMode === "fixed"
+                        ? "Precio fijo"
+                        : "Por variantes"
+                    }}
+                  </span>
+                </div>
+
+                <span
+                  class="cat-variants-count"
+                  *ngIf="cat.pricingMode === 'variants'"
+                >
+                  {{ activeVariants(cat) }} variantes activas
+                </span>
+              </div>
             </div>
           </div>
 
