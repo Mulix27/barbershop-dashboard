@@ -132,7 +132,7 @@ $danger: #DC2626;
     background: #FAFAFA;
   }
 
-  > .pi {
+  >.pi {
     color: $text-soft;
     font-size: .9rem;
   }
@@ -688,4 +688,12 @@ $danger: #DC2626;
     font-weight: 550;
     line-height: 1.4;
   }
+}
+
+.phone-hint {
+  display: block;
+  margin-top: .35rem;
+  color: #64748B;
+  font-size: .82rem;
+  font-weight: 600;
 }

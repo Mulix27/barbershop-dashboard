@@ -412,28 +412,31 @@ $danger: #E06A6A;
 
   .sidebar {
     width: 250px !important;
-    transform: translateX(-100%);
-    box-shadow:
-      8px 0 34px rgba(0, 0, 0, .62),
-      inset -1px 0 0 rgba(255, 255, 255, .04);
+    transform: translateX(-115%);
+    border-right: none;
+    box-shadow: none;
   }
 
   :host-context(.mobile-open) .sidebar {
     transform: translateX(0);
+    border-right: 1px solid $border;
+    box-shadow:
+      14px 0 40px rgba(15, 23, 42, .28),
+      inset -1px 0 0 rgba(255, 255, 255, .04);
+  }
 
-    .sidebar-logo {
-      min-height: 128px;
-      padding: 1.15rem 1.1rem;
-    }
+  :host-context(.mobile-open) .sidebar .sidebar-logo {
+    min-height: 128px;
+    padding: 1.15rem 1.1rem;
+  }
 
-    .logo-mark {
-      width: 100px;
-      height: 100px;
-      border-radius: 16px;
+  :host-context(.mobile-open) .sidebar .logo-mark {
+    width: 100px;
+    height: 100px;
+    border-radius: 16px;
 
-      img {
-        transform: scale(1.08);
-      }
+    img {
+      transform: scale(1.08);
     }
   }
 

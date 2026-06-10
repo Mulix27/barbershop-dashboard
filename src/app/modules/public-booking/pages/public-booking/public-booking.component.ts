@@ -98,23 +98,23 @@ export class PublicBookingComponent implements OnInit {
   }
 
   loadAvailability(): void {
-  if (!this.selectedService) {
-    return;
+    if (!this.selectedService) {
+      return;
+    }
+
+    this.errorMessage = '';
+
+    this.publicBookingService
+      .getAvailability(this.barbershopId, this.selectedDate, this.selectedService)
+      .subscribe({
+        next: slots => {
+          this.availableSlots = this.removePastSlots(slots);
+        },
+        error: () => {
+          this.errorMessage = 'No pudimos cargar los horarios disponibles.';
+        }
+      });
   }
-
-  this.errorMessage = '';
-
-  this.publicBookingService
-    .getAvailability(this.barbershopId, this.selectedDate, this.selectedService)
-    .subscribe({
-      next: slots => {
-        this.availableSlots = this.removePastSlots(slots);
-      },
-      error: () => {
-        this.errorMessage = 'No pudimos cargar los horarios disponibles.';
-      }
-    });
-}
 
   selectDate(date: string): void {
     this.selectedDate = date;
@@ -146,14 +146,21 @@ export class PublicBookingComponent implements OnInit {
       return;
     }
 
-    if (!this.clientPhone.trim()) {
+    const phone = this.clientPhone.replace(/\D/g, '');
+
+    if (!phone) {
       this.errorMessage = 'Ingresa tu número de WhatsApp.';
+      return;
+    }
+
+    if (phone.length !== 10) {
+      this.errorMessage = 'Ingresa un número de WhatsApp válido de 10 dígitos.';
       return;
     }
 
     const request: PublicBookingRequest = {
       clientName: this.clientName.trim(),
-      clientPhone: this.clientPhone.trim(),
+      clientPhone: phone,
       clientNotes: this.clientNotes.trim(),
       serviceCategoryId: this.selectedService.serviceCategoryId,
       serviceVariantId: this.selectedService.serviceVariantId,
@@ -323,6 +330,37 @@ export class PublicBookingComponent implements OnInit {
       minute: '2-digit',
       hour12: true
     });
+  }
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    const cleanValue = input.value
+      .replace(/\D/g, '')
+      .slice(0, 10);
+
+    input.value = cleanValue;
+    this.clientPhone = cleanValue;
+  }
+
+  blockNonNumericKeys(event: KeyboardEvent): void {
+    const allowedKeys = [
+      'Backspace',
+      'Delete',
+      'Tab',
+      'ArrowLeft',
+      'ArrowRight',
+      'Home',
+      'End'
+    ];
+
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   }
 
   private getTodayDate(): string {
