@@ -7,12 +7,13 @@ export interface SaleItem {
   quantity: number;
   total?: number;
 }
- 
+
 export interface Sale {
   id: string;
   clientId?: string;
   clientName: string;
   attendedBy?: string;
+  attendedByUser?: string;
   paymentMethod: string;
   subtotal: number;
   discount: number;
@@ -20,8 +21,10 @@ export interface Sale {
   status: string;
   items: SaleItem[];
   createdAt: string;
+  origin?: 'appointment' | 'pos';
+  notes?: string | null;
 }
- 
+
 export interface SaleRequest {
   clientId?: string;
   attendedByUserId?: string;

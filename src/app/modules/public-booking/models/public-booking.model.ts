@@ -7,11 +7,26 @@ export interface ApiResponse<T> {
 export interface PublicBarbershop {
   id: string;
   name: string;
-  slug?: string;
-  logoUrl?: string;
-  city?: string;
-  address?: string;
-  primaryColor?: string;
+  slug?: string | null;
+  logoUrl?: string | null;
+  coverImageUrl?: string | null;
+  description?: string | null;
+  phone?: string | null;
+  whatsappPhone?: string | null;
+  email?: string | null;
+  contactEmail?: string | null;
+  address?: string | null;
+  addressLine?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  bookingPolicy?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  primaryColor?: string | null;
+  singleBarber: boolean;
 }
 
 export interface PublicServiceOption {

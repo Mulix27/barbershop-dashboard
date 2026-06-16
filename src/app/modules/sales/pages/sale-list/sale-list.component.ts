@@ -393,7 +393,8 @@ export class SalesListComponent implements OnInit {
     const labels: Record<string, string> = {
       cash: 'Efectivo',
       card: 'Tarjeta',
-      transfer: 'Transferencia'
+      transfer: 'Transferencia',
+      other: 'Otro'
     };
 
     return labels[method] ?? method;
@@ -441,5 +442,68 @@ export class SalesListComponent implements OnInit {
 
   navigateToNew(): void {
     this.router.navigate(['/sales/new']);
+  }
+
+  get recentSales(): Sale[] {
+    return this.sales.slice(0, 12);
+  }
+
+  saleBarberName(sale: Sale): string {
+    return sale.attendedBy || sale.attendedByUser || 'No asignado';
+  }
+
+  saleOriginLabel(sale: Sale): string {
+    if (sale.origin === 'appointment') {
+      return 'Cita';
+    }
+
+    if (sale.origin === 'pos') {
+      return 'Punto de venta';
+    }
+
+    if (sale.notes?.toLowerCase().includes('auto-generada')) {
+      return 'Cita';
+    }
+
+    return 'Punto de venta';
+  }
+
+  isAppointmentSale(sale: Sale): boolean {
+    return this.saleOriginLabel(sale) === 'Cita';
+  }
+
+  saleItemsSummary(sale: Sale): string {
+    if (!sale.items || sale.items.length === 0) {
+      return 'Sin conceptos';
+    }
+
+    const names = sale.items
+      .slice(0, 2)
+      .map(item => item.itemName || (item.itemType === 'service' ? 'Servicio' : 'Producto'));
+
+    const extra = sale.items.length > 2 ? ` +${sale.items.length - 2}` : '';
+
+    return `${names.join(', ')}${extra}`;
+  }
+
+  paymentIcon(method: string): string {
+    const icons: Record<string, string> = {
+      cash: 'pi-money-bill',
+      card: 'pi-credit-card',
+      transfer: 'pi-send',
+      other: 'pi-ellipsis-h'
+    };
+
+    return icons[method] ?? 'pi-wallet';
+  }
+
+  formatDateTime(date: string): string {
+    return new Date(date).toLocaleString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }

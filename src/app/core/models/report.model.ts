@@ -40,4 +40,16 @@ export interface FullReport {
   salesByDayOfWeek: { dayName: string; totalSales: number; revenue: number }[];
   appointmentMetrics: AppointmentMetrics;
   peakHours: { hour: number; label: string; totalAppointments: number }[];
+  recentSales: RecentSale[];
+}
+
+export interface RecentSale {
+  saleId: string;
+  clientName: string;
+  barberName: string;
+  itemSummary: string;
+  paymentMethod: string;
+  total: number;
+  createdAt: string;
+  origin: 'appointment' | 'pos';
 }
