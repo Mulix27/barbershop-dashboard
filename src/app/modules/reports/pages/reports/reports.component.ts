@@ -1,10 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { ChartData, ChartOptions } from 'chart.js'; import { MessageService } from 'primeng/api';
+import { ChartData, ChartOptions } from 'chart.js';
+import { MessageService } from 'primeng/api';
 
 import { PdfReportRequest, ReportService } from '../../../../core/services/report.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { FullReport, TopService, BarberPerformance, AppointmentMetrics, SalesSummary } from 'src/app/core/models/report.model';
+import {
+  AppointmentMetrics,
+  BarberPerformance,
+  FullReport,
+  SalesSummary,
+  TopService,
+  RecentSale
+} from 'src/app/core/models/report.model';
 
+type ReportPeriod = 'today' | 'week' | 'month' | 'custom';
 
 interface SavedReport {
   id?: string;
@@ -24,45 +33,46 @@ interface SavedReport {
 })
 export class ReportsComponent implements OnInit {
 
-  // ── Estado ────────────────────────────────────────────────
   loading = true;
   isSingleBarber = false;
   userName = '';
 
-  // ── Período ───────────────────────────────────────────────
-  periodOptions = [
+  periodOptions: { label: string; value: ReportPeriod }[] = [
     { label: 'Hoy', value: 'today' },
     { label: 'Esta semana', value: 'week' },
     { label: 'Este mes', value: 'month' }
   ];
-  selectedPeriod = 'month';
+
+  selectedPeriod: ReportPeriod = 'month';
   customFrom: Date | null = null;
   customTo: Date | null = null;
   showDatePicker = false;
   generatingPdf = false;
-  downloadingId: string | null = null
+  downloadingId: string | null = null;
+
   readonly periodMap: Record<string, PdfReportRequest['period']> = {
     today: 'today',
     week: 'week',
-    month: 'month'
+    month: 'month',
+    custom: 'custom'
   };
 
-  // ── Datos ──────────────────────────────────────────────────
   report: FullReport | null = null;
 
-  savedReports: SavedReport[] = [
-    { name: 'Informe Financiero', type: 'Financiero', date: new Date().toLocaleDateString('es-MX'), format: 'PDF' },
-    { name: 'Rendimiento de Barberos', type: 'Rendimiento', date: new Date().toLocaleDateString('es-MX'), format: 'Excel' },
-    { name: 'Resumen de Servicios', type: 'Servicios', date: new Date().toLocaleDateString('es-MX'), format: 'PDF' },
-    { name: 'Análisis de Rentabilidad', type: 'Financiero', date: new Date().toLocaleDateString('es-MX'), format: 'PDF' },
-    { name: 'Consumo de Insumos', type: 'Inventario', date: new Date().toLocaleDateString('es-MX'), format: 'Excel' },
-  ];
-  // ════════════════════════════════════════════════════════
-  //  GRÁFICAS
-  // ════════════════════════════════════════════════════════
+  savedReports: SavedReport[] = [];
 
-  // Barras: Rentabilidad por barbero
+  private readonly chartColors = [
+    '#2563EB',
+    '#7C3AED',
+    '#16A34A',
+    '#BE4778',
+    '#F97316',
+    '#64748B'
+  ];
+
   barberBarData: ChartData<'bar'> = { labels: [], datasets: [] };
+  occupancyLineData: ChartData<'line'> = { labels: [], datasets: [] };
+  revenueExpensesData: ChartData<'line'> = { labels: [], datasets: [] };
 
   barberBarOptions: ChartOptions<'bar'> = {
     responsive: true,
@@ -89,7 +99,7 @@ export class ReportsComponent implements OnInit {
         borderWidth: 1,
         padding: 10,
         callbacks: {
-          label: (c) => ` ${this.formatCurrency(Number(c.raw || 0))}`
+          label: (ctx) => ` ${this.formatCurrency(Number(ctx.raw ?? 0))}`
         }
       }
     },
@@ -108,7 +118,6 @@ export class ReportsComponent implements OnInit {
       },
       y: {
         beginAtZero: true,
-        suggestedMax: 100,
         grid: {
           color: 'rgba(15,23,42,.08)'
         },
@@ -118,14 +127,11 @@ export class ReportsComponent implements OnInit {
             size: 12,
             weight: 600
           },
-          callback: (v) => `$${Number(v).toLocaleString('es-MX')}`
+          callback: (value) => `$${Number(value).toLocaleString('es-MX')}`
         }
       }
     }
   };
-
-  // Línea: Tendencia de ocupación y cancelaciones
-  occupancyLineData: ChartData<'line'> = { labels: [], datasets: [] };
 
   occupancyLineOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -152,7 +158,7 @@ export class ReportsComponent implements OnInit {
         borderWidth: 1,
         padding: 10,
         callbacks: {
-          label: (c) => ` ${Number(c.raw || 0).toFixed(1)}%`
+          label: (ctx) => ` ${this.formatCurrency(Number(ctx.raw ?? 0))}`
         }
       }
     },
@@ -170,8 +176,7 @@ export class ReportsComponent implements OnInit {
         }
       },
       y: {
-        min: 0,
-        max: 100,
+        beginAtZero: true,
         grid: {
           color: 'rgba(15,23,42,.08)'
         },
@@ -181,7 +186,7 @@ export class ReportsComponent implements OnInit {
             size: 12,
             weight: 600
           },
-          callback: (v) => `${v}%`
+          callback: (value) => `$${Number(value).toLocaleString('es-MX')}`
         }
       }
     },
@@ -197,9 +202,6 @@ export class ReportsComponent implements OnInit {
       }
     }
   };
-
-  // Línea: Revenue vs Expenses
-  revenueExpensesData: ChartData<'line'> = { labels: [], datasets: [] };
 
   revenueExpensesOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -226,7 +228,7 @@ export class ReportsComponent implements OnInit {
         borderWidth: 1,
         padding: 10,
         callbacks: {
-          label: (c) => ` ${this.formatCurrency(Number(c.raw || 0))}`
+          label: (ctx) => ` ${this.formatCurrency(Number(ctx.raw ?? 0))}`
         }
       }
     },
@@ -245,7 +247,6 @@ export class ReportsComponent implements OnInit {
       },
       y: {
         beginAtZero: true,
-        suggestedMax: 100,
         grid: {
           color: 'rgba(15,23,42,.08)'
         },
@@ -255,7 +256,7 @@ export class ReportsComponent implements OnInit {
             size: 12,
             weight: 600
           },
-          callback: (v) => `$${Number(v).toLocaleString('es-MX')}`
+          callback: (value) => `$${Number(value).toLocaleString('es-MX')}`
         }
       }
     },
@@ -280,59 +281,182 @@ export class ReportsComponent implements OnInit {
 
   ngOnInit(): void {
     const user = this.authService.getUser();
+
     if (user) {
-      this.isSingleBarber = user.singleBarber;
-      this.userName = user.fullName.split(' ')[0];
+      this.isSingleBarber = !!user.singleBarber;
+      this.userName = user.fullName?.split(' ')[0] ?? '';
     }
+
+    this.savedReports = [
+      {
+        id: 'initial-month',
+        name: 'Informe del mes',
+        title: 'Informe del mes',
+        type: 'General',
+        date: new Date().toLocaleDateString('es-MX'),
+        format: 'PDF'
+      },
+      {
+        id: 'initial-barbers',
+        name: 'Rendimiento de barberos',
+        title: 'Rendimiento de barberos',
+        type: 'Rendimiento',
+        date: new Date().toLocaleDateString('es-MX'),
+        format: 'PDF'
+      },
+      {
+        id: 'initial-services',
+        name: 'Resumen de servicios',
+        title: 'Resumen de servicios',
+        type: 'Servicios',
+        date: new Date().toLocaleDateString('es-MX'),
+        format: 'PDF'
+      }
+    ];
+
     this.loadReport();
-    this.savedReports = this.savedReports.map((r, i) => ({
-      ...r, id: r.id ?? `mock-${i}`
-    }));
   }
 
   loadReport(): void {
-    this.loading = true;
-    const obs =
-      this.selectedPeriod === 'today' ? this.reportService.getToday() :
-        this.selectedPeriod === 'week' ? this.reportService.getThisWeek() :
-          this.reportService.getThisMonth();
+    if (this.selectedPeriod === 'custom') {
+      this.loadCustomReport();
+      return;
+    }
 
-    obs.subscribe({
+    this.loading = true;
+
+    const request$ =
+      this.selectedPeriod === 'today'
+        ? this.reportService.getToday()
+        : this.selectedPeriod === 'week'
+          ? this.reportService.getThisWeek()
+          : this.reportService.getThisMonth();
+
+    request$.subscribe({
       next: (res) => {
         if (res.success) {
           this.report = res.data;
           this.buildCharts(res.data);
+        } else {
+          this.report = null;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo cargar el reporte'
+          });
         }
+
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.report = null;
+        this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el reporte'
+        });
+      }
     });
   }
 
-  // ── Build charts ──────────────────────────────────────────
+  loadCustomReport(): void {
+    if (!this.customFrom || !this.customTo) {
+      this.showDatePicker = true;
+      return;
+    }
+
+    this.loading = true;
+
+    this.reportService.getFullReport(
+      this.formatDateParam(this.customFrom),
+      this.formatDateParam(this.customTo)
+    ).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.report = res.data;
+          this.buildCharts(res.data);
+        } else {
+          this.report = null;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo cargar el reporte'
+          });
+        }
+
+        this.loading = false;
+      },
+      error: () => {
+        this.report = null;
+        this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el reporte'
+        });
+      }
+    });
+  }
+
+  onPeriodChange(period: ReportPeriod): void {
+    this.selectedPeriod = period;
+
+    if (period === 'custom') {
+      this.showDatePicker = true;
+      return;
+    }
+
+    this.showDatePicker = false;
+    this.loadReport();
+  }
+
+  applyCustomRange(): void {
+    if (!this.customFrom || !this.customTo) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Fechas requeridas',
+        detail: 'Selecciona fecha de inicio y fin'
+      });
+      return;
+    }
+
+    if (this.customFrom > this.customTo) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Rango inválido',
+        detail: 'La fecha de inicio no puede ser mayor que la fecha fin'
+      });
+      return;
+    }
+
+    this.showDatePicker = false;
+    this.selectedPeriod = 'custom';
+    this.loadReport();
+  }
 
   buildCharts(data: FullReport): void {
     this.buildBarberChart(data);
-    this.buildOccupancyChart(data);
-    this.buildRevenueExpensesChart(data);
+    this.buildIncomeTrendChart(data);
+    this.buildMonthlyIncomeChart(data);
   }
 
   buildBarberChart(data: FullReport): void {
     const barbers = data.barberPerformance ?? [];
 
     if (this.isSingleBarber) {
-      const months = data.salesByMonth?.slice(-6) ?? [];
+      const periods = this.preferredSalesPeriods(data);
 
       this.barberBarData = {
-        labels: months.map(m => m.period),
+        labels: periods.map(item => this.periodName(item.period)),
         datasets: [
           {
             label: 'Ingresos',
-            data: months.map(m => Number(m.revenue ?? 0)),
+            data: periods.map(item => Number(item.revenue ?? 0)),
             backgroundColor: 'rgba(37,99,235,.18)',
             borderColor: '#2563EB',
             borderWidth: 2,
-            borderRadius: 6
+            borderRadius: 8
           }
         ]
       };
@@ -340,163 +464,251 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
-    const colors = ['#2563EB', '#7C3AED', '#16A34A', '#BE4778', '#F97316', '#64748B'];
-
     this.barberBarData = {
-      labels: barbers.map(b => b.barberName.split(' ')[0]),
+      labels: barbers.map(barber => this.shortName(barber.barberName)),
       datasets: [
         {
-          label: 'Ingresos',
-          data: barbers.map(b => Number(b.revenue ?? 0)),
-          backgroundColor: barbers.map((_, i) => `${colors[i % colors.length]}26`),
-          borderColor: barbers.map((_, i) => colors[i % colors.length]),
+          label: 'Ingresos generados',
+          data: barbers.map(barber => Number(barber.revenue ?? 0)),
+          backgroundColor: barbers.map((_, index) => `${this.chartColors[index % this.chartColors.length]}26`),
+          borderColor: barbers.map((_, index) => this.chartColors[index % this.chartColors.length]),
           borderWidth: 2,
-          borderRadius: 6
+          borderRadius: 8
         }
       ]
     };
   }
 
-  buildOccupancyChart(data: FullReport): void {
-    const appt = data.appointmentMetrics;
-    const days = data.salesByDay?.slice(-6) ?? [];
-    const labels = days.map(d => {
-      const date = new Date(d.period + 'T12:00:00');
-      return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-    });
-
-    const occupancyRate = appt
-      ? ((appt.completed / Math.max(appt.totalAppointments, 1)) * 100)
-      : 75;
-    const cancelRate = appt
-      ? ((appt.cancelled / Math.max(appt.totalAppointments, 1)) * 100)
-      : 10;
+  buildIncomeTrendChart(data: FullReport): void {
+    const periods = this.preferredSalesPeriods(data);
 
     this.occupancyLineData = {
-      labels,
-      datasets: [{
-        label: 'Tasa de Ocupación (%)',
-        data: labels.map(() => occupancyRate + (Math.random() * 10 - 5)),
-        borderColor: '#2563EB',
-        backgroundColor: 'rgba(37,99,235,.12)',
-        pointBackgroundColor: '#2563EB',
-        pointBorderColor: '#FFFFFF',
-        pointHoverBackgroundColor: '#1D4ED8',
-        pointHoverBorderColor: '#FFFFFF',
-        fill: true
-      }, {
-        label: 'Tasa de Cancelaciones (%)',
-        data: labels.map(() => cancelRate + (Math.random() * 5 - 2.5)),
-        borderColor: '#DC2626',
-        backgroundColor: 'rgba(220,38,38,.08)',
-        pointBackgroundColor: '#DC2626',
-        pointBorderColor: '#FFFFFF',
-        pointHoverBackgroundColor: '#B91C1C',
-        pointHoverBorderColor: '#FFFFFF',
-        fill: false
-      }]
+      labels: periods.map(item => this.periodName(item.period)),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: periods.map(item => Number(item.revenue ?? 0)),
+          borderColor: '#2563EB',
+          backgroundColor: 'rgba(37,99,235,.12)',
+          pointBackgroundColor: '#2563EB',
+          pointBorderColor: '#FFFFFF',
+          pointHoverBackgroundColor: '#1D4ED8',
+          pointHoverBorderColor: '#FFFFFF',
+          fill: true
+        }
+      ]
     };
   }
 
-  buildRevenueExpensesChart(data: FullReport): void {
+  buildMonthlyIncomeChart(data: FullReport): void {
     const months = data.salesByMonth?.slice(-6) ?? [];
-    const labels = months.map(m => {
-      const [year, month] = m.period.split('-');
-      return new Date(Number(year), Number(month) - 1).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
-    });
 
     this.revenueExpensesData = {
-      labels,
-      datasets: [{
-        label: 'Ingresos',
-        data: months.map(m => Number(m.revenue)),
-        borderColor: '#2563EB',
-        backgroundColor: 'rgba(37,99,235,.12)',
-        pointBackgroundColor: '#2563EB',
-        pointBorderColor: '#FFFFFF',
-        pointHoverBackgroundColor: '#1D4ED8',
-        pointHoverBorderColor: '#FFFFFF',
-        fill: true
-      }, {
-        label: 'Gastos (est.)',
-        data: months.map(m => Number(m.revenue) * 0.35),
-        borderColor: '#64748B',
-        backgroundColor: 'rgba(100,116,139,.08)',
-        pointBackgroundColor: '#64748B',
-        pointBorderColor: '#FFFFFF',
-        pointHoverBackgroundColor: '#475569',
-        pointHoverBorderColor: '#FFFFFF',
-        fill: false
-      }]
+      labels: months.map(item => this.monthName(item.period)),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: months.map(item => Number(item.revenue ?? 0)),
+          borderColor: '#2563EB',
+          backgroundColor: 'rgba(37,99,235,.12)',
+          pointBackgroundColor: '#2563EB',
+          pointBorderColor: '#FFFFFF',
+          pointHoverBackgroundColor: '#1D4ED8',
+          pointHoverBorderColor: '#FFFFFF',
+          fill: true
+        },
+        {
+          label: 'Ticket promedio',
+          data: months.map(item => this.safeDiv(Number(item.revenue ?? 0), Number(item.totalSales ?? 0))),
+          borderColor: '#16A34A',
+          backgroundColor: 'rgba(22,163,74,.08)',
+          pointBackgroundColor: '#16A34A',
+          pointBorderColor: '#FFFFFF',
+          pointHoverBackgroundColor: '#15803D',
+          pointHoverBorderColor: '#FFFFFF',
+          fill: false
+        }
+      ]
     };
   }
 
-  // ── Getters de datos ──────────────────────────────────────
+  preferredSalesPeriods(data: FullReport): any[] {
+    if (this.selectedPeriod === 'month') {
+      return data.salesByDay?.slice(-12) ?? [];
+    }
 
-  get summary(): SalesSummary | null { return this.report?.summary ?? null; }
-  get topServices(): TopService[] { return this.report?.topServices?.slice(0, 8) ?? []; }
-  get barbers(): BarberPerformance[] { return this.report?.barberPerformance ?? []; }
-  get apptMetrics(): AppointmentMetrics | null { return this.report?.appointmentMetrics ?? null; }
-  get peakHours() { return this.report?.peakHours?.slice(0, 5) ?? []; }
-  get paymentMethods() { return this.report?.paymentMethods ?? []; }
-  get clientMetrics() { return this.report?.clientMetrics; }
+    if (this.selectedPeriod === 'week') {
+      return data.salesByDay ?? [];
+    }
 
-  get totalRevenue(): number { return Number(this.summary?.totalRevenue ?? 0); }
+    if (this.selectedPeriod === 'today') {
+      return data.salesByDay ?? [];
+    }
+
+    return data.salesByDay ?? data.salesByWeek ?? data.salesByMonth ?? [];
+  }
+
+  get summary(): SalesSummary | null {
+    return this.report?.summary ?? null;
+  }
+
+  get topServices(): TopService[] {
+    return this.report?.topServices?.slice(0, 8) ?? [];
+  }
+
+  get barbers(): BarberPerformance[] {
+    return this.report?.barberPerformance ?? [];
+  }
+
+  get apptMetrics(): AppointmentMetrics | null {
+    return this.report?.appointmentMetrics ?? null;
+  }
+
+  get peakHours(): any[] {
+    return this.report?.peakHours?.slice(0, 5) ?? [];
+  }
+
+  get paymentMethods(): any[] {
+    return this.report?.paymentMethods ?? [];
+  }
+
+  get recentSales(): RecentSale[] {
+    return this.report?.recentSales?.slice(0, 8) ?? [];
+  }
+
+  get clientMetrics(): any {
+    return this.report?.clientMetrics ?? null;
+  }
+
+  get salesByDayOfWeek(): any[] {
+    return this.report?.salesByDayOfWeek ?? [];
+  }
+
+  get totalRevenue(): number {
+    return Number(this.summary?.totalRevenue ?? 0);
+  }
+
+  get totalSales(): number {
+    return Number(this.summary?.totalSales ?? 0);
+  }
+
+  get avgTicket(): number {
+    return Number(this.summary?.averageTicket ?? 0);
+  }
+
+  get averageTicket(): number {
+    return this.avgTicket;
+  }
+
+  get grossIncome(): number {
+    return this.totalRevenue;
+  }
+
   get netProfit(): number {
     return this.totalRevenue;
   }
-  get occupancyRate(): number {
-    const a = this.apptMetrics;
-    if (!a || a.totalAppointments === 0) return 0;
-    return Math.round(a.completed / a.totalAppointments * 100 * 10) / 10;
+
+  get completedAppts(): number {
+    return Number(this.apptMetrics?.completed ?? 0);
   }
-  get completedAppts(): number { return this.apptMetrics?.completed ?? 0; }
+
+  get cancelledAppts(): number {
+    return Number(this.apptMetrics?.cancelled ?? 0);
+  }
+
+  get noShowAppts(): number {
+    return Number(this.apptMetrics?.noShow ?? 0);
+  }
+
+  get totalAppointments(): number {
+    return Number(this.apptMetrics?.totalAppointments ?? 0);
+  }
+
+  get occupancyRate(): number {
+    if (!this.apptMetrics || this.totalAppointments === 0) return 0;
+    return Math.round((this.completedAppts / this.totalAppointments) * 1000) / 10;
+  }
+
+  get cancellationRate(): number {
+    if (!this.apptMetrics || this.totalAppointments === 0) return 0;
+    return Math.round((this.cancelledAppts / this.totalAppointments) * 1000) / 10;
+  }
+
+  get noShowRate(): number {
+    return Number(this.apptMetrics?.noShowRate ?? 0);
+  }
+
+  get newClients(): number {
+    return Number(this.clientMetrics?.newClients ?? 0);
+  }
+
+  get recurringClients(): number {
+    return Number(this.clientMetrics?.recurringClients ?? 0);
+  }
 
   get totalBarbersRevenue(): number {
-    return this.barbers.reduce((s, b) => s + Number(b.revenue), 0);
+    return this.barbers.reduce((total, barber) => total + Number(barber.revenue ?? 0), 0);
   }
 
   get totalBarbersServices(): number {
-    return this.barbers.reduce((s, b) => s + Number(b.totalServices), 0);
+    return this.barbers.reduce((total, barber) => total + Number(barber.totalServices ?? 0), 0);
   }
 
   get totalTopServicesQty(): number {
-    return this.topServices.reduce((s, sv) => s + Number(sv.totalQuantity), 0);
+    return this.topServices.reduce((total, service) => total + Number(service.totalQuantity ?? 0), 0);
   }
 
-  // ── Period label ──────────────────────────────────────────
+  get totalTopServicesRevenue(): number {
+    return this.topServices.reduce((total, service) => total + Number(service.totalRevenue ?? 0), 0);
+  }
+
+  get totalPaymentRevenue(): number {
+    return this.paymentMethods.reduce((total, payment) => total + Number(payment.revenue ?? 0), 0);
+  }
+
+  get totalProductRevenue(): number {
+    return this.totalPaymentRevenue;
+  }
+
   get periodLabel(): string {
-    return this.selectedPeriod === 'today' ? 'Hoy' :
-      this.selectedPeriod === 'week' ? 'Esta semana' : 'Este mes';
+    const labels: Record<ReportPeriod, string> = {
+      today: 'Hoy',
+      week: 'Esta semana',
+      month: 'Este mes',
+      custom: 'Personalizado'
+    };
+
+    return labels[this.selectedPeriod] ?? 'Período';
   }
 
   get dateRangeLabel(): string {
-    return this.report
-      ? `${this.report.from} — ${this.report.to}`
-      : '';
+    if (!this.report) return '';
+    return `${this.formatDate(this.report.from)} — ${this.formatDate(this.report.to)}`;
   }
-
-  // ── Acciones ──────────────────────────────────────────────
 
   generateReport(): void {
     if (this.generatingPdf) return;
+
     this.generatingPdf = true;
 
     const req: PdfReportRequest = {
       period: this.periodMap[this.selectedPeriod] ?? 'month'
     };
 
+    if (this.selectedPeriod === 'custom' && this.customFrom && this.customTo) {
+      req.from = this.formatDateParam(this.customFrom);
+      req.to = this.formatDateParam(this.customTo);
+    }
+
     this.reportService.generatePdf(req).subscribe({
       next: (res) => {
         if (res.success) {
-          // Descargar el PDF automáticamente
           this.reportService.downloadFromBase64(res.data.base64, res.data.fileName);
 
-          // Agregar a la lista de reportes guardados
           this.savedReports.unshift({
             id: Date.now().toString(),
-            name: `Informe ${res.data.period} ${new Date().toLocaleDateString('es-MX')}`,
-            title: `Informe ${res.data.period}`,
+            name: `Informe ${this.periodLabel}`,
+            title: `Informe ${this.periodLabel}`,
             type: 'General',
             format: 'PDF',
             date: new Date().toLocaleDateString('es-MX'),
@@ -506,48 +718,54 @@ export class ReportsComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: '¡PDF generado!',
+            summary: 'PDF generado',
             detail: `${res.data.fileName} descargado correctamente`
           });
         } else {
           this.messageService.add({
-            severity: 'error', summary: 'Error', detail: res.message
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo generar el reporte'
           });
         }
+
         this.generatingPdf = false;
       },
       error: () => {
-        this.messageService.add({
-          severity: 'error', summary: 'Error', detail: 'No se pudo generar el reporte'
-        });
         this.generatingPdf = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo generar el reporte'
+        });
       }
     });
   }
 
   downloadReport(report: SavedReport): void {
-    // Si ya tiene base64 en memoria → descarga directa sin llamar al backend
     if (report.base64 && report.fileName) {
       this.reportService.downloadFromBase64(report.base64, report.fileName);
       return;
     }
 
-    // Asignar id temporal si no tiene (reportes mock)
     if (!report.id) {
-      report.id = `mock-${Date.now()}`;
+      report.id = `report-${Date.now()}`;
     }
 
-    // Llamar al backend para generar el PDF
     this.downloadingId = report.id;
 
     const req: PdfReportRequest = {
       period: this.periodMap[this.selectedPeriod] ?? 'month'
     };
 
+    if (this.selectedPeriod === 'custom' && this.customFrom && this.customTo) {
+      req.from = this.formatDateParam(this.customFrom);
+      req.to = this.formatDateParam(this.customTo);
+    }
+
     this.reportService.generatePdf(req).subscribe({
       next: (res) => {
         if (res.success) {
-          // Guardar en memoria para no pedir al backend otra vez
           report.base64 = res.data.base64;
           report.fileName = res.data.fileName;
 
@@ -555,114 +773,216 @@ export class ReportsComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: '¡Descargado!',
+            summary: 'Descargado',
             detail: res.data.fileName
           });
         } else {
           this.messageService.add({
-            severity: 'error', summary: 'Error', detail: res.message
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo descargar el reporte'
           });
         }
+
         this.downloadingId = null;
       },
       error: () => {
-        this.messageService.add({
-          severity: 'error', summary: 'Error', detail: 'No se pudo generar el PDF'
-        });
         this.downloadingId = null;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo generar el PDF'
+        });
       }
     });
   }
 
   shareReport(report: SavedReport): void {
-    if (!report.base64 || !report.fileName) return;
+    if (!report.base64 || !report.fileName) {
+      this.downloadReport(report);
+      return;
+    }
 
-    // Convertir base64 a Blob/File para compartir
     const byteChars = atob(report.base64);
     const byteNums = new Array(byteChars.length);
+
     for (let i = 0; i < byteChars.length; i++) {
       byteNums[i] = byteChars.charCodeAt(i);
     }
+
     const blob = new Blob([new Uint8Array(byteNums)], { type: 'application/pdf' });
     const file = new File([blob], report.fileName, { type: 'application/pdf' });
 
-    // Web Share API (disponible en móvil y Chrome moderno)
-    if (navigator.share && navigator.canShare({ files: [file] })) {
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
       navigator.share({
         title: report.name,
         text: `Reporte de barbería — ${report.date}`,
         files: [file]
-      }).catch(() => {
-        // Si el usuario cancela, no hacer nada
-      });
-    } else {
-      // Fallback: copiar URL de descarga al portapapeles
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = report.fileName;
-      anchor.click();
-      window.URL.revokeObjectURL(url);
+      }).catch(() => undefined);
+      return;
+    }
 
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Compartir no disponible',
-        detail: 'Se descargó el archivo para que puedas compartirlo manualmente'
+    this.reportService.downloadFromBase64(report.base64, report.fileName);
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Compartir no disponible',
+      detail: 'Se descargó el archivo para que puedas compartirlo manualmente'
+    });
+  }
+
+  formatCurrency(value: any): string {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 2
+    }).format(Number(value ?? 0));
+  }
+
+  formatNumber(value: any): string {
+    return new Intl.NumberFormat('es-MX').format(Number(value ?? 0));
+  }
+
+  formatDate(date: string): string {
+    if (!date) return '—';
+
+    return new Date(date + 'T12:00:00').toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  formatDateParam(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  paymentLabel(method: string): string {
+    const labels: Record<string, string> = {
+      cash: 'Efectivo',
+      card: 'Tarjeta',
+      transfer: 'Transferencia',
+      other: 'Otro'
+    };
+
+    return labels[method] ?? method ?? '—';
+  }
+
+  statusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      completed: 'Completada',
+      cancelled: 'Cancelada',
+      refunded: 'Reembolsada',
+      active: 'Activa'
+    };
+
+    return labels[status] ?? status ?? '—';
+  }
+
+  statusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
+    if (status === 'completed' || status === 'active') return 'success';
+    if (status === 'cancelled' || status === 'refunded') return 'danger';
+    return 'warning';
+  }
+
+  safeDiv(value: any, divisor: any): number {
+    const n = Number(value ?? 0);
+    const d = Number(divisor ?? 0);
+
+    if (!d) return 0;
+
+    return n / d;
+  }
+
+  avgTicketBarber(revenue: any, sales: any): number {
+    return this.safeDiv(revenue, sales);
+  }
+
+  commissionPaid(): number {
+    return 0;
+  }
+
+  netProfitBarber(revenue: any): number {
+    return Number(revenue ?? 0);
+  }
+
+  profitability(service: TopService): number {
+    return Number(service.totalRevenue ?? 0) > 0 ? 100 : 0;
+  }
+
+  profitPerMinute(service: TopService): number {
+    const avgPrice = this.safeDiv(service.totalRevenue, service.totalQuantity);
+    return this.safeDiv(avgPrice, 30);
+  }
+
+  paymentShare(paymentRevenue: any): number {
+    if (!this.totalPaymentRevenue) return 0;
+    return Math.round((Number(paymentRevenue ?? 0) / this.totalPaymentRevenue) * 1000) / 10;
+  }
+
+  peakPercent(totalAppointments: any): number {
+    const max = Number(this.peakHours?.[0]?.totalAppointments ?? 0);
+    if (!max) return 0;
+    return Math.round((Number(totalAppointments ?? 0) / max) * 100);
+  }
+
+  shortName(name: string): string {
+    if (!name) return '—';
+    return name.split(' ')[0];
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '—';
+
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  periodName(period: string): string {
+    if (!period) return '—';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(period)) {
+      const date = new Date(period + 'T12:00:00');
+      return date.toLocaleDateString('es-MX', {
+        day: 'numeric',
+        month: 'short'
       });
     }
+
+    if (/^\d{4}-\d{2}$/.test(period)) {
+      return this.monthName(period);
+    }
+
+    return period;
   }
 
+  monthName(period: string): string {
+    if (!period || !period.includes('-')) return period ?? '—';
 
-  // ── Helpers ───────────────────────────────────────────────
+    const [year, month] = period.split('-');
+    const date = new Date(Number(year), Number(month) - 1, 1);
 
-  formatCurrency(v: number): string {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', minimumFractionDigits: 2
-    }).format(v);
+    return date.toLocaleDateString('es-MX', {
+      month: 'short',
+      year: '2-digit'
+    });
   }
 
-  profitability(svc: TopService): number {
-    if (!svc.totalRevenue || !svc.totalQuantity) return 0;
-    return Math.min(99, 75 + Math.random() * 20); // estimado
-  }
+  originLabel(origin: string): string {
+    const labels: Record<string, string> = {
+      appointment: 'Cita',
+      pos: 'Punto de venta'
+    };
 
-  commissionPaid(revenue: number): number {
-    return revenue * 0.2;
-  }
-
-  netProfitBarber(revenue: number): number {
-    return revenue * 0.41;
-  }
-
-  avgTicketBarber(revenue: number, sales: number): number {
-    return sales > 0 ? revenue / sales : 0;
-  }
-
-  typeLabel(t: string): string {
-    const m: Record<string, string> = { PDF: 'PDF', Excel: 'Excel', CSV: 'CSV' };
-    return m[t] ?? t;
-  }
-
-  typeSeverity(
-    t: string
-  ): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' {
-    return t === 'Financiero' ? 'success' :
-      t === 'Rendimiento' ? 'info' :
-        t === 'Servicios' ? 'warning' :
-          'secondary';
-  }
-
-  safeDiv(value: number, divisor: number): number {
-    return value / Math.max(divisor, 1);
-  }
-
-  profitPerMinute(svc: TopService): number {
-    return this.safeDiv(this.safeDiv(svc.totalRevenue, svc.totalQuantity), 30);
-  }
-
-  get totalTopServicesRevenue(): number {
-    return this.topServices.reduce((sum, service) => {
-      return sum + Number(service.totalRevenue ?? 0);
-    }, 0);
+    return labels[origin] ?? 'Venta';
   }
 }

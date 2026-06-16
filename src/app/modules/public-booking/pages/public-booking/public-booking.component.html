@@ -1,237 +1,411 @@
-<div class="booking-page">
-  <div class="booking-card" *ngIf="!isLoading">
+<div
+  class="booking-page"
+  [class.public-landing]="currentStep === 1"
+  [style.--public-accent]="themeColor"
+>
+  <ng-container *ngIf="!isLoading; else loadingTpl">
+    <div class="landing-error" *ngIf="!barbershop && errorMessage">
+      {{ errorMessage }}
+    </div>
+
     <ng-container *ngIf="barbershop as shop">
-      <header class="booking-brand">
-        <div class="brand-logo" [class.has-logo]="shop.logoUrl">
-          <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
-          <i *ngIf="!shop.logoUrl" class="pi pi-scissors"></i>
-        </div>
+      <section class="public-home" *ngIf="currentStep === 1">
+        <nav class="public-nav">
+          <div class="public-nav-inner">
+            <div class="public-brand">
+              <div class="public-brand-logo" [class.has-logo]="shop.logoUrl">
+                <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
+                <i *ngIf="!shop.logoUrl" class="pi pi-scissors"></i>
+              </div>
 
-        <div>
-          <h1>{{ shop.name }}</h1>
-        </div>
-      </header>
+              <span>{{ shop.name }}</span>
+            </div>
 
-      <div class="divider"></div>
+            <div class="public-nav-links">
+              <a href="#services" (click)="scrollToSection('services'); $event.preventDefault()">Servicios</a>
+              <a href="#team" (click)="scrollToSection('team'); $event.preventDefault()">Equipo</a>
+              <a href="#reviews" (click)="scrollToSection('reviews'); $event.preventDefault()">Reseñas</a>
+              <a href="#location" (click)="scrollToSection('location'); $event.preventDefault()">Dirección</a>
+            </div>
 
-      <div class="alert-error" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
+            <a class="public-call-link" *ngIf="displayPhone as phone" [href]="'tel:' + phone">
+              <i class="pi pi-phone"></i>
+              <span>Llámanos</span>
+              <strong>{{ phone }}</strong>
+            </a>
+          </div>
+        </nav>
 
-      <!-- Paso 1: servicios -->
-      <section class="step-section" *ngIf="currentStep === 1">
-        <h2>Reserva una cita con nosotros:</h2>
+      <header
+          class="public-hero"
+          [class.has-cover]="shop.coverImageUrl"
+          [class.default-cover]="!shop.coverImageUrl"
+          [style.background-image]="shop.coverImageUrl ? heroBackground : null"
+        >
+          <div class="hero-fallback" *ngIf="!shop.coverImageUrl">
+            <span class="hero-kicker">BARBER STUDIO</span>
+            <h1>{{ shop.name }}</h1>
+            <p>
+              {{ shop.description || 'Reserva tu cita en línea de forma rápida y sencilla.' }}
+            </p>
+          </div>
+        </header>
 
-        <div class="service-list">
-          <button
-            class="service-row"
-            *ngFor="let service of services"
-            (click)="selectService(service)"
-          >
-            <div class="service-info">
-              <strong>{{ service.displayName }}</strong>
+        <main class="public-layout">
+          <section class="public-main">
+            <section class="public-panel services-public-panel" id="services">
+              <h2>Servicios</h2>
 
-              <span class="duration-pill"> {{ service.durationMin }} min </span>
+              <div class="alert-error" *ngIf="errorMessage">
+                {{ errorMessage }}
+              </div>
+              <div class="public-service-list" *ngIf="services.length > 0">
+                <button
+                  type="button"
+                  class="public-service-row"
+                  *ngFor="let service of services"
+                  (click)="selectService(service)"
+                >
+                  <div class="public-service-info">
+                    <strong>{{ service.displayName }}</strong>
+
+                    <span>
+                      {{ service.durationMin }} min · {{ formatCurrency(service.price) }}
+                    </span>
+
+                    <small *ngIf="service.description">
+                      {{ service.description }}
+                    </small>
+                  </div>
+
+                  <i class="pi pi-chevron-right"></i>
+                </button>
+              </div>
+              <div class="empty-public-state" *ngIf="services.length === 0">
+                <i class="pi pi-scissors"></i>
+                <strong>No hay servicios disponibles</strong>
+                <span>Intenta nuevamente más tarde.</span>
+              </div>
+            </section>
+
+            <section class="public-panel public-section" id="team">
+              <h2>Equipo</h2>
+
+              <div class="team-card-public">
+                <div class="team-avatar" [class.has-logo]="shop.logoUrl">
+                  <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
+                  <i *ngIf="!shop.logoUrl" class="pi pi-user"></i>
+                </div>
+
+                <div>
+                  <strong>{{ shop.singleBarber ? shop.name : 'Equipo de la barbería' }}</strong>
+                  <span>{{ shop.singleBarber ? 'Barbero principal' : 'Equipo disponible' }}</span>
+                </div>
+
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </section>
+
+            <section class="contact-policy-grid">
+              <div class="public-section">
+                <h2>Ponte en contacto con nosotros</h2>
+
+                <a class="public-info-link" *ngIf="displayPhone as phone" [href]="'tel:' + phone">
+                  <i class="pi pi-phone"></i>
+                  {{ phone }}
+                </a>
+
+                <a class="public-info-link" *ngIf="displayEmail as email" [href]="'mailto:' + email">
+                  <i class="pi pi-envelope"></i>
+                  {{ email }}
+                </a>
+
+                <a class="public-info-link" *ngIf="whatsappUrl as waUrl" [href]="waUrl" target="_blank" rel="noopener">
+                  <i class="pi pi-whatsapp"></i>
+                  WhatsApp
+                </a>
+              </div>
+
+              <div class="public-section">
+                <h2>Bueno saber</h2>
+
+                <button class="policy-link" type="button">
+                  <i class="pi pi-calendar"></i>
+                  Política de reservas
+                </button>
+
+                <p class="policy-text">
+                  {{ shop.bookingPolicy || 'Te recomendamos llegar unos minutos antes de tu cita. Si necesitas cancelar o cambiar tu horario, avísanos con anticipación.' }}
+                </p>
+              </div>
+            </section>
+
+            <section class="public-section reviews-section" id="reviews">
+              <h2>Reseñas</h2>
 
               <p>
-                {{ service.description || service.displayName }}
-                {{ formatCurrency(service.price) }}
+                Sé el primero en dejarnos una reseña y compartir tus impresiones sobre tu experiencia.
               </p>
+
+              <button class="outline-public-btn" type="button">
+                Escribe una reseña
+              </button>
+            </section>
+
+            <section class="public-section location-section" id="location" *ngIf="displayAddress || safeMapUrl">
+              <h2>Dirección</h2>
+
+              <p class="address-line" *ngIf="displayAddress">
+                <i class="pi pi-map-marker"></i>
+                {{ displayAddress }}
+              </p>
+
+              <div class="map-frame" *ngIf="safeMapUrl as mapUrl">
+                <iframe
+                  [src]="mapUrl"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </section>
+          </section>
+
+          <aside class="business-public-card">
+            <div class="business-logo" [class.has-logo]="shop.logoUrl">
+              <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
+              <i *ngIf="!shop.logoUrl" class="pi pi-scissors"></i>
             </div>
 
-            <i class="pi pi-chevron-right"></i>
-          </button>
-        </div>
-      </section>
+            <h2>{{ shop.name }}</h2>
 
-      <!-- Paso 2: calendario + horarios -->
-      <section class="step-section" *ngIf="currentStep === 2">
-        <ng-container *ngIf="selectedService as service">
-          <button class="back-link" (click)="goBack()">
-            <i class="pi pi-arrow-left"></i>
-            <span>{{ service.displayName }}</span>
-          </button>
+            <button class="business-reserve-btn" type="button" (click)="scrollToSection('services')">
+              Reservar
+            </button>
 
-          <span class="duration-pill selected-duration">
-            {{ service.durationMin }} min
-          </span>
-
-          <div class="divider"></div>
-
-          <div class="booking-grid">
-            <div class="calendar-panel">
-              <div class="calendar-header">
-                <h3>{{ monthLabel | titlecase }}</h3>
-
-                <div class="month-actions">
-                  <button type="button" (click)="goToPreviousMonth()">
-                    <i class="pi pi-chevron-left"></i>
-                  </button>
-
-                  <button type="button" (click)="goToNextMonth()">
-                    <i class="pi pi-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="weekdays">
-                <span>LUN</span>
-                <span>MAR</span>
-                <span>MIÉ</span>
-                <span>JUE</span>
-                <span>VIE</span>
-                <span>SÁB</span>
-                <span>DOM</span>
-              </div>
-
-              <div class="calendar-days">
-                <button
-                  type="button"
-                  class="day-btn"
-                  *ngFor="let day of calendarDays"
-                  [class.outside]="!day.inCurrentMonth"
-                  [class.available]="day.available"
-                  [class.selected]="day.selected"
-                  [disabled]="day.disabled"
-                  (click)="selectDate(day.date)"
-                >
-                  {{ day.day }}
-                </button>
-              </div>
-            </div>
-
-            <div class="slots-panel">
-              <h3>{{ selectedDateLabel | titlecase }}</h3>
-              <p>*Hora de Mexico City</p>
-
-              <div class="slots-list" *ngIf="availableSlots.length > 0">
-                <button
-                  type="button"
-                  class="slot-btn"
-                  *ngFor="let slot of availableSlots"
-                  [disabled]="!slot.available"
-                  [class.selected]="selectedSlot?.startTime === slot.startTime"
-                  (click)="selectSlot(slot)"
-                >
-                  <span class="slot-dot"></span>
-                  {{ formatTime(slot.startTime) }}
-                </button>
-              </div>
-
-              <div class="no-slots" *ngIf="availableSlots.length === 0">
+            <div class="business-card-section">
+              <div class="business-info-row">
                 <i class="pi pi-clock"></i>
-                <strong>No hay horarios disponibles</strong>
-                <span>Selecciona otra fecha para reservar tu cita.</span>
+                <span>Agenda disponible</span>
               </div>
             </div>
-          </div>
-        </ng-container>
+
+            <div class="business-card-section" *ngIf="displayAddress">
+              <div class="business-info-row">
+                <i class="pi pi-map-marker"></i>
+                <span>{{ displayAddress }}</span>
+              </div>
+            </div>
+
+            <div class="business-card-section" *ngIf="displayPhone || displayEmail">
+              <button class="business-contact-toggle" type="button" (click)="scrollToSection('team')">
+                Ponte en contacto con nosotros
+                <i class="pi pi-chevron-down"></i>
+              </button>
+            </div>
+          </aside>
+        </main>
       </section>
 
-      <!-- Paso 3: datos -->
-      <section class="step-section" *ngIf="currentStep === 3">
-        <ng-container *ngIf="selectedService as service">
-          <ng-container *ngIf="selectedSlot as slot">
+      <div class="booking-card flow-card" *ngIf="currentStep !== 1">
+        <header class="booking-brand">
+          <div class="brand-logo" [class.has-logo]="shop.logoUrl">
+            <img *ngIf="shop.logoUrl" [src]="shop.logoUrl" [alt]="shop.name" />
+            <i *ngIf="!shop.logoUrl" class="pi pi-scissors"></i>
+          </div>
+
+          <div>
+            <h1>{{ shop.name }}</h1>
+          </div>
+        </header>
+
+        <div class="divider"></div>
+
+        <div class="alert-error" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <section class="step-section" *ngIf="currentStep === 2">
+          <ng-container *ngIf="selectedService as service">
             <button class="back-link" (click)="goBack()">
               <i class="pi pi-arrow-left"></i>
-              <span>Finaliza tu reserva</span>
+              <span>{{ service.displayName }}</span>
             </button>
 
-            <div class="booking-summary">
-              <div class="summary-row">
-                <i class="pi pi-arrow-right"></i>
-                <span>{{ service.displayName }}</span>
-              </div>
+            <span class="duration-pill selected-duration">
+              {{ service.durationMin }} min
+            </span>
 
-              <div class="summary-row">
-                <i class="pi pi-clock"></i>
-                <span>{{ service.durationMin }} min</span>
-              </div>
+            <div class="divider"></div>
 
-              <div class="summary-row">
-                <i class="pi pi-calendar"></i>
-                <span
-                  >{{ finalDateLabel }} {{ formatTime(slot.startTime) }}</span
-                >
-              </div>
-            </div>
+            <div class="booking-grid">
+              <div class="calendar-panel">
+                <div class="calendar-header">
+                  <h3>{{ monthLabel | titlecase }}</h3>
 
-            <label class="form-field">
-              ¿Cuál es tu nombre?
-              <input type="text" [(ngModel)]="clientName" autocomplete="name" />
-            </label>
+                  <div class="month-actions">
+                    <button type="button" (click)="goToPreviousMonth()">
+                      <i class="pi pi-chevron-left"></i>
+                    </button>
 
-            <label class="form-field">
-              ¿Cuál es tu WhatsApp?
-
-              <div class="phone-row">
-                <div class="country-box">
-                  🇲🇽
-                  <i class="pi pi-chevron-down"></i>
+                    <button type="button" (click)="goToNextMonth()">
+                      <i class="pi pi-chevron-right"></i>
+                    </button>
+                  </div>
                 </div>
 
-                <input
-                  type="text"
-                  [value]="clientPhone"
-                  (input)="onPhoneInput($event)"
-                  (keydown)="blockNonNumericKeys($event)"
-                  placeholder="Escribe tu número de WhatsApp"
-                  autocomplete="tel-national"
-                  inputmode="numeric"
-                  maxlength="10"
-                />
+                <div class="weekdays">
+                  <span>LUN</span>
+                  <span>MAR</span>
+                  <span>MIÉ</span>
+                  <span>JUE</span>
+                  <span>VIE</span>
+                  <span>SÁB</span>
+                  <span>DOM</span>
+                </div>
+
+                <div class="calendar-days">
+                  <button
+                    type="button"
+                    class="day-btn"
+                    *ngFor="let day of calendarDays"
+                    [class.outside]="!day.inCurrentMonth"
+                    [class.available]="day.available"
+                    [class.selected]="day.selected"
+                    [disabled]="day.disabled"
+                    (click)="selectDate(day.date)"
+                  >
+                    {{ day.day }}
+                  </button>
+                </div>
               </div>
-            </label>
 
-            <label class="form-field">
-              Notas opcionales
-              <textarea
-                [(ngModel)]="clientNotes"
-                placeholder="Ej. corte bajo, barba corta..."
-              ></textarea>
-            </label>
+              <div class="slots-panel">
+                <h3>{{ selectedDateLabel | titlecase }}</h3>
+                <p>*Hora de Mexico City</p>
 
-            <button
-              class="reserve-btn"
-              [disabled]="
-                isSaving || !clientName.trim() || clientPhone.length !== 10
-              "
-              (click)="confirmBooking()"
-            >
-              {{ isSaving ? "Reservando..." : "Reservar" }}
-            </button>
+                <div class="slots-list" *ngIf="availableSlots.length > 0">
+                  <button
+                    type="button"
+                    class="slot-btn"
+                    *ngFor="let slot of availableSlots"
+                    [disabled]="!slot.available"
+                    [class.selected]="selectedSlot?.startTime === slot.startTime"
+                    (click)="selectSlot(slot)"
+                  >
+                    <span class="slot-dot"></span>
+                    {{ formatTime(slot.startTime) }}
+                  </button>
+                </div>
+
+                <div class="no-slots" *ngIf="availableSlots.length === 0">
+                  <i class="pi pi-clock"></i>
+                  <strong>No hay horarios disponibles</strong>
+                  <span>Selecciona otra fecha para reservar tu cita.</span>
+                </div>
+              </div>
+            </div>
           </ng-container>
-        </ng-container>
-      </section>
+        </section>
 
-      <!-- Paso 4: confirmación -->
-      <section class="success-section" *ngIf="currentStep === 4">
-        <div class="success-icon">
-          <i class="pi pi-check"></i>
-        </div>
+        <section class="step-section" *ngIf="currentStep === 3">
+          <ng-container *ngIf="selectedService as service">
+            <ng-container *ngIf="selectedSlot as slot">
+              <button class="back-link" (click)="goBack()">
+                <i class="pi pi-arrow-left"></i>
+                <span>Finaliza tu reserva</span>
+              </button>
 
-        <h2>¡Reserva confirmada!</h2>
+              <div class="booking-summary">
+                <div class="summary-row">
+                  <i class="pi pi-arrow-right"></i>
+                  <span>{{ service.displayName }}</span>
+                </div>
 
-        <p>
-          Te esperamos en <strong>{{ shop.name }}</strong
-          >.
-        </p>
+                <div class="summary-row">
+                  <i class="pi pi-clock"></i>
+                  <span>{{ service.durationMin }} min</span>
+                </div>
 
-        <ng-container *ngIf="selectedSlot as slot">
+                <div class="summary-row">
+                  <i class="pi pi-calendar"></i>
+                  <span>{{ finalDateLabel }} {{ formatTime(slot.startTime) }}</span>
+                </div>
+              </div>
+
+              <label class="form-field">
+                ¿Cuál es tu nombre?
+                <input type="text" [(ngModel)]="clientName" autocomplete="name" />
+              </label>
+
+              <label class="form-field">
+                ¿Cuál es tu WhatsApp?
+
+                <div class="phone-row">
+                  <div class="country-box">
+                    🇲🇽
+                    <i class="pi pi-chevron-down"></i>
+                  </div>
+
+                  <input
+                    type="text"
+                    [value]="clientPhone"
+                    (input)="onPhoneInput($event)"
+                    (keydown)="blockNonNumericKeys($event)"
+                    placeholder="Escribe tu número de WhatsApp"
+                    autocomplete="tel-national"
+                    inputmode="numeric"
+                    maxlength="10"
+                  />
+                </div>
+              </label>
+
+              <label class="form-field">
+                Notas opcionales
+                <textarea
+                  [(ngModel)]="clientNotes"
+                  placeholder="Ej. corte bajo, barba corta..."
+                ></textarea>
+              </label>
+
+              <button
+                class="reserve-btn"
+                [disabled]="isSaving || !clientName.trim() || clientPhone.length !== 10"
+                (click)="confirmBooking()"
+              >
+                {{ isSaving ? "Reservando..." : "Reservar" }}
+              </button>
+            </ng-container>
+          </ng-container>
+        </section>
+
+        <section class="success-section" *ngIf="currentStep === 4">
+          <div class="success-icon">
+            <i class="pi pi-check"></i>
+          </div>
+
+          <h2>¡Reserva confirmada!</h2>
+
           <p>
-            Tu cita quedó para el
-            <strong>{{ finalDateLabel }}</strong>
-            a las
-            <strong>{{ formatTime(slot.startTime) }}</strong
-            >.
+            Te esperamos en <strong>{{ shop.name }}</strong>.
           </p>
-        </ng-container>
-      </section>
-    </ng-container>
-  </div>
 
-  <div class="loading-state" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Cargando reservas...</p>
-  </div>
+          <ng-container *ngIf="selectedSlot as slot">
+            <p>
+              Tu cita quedó para el
+              <strong>{{ finalDateLabel }}</strong>
+              a las
+              <strong>{{ formatTime(slot.startTime) }}</strong>.
+            </p>
+          </ng-container>
+        </section>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #loadingTpl>
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando reservas...</p>
+    </div>
+  </ng-template>
 </div>

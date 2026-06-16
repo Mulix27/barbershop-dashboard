@@ -1,139 +1,154 @@
 <p-toast position="top-right"></p-toast>
+
 <div class="reports-page">
   <div class="page-header">
     <div>
       <h1>
-        {{ isSingleBarber ? "Insights Personales" : "Reportes del Negocio" }}
+        {{ isSingleBarber ? "Insights personales" : "Analítica de ventas" }}
       </h1>
+
       <p class="header-sub">
         {{
           isSingleBarber
-            ? "Optimiza tu tiempo y rentabilidad, " + userName
-            : "Analiza el rendimiento general y exporta informes detallados"
+            ? "Monitorea tus ingresos, servicios y rendimiento, " + userName
+            : "Monitorea ventas, servicios, barberos, citas y métodos de pago"
         }}
       </p>
     </div>
+
     <div class="header-actions">
       <div class="period-selector">
         <button
           *ngFor="let opt of periodOptions"
+          type="button"
           class="period-btn"
           [class.active]="selectedPeriod === opt.value"
-          (click)="selectedPeriod = opt.value; loadReport()"
+          (click)="onPeriodChange(opt.value)"
         >
           {{ opt.label }}
         </button>
       </div>
-      <button class="btn-primary" (click)="generateReport()">
-        <i class="pi pi-plus"></i>
-        Generar Informe
+
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="generatingPdf || !report"
+        (click)="generateReport()"
+      >
+        <i
+          class="pi"
+          [ngClass]="generatingPdf ? 'pi-spin pi-spinner' : 'pi-file-pdf'"
+        >
+        </i>
+        {{ generatingPdf ? "Generando..." : "Generar informe" }}
       </button>
     </div>
   </div>
+
   <div class="date-range-badge" *ngIf="!loading && report">
     <i class="pi pi-calendar"></i>
-    <span>{{ report.periodLabel }}</span>
+    <span>{{ report.periodLabel || dateRangeLabel }}</span>
   </div>
+
   <ng-container *ngIf="loading">
     <div class="metrics-grid">
       <p-skeleton
         *ngFor="let i of [1, 2, 3, 4]"
         height="100px"
-        borderRadius="14px"
-      ></p-skeleton>
+        borderRadius="18px"
+      >
+      </p-skeleton>
     </div>
+
     <div class="charts-row">
-      <p-skeleton height="320px" borderRadius="14px"></p-skeleton>
-      <p-skeleton height="320px" borderRadius="14px"></p-skeleton>
+      <p-skeleton height="320px" borderRadius="20px"></p-skeleton>
+      <p-skeleton height="320px" borderRadius="20px"></p-skeleton>
+    </div>
+
+    <div class="tables-row">
+      <p-skeleton height="320px" borderRadius="20px"></p-skeleton>
+      <p-skeleton height="320px" borderRadius="20px"></p-skeleton>
     </div>
   </ng-container>
+
   <ng-container *ngIf="!loading && report">
     <div class="metrics-grid">
       <div class="metric-card">
-        <div class="metric-icon revenue"><i class="pi pi-dollar"></i></div>
+        <div class="metric-icon revenue">
+          <i class="pi pi-dollar"></i>
+        </div>
+
         <div class="metric-body">
-          <span class="metric-label">
-            {{
-              isSingleBarber
-                ? "Ingresos Brutos"
-                : "Ingresos Totales (Facturado)"
-            }}
-          </span>
+          <span class="metric-label">Total facturado</span>
           <span class="metric-value">{{ formatCurrency(totalRevenue) }}</span>
           <span class="metric-trend up">
-            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+            <i class="pi pi-chart-line"></i>
+            {{ periodLabel }}
           </span>
         </div>
       </div>
+
       <div class="metric-card">
-        <div class="metric-icon profit"><i class="pi pi-chart-line"></i></div>
+        <div class="metric-icon profit">
+          <i class="pi pi-ticket"></i>
+        </div>
+
         <div class="metric-body">
-          <span class="metric-label">
-            {{ isSingleBarber ? "Ganancia Neta Real" : "Ganancia Neta" }}
-          </span>
-          <span class="metric-value">{{ formatCurrency(netProfit) }}</span>
+          <span class="metric-label">Ticket promedio</span>
+          <span class="metric-value">{{ formatCurrency(avgTicket) }}</span>
           <span class="metric-trend up">
-            <i class="pi pi-arrow-up"></i> Sin costos aplicados
+            <i class="pi pi-shopping-cart"></i>
+            Por venta
           </span>
         </div>
       </div>
+
       <div class="metric-card">
         <div class="metric-icon occupancy">
-          <i class="pi pi-clock"></i>
+          <i class="pi pi-shopping-cart"></i>
         </div>
+
         <div class="metric-body">
-          <span class="metric-label">
-            {{
-              isSingleBarber ? "Valor Promedio por Hora" : "Tasa de Ocupación"
-            }}
-          </span>
-          <span class="metric-value">
-            {{
-              isSingleBarber
-                ? formatCurrency(totalRevenue / 160)
-                : occupancyRate + "%"
-            }}
-          </span>
+          <span class="metric-label">Ventas totales</span>
+          <span class="metric-value">{{ formatNumber(totalSales) }}</span>
           <span class="metric-trend up">
-            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+            <i class="pi pi-check-circle"></i>
+            Transacciones
           </span>
         </div>
       </div>
+
       <div class="metric-card">
-        <div class="metric-icon tickets"><i class="pi pi-ticket"></i></div>
+        <div class="metric-icon tickets">
+          <i class="pi pi-users"></i>
+        </div>
+
         <div class="metric-body">
-          <span class="metric-label">
-            {{
-              isSingleBarber
-                ? "Tasa de Retención de Clientes"
-                : "Tickets Completados"
-            }}
-          </span>
-          <span class="metric-value">
-            {{
-              isSingleBarber
-                ? (clientMetrics?.recurringClients ?? 0) + " clientes"
-                : completedAppts
-            }}
-          </span>
+          <span class="metric-label">Clientes nuevos</span>
+          <span class="metric-value">{{ formatNumber(newClients) }}</span>
           <span class="metric-trend up">
-            <i class="pi pi-arrow-up"></i> {{ periodLabel }}
+            <i class="pi pi-sync"></i>
+            {{ formatNumber(recurringClients) }} recurrentes
           </span>
         </div>
       </div>
     </div>
+
     <div class="charts-row">
       <div class="card chart-card">
         <div class="card-header">
-          <h2>
-            {{
-              isSingleBarber
-                ? "Ingresos por Período"
-                : "Rentabilidad por Barbero"
-            }}
-          </h2>
+          <div class="ch-left">
+            <i class="pi pi-chart-bar accent"></i>
+            <h2>
+              {{
+                isSingleBarber ? "Ingresos por período" : "Ingresos por barbero"
+              }}
+            </h2>
+          </div>
+
           <span class="period-tag">{{ periodLabel }}</span>
         </div>
+
         <div class="chart-wrap">
           <canvas
             baseChart
@@ -144,374 +159,529 @@
           </canvas>
         </div>
       </div>
+
       <div class="card chart-card">
         <div class="card-header">
-          <h2>
-            {{
-              isSingleBarber
-                ? "Revenue vs Gastos"
-                : "Tendencia de Ocupación y Cancelaciones"
-            }}
-          </h2>
-          <span class="period-tag">Últimos 6 meses</span>
+          <div class="ch-left">
+            <i class="pi pi-chart-line accent"></i>
+            <h2>Tendencia de ingresos</h2>
+          </div>
+
+          <span class="period-tag">{{ periodLabel }}</span>
         </div>
+
         <div class="chart-wrap">
           <canvas
             baseChart
-            [data]="isSingleBarber ? revenueExpensesData : occupancyLineData"
-            [options]="
-              isSingleBarber ? revenueExpensesOptions : occupancyLineOptions
-            "
+            [data]="occupancyLineData"
+            [options]="occupancyLineOptions"
             type="line"
           >
           </canvas>
         </div>
       </div>
     </div>
+
     <div class="tables-row">
       <div class="card table-card">
         <div class="card-header">
           <div class="ch-left">
-            <i class="pi pi-scissors gold"></i>
-            <h2>
-              {{
-                isSingleBarber
-                  ? "Servicios más Rentables"
-                  : "Rendimiento de Servicios Detallado"
-              }}
-            </h2>
+            <i class="pi pi-list accent"></i>
+            <h2>Top servicios</h2>
           </div>
+
+          <span class="period-tag">{{ periodLabel }}</span>
         </div>
-        <table class="data-table">
+
+        <table class="data-table" *ngIf="topServices.length > 0">
           <thead>
             <tr>
+              <th>#</th>
               <th>Servicio</th>
-              <th *ngIf="isSingleBarber">Duración</th>
-              <th>Precio</th>
-              <th *ngIf="!isSingleBarber">Cant.</th>
-              <th>Ganancia Neta</th>
-              <th>{{ isSingleBarber ? "Gan/Min" : "Rentab. %" }}</th>
+              <th>Cant.</th>
+              <th>Ingresos</th>
+              <th>Precio prom.</th>
             </tr>
           </thead>
+
           <tbody>
-            <tr *ngFor="let svc of topServices">
-              <td class="svc-td">{{ svc.serviceName }}</td>
-              <td *ngIf="isSingleBarber" class="muted-td">30 min</td>
-              <td class="gold-td">
+            <tr *ngFor="let svc of topServices; let i = index">
+              <td>{{ i + 1 }}</td>
+
+              <td class="svc-td">
+                {{ svc.serviceName }}
+              </td>
+
+              <td>
+                {{ formatNumber(svc.totalQuantity) }}
+              </td>
+
+              <td class="accent-td">
+                {{ formatCurrency(svc.totalRevenue) }}
+              </td>
+
+              <td>
                 {{
                   formatCurrency(safeDiv(svc.totalRevenue, svc.totalQuantity))
                 }}
               </td>
-              <td *ngIf="!isSingleBarber">{{ svc.totalQuantity }}</td>
-              <td class="gold-td">
-                {{ formatCurrency(svc.totalRevenue) }}
-              </td>
-              <td>
-                <span class="pct-badge" [class.high]="profitability(svc) > 85">
-                  {{
-                    isSingleBarber
-                      ? "$" + profitPerMinute(svc).toFixed(2)
-                      : profitability(svc) + "%"
-                  }}
-                </span>
-              </td>
             </tr>
-            <tr class="total-row" *ngIf="topServices.length > 0">
-              <td><strong>Total</strong></td>
-              <td *ngIf="isSingleBarber"></td>
+
+            <tr class="total-row">
               <td></td>
-              <td *ngIf="!isSingleBarber">
-                <strong>{{ totalTopServicesQty }}</strong>
+
+              <td>
+                <strong>Total</strong>
               </td>
-              <td class="gold-td">
+
+              <td>
+                <strong>{{ formatNumber(totalTopServicesQty) }}</strong>
+              </td>
+
+              <td class="accent-td">
                 <strong>{{ formatCurrency(totalTopServicesRevenue) }}</strong>
               </td>
+
               <td></td>
             </tr>
           </tbody>
         </table>
+
         <div class="empty-table" *ngIf="topServices.length === 0">
-          Sin datos en este período
-        </div>
-        <div class="table-footer">
-          <button class="view-all-btn">
-            Ver todo <i class="pi pi-arrow-right"></i>
-          </button>
+          Sin servicios vendidos en este período.
         </div>
       </div>
+
       <div class="card table-card">
         <div class="card-header">
           <div class="ch-left">
-            <i class="pi pi-users gold"></i>
+            <i class="pi pi-users accent"></i>
             <h2>
               {{
                 isSingleBarber
-                  ? "Consumo de Insumos"
-                  : "Rendimiento de Barberos Detallado"
+                  ? "Resumen de ingresos"
+                  : "Rendimiento por barbero"
               }}
             </h2>
           </div>
+
+          <span class="period-tag">{{ periodLabel }}</span>
         </div>
+
         <ng-container *ngIf="!isSingleBarber">
-          <table class="data-table">
+          <table class="data-table" *ngIf="barbers.length > 0">
             <thead>
               <tr>
                 <th>Barbero</th>
-                <th>Citas</th>
-                <th>Total Ventas</th>
-                <th>Avg. Ticket</th>
-                <th>Comisión (20%)</th>
-                <th class="gold-td">Ganancia Neta</th>
+                <th>Ventas</th>
+                <th>Servicios</th>
+                <th>Ingresos</th>
+                <th>Ticket prom.</th>
               </tr>
             </thead>
+
             <tbody>
               <tr *ngFor="let b of barbers">
                 <td>
                   <div class="barber-cell">
-                    <div class="barber-av">{{ b.barberName.charAt(0) }}</div>
-                    {{ b.barberName }}
+                    <div class="barber-av">
+                      {{ getInitials(b.barberName) }}
+                    </div>
+                    <span>{{ b.barberName }}</span>
                   </div>
                 </td>
-                <td>{{ b.totalSales }}</td>
-                <td class="gold-td">{{ formatCurrency(b.revenue) }}</td>
+
+                <td>{{ formatNumber(b.totalSales) }}</td>
+
+                <td>{{ formatNumber(b.totalServices) }}</td>
+
+                <td class="accent-td">
+                  {{ formatCurrency(b.revenue) }}
+                </td>
+
                 <td>
                   {{ formatCurrency(avgTicketBarber(b.revenue, b.totalSales)) }}
                 </td>
-                <td class="muted-td">
-                  {{ formatCurrency(commissionPaid(b.revenue)) }}
-                </td>
-                <td class="gold-td">
-                  <strong>{{
-                    formatCurrency(netProfitBarber(b.revenue))
-                  }}</strong>
-                </td>
               </tr>
-              <tr class="total-row" *ngIf="barbers.length > 0">
-                <td><strong>Total</strong></td>
+
+              <tr class="total-row">
                 <td>
-                  <strong>{{ completedAppts }}</strong>
+                  <strong>Total</strong>
                 </td>
-                <td class="gold-td">
+
+                <td>
+                  <strong>{{ formatNumber(totalSales) }}</strong>
+                </td>
+
+                <td>
+                  <strong>{{ formatNumber(totalBarbersServices) }}</strong>
+                </td>
+
+                <td class="accent-td">
                   <strong>{{ formatCurrency(totalBarbersRevenue) }}</strong>
                 </td>
+
                 <td>
                   <strong>{{
                     formatCurrency(
-                      avgTicketBarber(totalBarbersRevenue, completedAppts)
+                      avgTicketBarber(totalBarbersRevenue, totalSales)
                     )
                   }}</strong>
                 </td>
-                <td class="muted-td">
-                  <strong>{{
-                    formatCurrency(commissionPaid(totalBarbersRevenue))
-                  }}</strong>
-                </td>
-                <td class="gold-td">
-                  <strong>{{
-                    formatCurrency(netProfitBarber(totalBarbersRevenue))
-                  }}</strong>
-                </td>
               </tr>
             </tbody>
           </table>
+
           <div class="empty-table" *ngIf="barbers.length === 0">
-            Sin datos en este período
+            Sin rendimiento por barbero en este período.
           </div>
         </ng-container>
+
         <ng-container *ngIf="isSingleBarber">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Insumo</th>
-                <th>Utilizado</th>
-                <th>Costo</th>
-                <th>Ing. Generados</th>
-                <th class="gold-td">ROI</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let pm of paymentMethods">
-                <td class="svc-td">
-                  {{
-                    pm.paymentMethod === "cash"
-                      ? "Efectivo"
-                      : pm.paymentMethod === "card"
-                        ? "Tarjeta"
-                        : "Transferencia"
-                  }}
-                </td>
-                <td>{{ pm.totalSales }} ventas</td>
-                <td class="muted-td">—</td>
-                <td class="gold-td">{{ formatCurrency(pm.revenue) }}</td>
-                <td class="gold-td"><strong>—</strong></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="appt-metrics">
+            <div class="am-row">
+              <span>Ingresos generados</span>
+              <strong>{{ formatCurrency(totalRevenue) }}</strong>
+            </div>
+
+            <div class="am-row">
+              <span>Ventas realizadas</span>
+              <strong>{{ formatNumber(totalSales) }}</strong>
+            </div>
+
+            <div class="am-row">
+              <span>Ticket promedio</span>
+              <strong>{{ formatCurrency(avgTicket) }}</strong>
+            </div>
+
+            <div class="am-row success">
+              <span>Clientes recurrentes</span>
+              <strong>{{ formatNumber(recurringClients) }}</strong>
+            </div>
+          </div>
         </ng-container>
       </div>
     </div>
+
+    <div class="card recent-sales-card">
+      <div class="card-header">
+        <div class="ch-left">
+          <i class="pi pi-receipt accent"></i>
+          <h2>Ventas recientes</h2>
+        </div>
+
+        <span class="period-tag">{{ periodLabel }}</span>
+      </div>
+
+      <table class="data-table" *ngIf="recentSales.length > 0">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Venta</th>
+            <th>Barbero</th>
+            <th>Origen</th>
+            <th>Método</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let sale of recentSales">
+            <td>{{ sale.createdAt }}</td>
+
+            <td class="svc-td">
+              {{ sale.clientName }}
+            </td>
+
+            <td>
+              {{ sale.itemSummary }}
+            </td>
+
+            <td>
+              {{ sale.barberName }}
+            </td>
+
+            <td>
+              <span
+                class="origin-pill"
+                [class.appointment]="sale.origin === 'appointment'"
+              >
+                {{ originLabel(sale.origin) }}
+              </span>
+            </td>
+
+            <td>
+              {{ paymentLabel(sale.paymentMethod) }}
+            </td>
+
+            <td class="accent-td">
+              {{ formatCurrency(sale.total) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-table" *ngIf="recentSales.length === 0">
+        Sin ventas recientes en este período.
+      </div>
+    </div>
+
     <div class="bottom-row">
       <div class="card">
         <div class="card-header">
           <div class="ch-left">
-            <i class="pi pi-clock gold"></i>
-            <h2>Horas Pico</h2>
+            <i class="pi pi-credit-card accent"></i>
+            <h2>Métodos de pago</h2>
           </div>
         </div>
-        <div class="peak-list">
-          <div class="peak-item" *ngFor="let h of peakHours; let i = index">
-            <span class="peak-rank">#{{ i + 1 }}</span>
-            <span class="peak-label">{{ h.label }}</span>
-            <div class="peak-bar">
-              <div
-                class="peak-fill"
-                [style.width.%]="
-                  peakHours[0]
-                    ? (h.totalAppointments / peakHours[0].totalAppointments) *
-                      100
-                    : 0
-                "
-              ></div>
-            </div>
-            <span class="peak-count">{{ h.totalAppointments }}</span>
-          </div>
-          <div class="empty-sm" *ngIf="peakHours.length === 0">Sin datos</div>
-        </div>
-        <p-divider styleClass="dark-divider"></p-divider>
-        <h3 class="sub-title">Métodos de pago</h3>
-        <div class="payment-list">
-          <div class="payment-item" *ngFor="let p of paymentMethods">
+
+        <div class="payment-list" *ngIf="paymentMethods.length > 0">
+          <div class="payment-item" *ngFor="let payment of paymentMethods">
             <div class="pi-wrap">
               <i
                 class="pi"
-                [class.pi-money-bill]="p.paymentMethod === 'cash'"
-                [class.pi-credit-card]="p.paymentMethod === 'card'"
-                [class.pi-send]="p.paymentMethod === 'transfer'"
+                [class.pi-money-bill]="payment.paymentMethod === 'cash'"
+                [class.pi-credit-card]="payment.paymentMethod === 'card'"
+                [class.pi-send]="payment.paymentMethod === 'transfer'"
+                [class.pi-ellipsis-h]="
+                  payment.paymentMethod !== 'cash' &&
+                  payment.paymentMethod !== 'card' &&
+                  payment.paymentMethod !== 'transfer'
+                "
               >
               </i>
             </div>
+
             <div class="p-info">
-              <span>{{
-                p.paymentMethod === "cash"
-                  ? "Efectivo"
-                  : p.paymentMethod === "card"
-                    ? "Tarjeta"
-                    : "Transferencia"
-              }}</span>
-              <span class="p-count">{{ p.totalSales }} ventas</span>
+              <span>{{ paymentLabel(payment.paymentMethod) }}</span>
+              <span class="p-count">
+                {{ formatNumber(payment.totalSales) }} venta(s)
+              </span>
             </div>
-            <span class="p-amount">{{ formatCurrency(p.revenue) }}</span>
+
+            <span class="p-amount">
+              {{ formatCurrency(payment.revenue) }}
+            </span>
           </div>
         </div>
+
+        <div class="empty-sm" *ngIf="paymentMethods.length === 0">
+          Sin métodos de pago registrados.
+        </div>
       </div>
+
       <div class="card">
         <div class="card-header">
           <div class="ch-left">
-            <i class="pi pi-calendar gold"></i>
-            <h2>Métricas de Citas</h2>
+            <i class="pi pi-calendar accent"></i>
+            <h2>Resumen de citas</h2>
           </div>
         </div>
+
         <div class="appt-metrics" *ngIf="apptMetrics">
           <div class="am-row">
             <span>Total citas</span>
-            <strong>{{ apptMetrics.totalAppointments }}</strong>
+            <strong>{{ formatNumber(totalAppointments) }}</strong>
           </div>
+
           <div class="am-row success">
             <span>Completadas</span>
-            <strong>{{ apptMetrics.completed }}</strong>
+            <strong>{{ formatNumber(completedAppts) }}</strong>
           </div>
+
           <div class="am-row warning">
             <span>Canceladas</span>
-            <strong>{{ apptMetrics.cancelled }}</strong>
+            <strong>{{ formatNumber(cancelledAppts) }}</strong>
           </div>
+
           <div class="am-row danger">
             <span>No asistió</span>
-            <strong>{{ apptMetrics.noShow }}</strong>
+            <strong>{{ formatNumber(noShowAppts) }}</strong>
           </div>
+
           <div class="am-row occupancy">
             <span>Tasa de ocupación</span>
             <strong>{{ occupancyRate }}%</strong>
           </div>
+
           <div class="am-row muted">
             <span>Tasa de ausentismo</span>
-            <strong>{{ apptMetrics.noShowRate }}%</strong>
+            <strong>{{ noShowRate }}%</strong>
           </div>
         </div>
-        <p-divider styleClass="dark-divider"></p-divider>
-        <h3 class="sub-title">Clientes</h3>
-        <div class="client-metrics" *ngIf="clientMetrics">
-          <div class="cm-item">
-            <div class="cm-icon new"><i class="pi pi-user-plus"></i></div>
-            <div>
-              <span class="cm-val">{{ clientMetrics.newClients }}</span>
-              <span class="cm-lbl">Nuevos clientes</span>
-            </div>
-          </div>
-          <div class="cm-item">
-            <div class="cm-icon returning"><i class="pi pi-sync"></i></div>
-            <div>
-              <span class="cm-val">{{ clientMetrics.recurringClients }}</span>
-              <span class="cm-lbl">Recurrentes</span>
-            </div>
-          </div>
-        </div>
+
+        <div class="empty-sm" *ngIf="!apptMetrics">Sin métricas de citas.</div>
       </div>
+
       <div class="card">
         <div class="card-header">
           <div class="ch-left">
-            <i class="pi pi-file gold"></i>
-            <h2>
-              {{
-                isSingleBarber
-                  ? "Mis Reportes Mensuales"
-                  : "Informes Guardados y Exportaciones"
-              }}
-            </h2>
+            <i class="pi pi-clock accent"></i>
+            <h2>Horas pico</h2>
           </div>
         </div>
-        <div class="reports-list">
-          <div class="report-item" *ngFor="let r of savedReports">
+
+        <div class="peak-list" *ngIf="peakHours.length > 0">
+          <div class="peak-item" *ngFor="let hour of peakHours; let i = index">
+            <span class="peak-rank">#{{ i + 1 }}</span>
+
+            <span class="peak-label">
+              {{ hour.label }}
+            </span>
+
+            <div class="peak-bar">
+              <div
+                class="peak-fill"
+                [style.width.%]="peakPercent(hour.totalAppointments)"
+              ></div>
+            </div>
+
+            <span class="peak-count">
+              {{ formatNumber(hour.totalAppointments) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="empty-sm" *ngIf="peakHours.length === 0">
+          Sin horas pico en este período.
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-users accent"></i>
+            <h2>Clientes</h2>
+          </div>
+        </div>
+
+        <div class="client-metrics" *ngIf="clientMetrics">
+          <div class="cm-item">
+            <div class="cm-icon new">
+              <i class="pi pi-user-plus"></i>
+            </div>
+
+            <div>
+              <span class="cm-val">{{ formatNumber(newClients) }}</span>
+              <span class="cm-lbl">Nuevos clientes</span>
+            </div>
+          </div>
+
+          <div class="cm-item">
+            <div class="cm-icon returning">
+              <i class="pi pi-users"></i>
+            </div>
+
+            <div>
+              <span class="cm-val">{{ formatNumber(recurringClients) }}</span>
+              <span class="cm-lbl">Clientes recurrentes</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-sm" *ngIf="!clientMetrics">
+          Sin métricas de clientes.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-calendar-times accent"></i>
+            <h2>Cancelaciones</h2>
+          </div>
+        </div>
+
+        <div class="appt-metrics">
+          <div class="am-row warning">
+            <span>Canceladas</span>
+            <strong>{{ formatNumber(cancelledAppts) }}</strong>
+          </div>
+
+          <div class="am-row danger">
+            <span>No asistió</span>
+            <strong>{{ formatNumber(noShowAppts) }}</strong>
+          </div>
+
+          <div class="am-row muted">
+            <span>Tasa de cancelación</span>
+            <strong>{{ cancellationRate }}%</strong>
+          </div>
+
+          <div class="am-row muted">
+            <span>Tasa de ausentismo</span>
+            <strong>{{ noShowRate }}%</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="ch-left">
+            <i class="pi pi-file-pdf accent"></i>
+            <h2>Informes generados</h2>
+          </div>
+        </div>
+
+        <div class="reports-list" *ngIf="savedReports.length > 0">
+          <div class="report-item" *ngFor="let saved of savedReports">
             <div class="ri-info">
-              <span class="ri-name">{{ r.name }}</span>
+              <span class="ri-name">{{ saved.name }}</span>
+
               <div class="ri-meta">
-                <p-tag
-                  [value]="r.type"
-                  [severity]="typeSeverity(r.type)"
-                  styleClass="ri-tag"
-                ></p-tag>
-                <span class="ri-date">{{ r.date }}</span>
+                <span class="ri-format">{{ saved.type }}</span>
+                <span class="ri-date">{{ saved.date }}</span>
               </div>
             </div>
+
             <div class="ri-actions">
-              <span class="ri-format">{{ r.format }}</span>
+              <span class="ri-format">{{ saved.format }}</span>
+
               <button
+                type="button"
                 class="ri-btn"
-                (click)="downloadReport(r)"
-                [disabled]="downloadingId === r.id"
-                [class.loading]="downloadingId === r.id"
+                [disabled]="downloadingId === saved.id"
+                (click)="downloadReport(saved)"
               >
                 <i
                   class="pi pi-spin pi-spinner"
-                  *ngIf="downloadingId === r.id"
-                ></i>
-                <i class="pi pi-download" *ngIf="downloadingId !== r.id"></i>
+                  *ngIf="downloadingId === saved.id"
+                >
+                </i>
+                <i class="pi pi-download" *ngIf="downloadingId !== saved.id">
+                </i>
               </button>
+
               <button
+                type="button"
                 class="ri-btn"
-                (click)="shareReport(r)"
-                [disabled]="!r.base64"
+                [disabled]="!saved.base64"
+                (click)="shareReport(saved)"
               >
                 <i class="pi pi-share-alt"></i>
               </button>
             </div>
           </div>
         </div>
-        <div class="table-footer">
-          <button class="view-all-btn">
-            Ver todos los reportes <i class="pi pi-arrow-right"></i>
-          </button>
+
+        <div class="empty-sm" *ngIf="savedReports.length === 0">
+          Aún no hay informes generados.
         </div>
       </div>
     </div>
   </ng-container>
+
+  <div class="card empty-state" *ngIf="!loading && !report">
+    <i class="pi pi-chart-line"></i>
+    <h3>No se pudo cargar el reporte</h3>
+    <p>Intenta actualizar la información o selecciona otro período.</p>
+
+    <button type="button" class="btn-primary" (click)="loadReport()">
+      <i class="pi pi-refresh"></i>
+      Reintentar
+    </button>
+  </div>
 </div>

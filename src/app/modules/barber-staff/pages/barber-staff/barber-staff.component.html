@@ -6,7 +6,9 @@
       <div class="header-title-row">
         <div>
           <h1>Barber Staff</h1>
-          <p class="header-sub">Gestiona tus barberos, perfiles, horarios y desempeño.</p>
+          <p class="header-sub">
+            Gestiona tus barberos, perfiles, horarios y desempeño.
+          </p>
         </div>
       </div>
     </div>
@@ -26,15 +28,83 @@
       <span class="mp-lbl">Activos</span>
     </div>
     <div class="metric-pill">
-      <i class="pi pi-star-fill"></i>
+      <i class="pi pi-star"></i>
       <span class="mp-val">{{ avgRating }}</span>
       <span class="mp-lbl">Avg. Rating</span>
     </div>
     <div class="metric-pill">
-      <i class="pi pi-scissors"></i>
+      <i class="pi pi-chart-bar"></i>
       <span class="mp-val">{{ formatNumber(totalCutsAll) }}</span>
       <span class="mp-lbl">Cortes totales</span>
     </div>
+  </div>
+  <div
+    class="payment-summary-strip"
+    *ngIf="paymentSummary && !paymentSummaryLoading"
+  >
+    <div class="pay-summary-card pending">
+      <div class="pay-summary-icon">
+        <i class="pi pi-wallet"></i>
+      </div>
+      <div>
+        <span>Pendiente por pagar</span>
+        <strong>{{ money(paymentSummary.pendingAmount) }}</strong>
+        <small>{{ paymentSummary.pendingPeriods }} período(s)</small>
+      </div>
+    </div>
+
+    <div class="pay-summary-card ready">
+      <div class="pay-summary-icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div>
+        <span>Listo para pagar</span>
+        <strong>{{ money(paymentSummary.readyToPayAmount) }}</strong>
+        <small>{{ paymentSummary.readyPeriods }} período(s)</small>
+      </div>
+    </div>
+
+    <div class="pay-summary-card review">
+      <div class="pay-summary-icon">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div>
+        <span>En revisión</span>
+        <strong>{{ money(paymentSummary.reviewAmount) }}</strong>
+        <small>{{ paymentSummary.reviewPeriods }} período(s)</small>
+      </div>
+    </div>
+
+    <div class="pay-summary-card paid">
+      <div class="pay-summary-icon">
+        <i class="pi pi-dollar"></i>
+      </div>
+      <div>
+        <span>Pagado registrado</span>
+        <strong>{{ money(paymentSummary.paidAmount) }}</strong>
+        <small>{{ paymentSummary.paidPeriods }} período(s)</small>
+      </div>
+    </div>
+  </div>
+  <div
+    class="payment-history-entry"
+    *ngIf="paymentSummary && !paymentSummaryLoading"
+  >
+    <div>
+      <h3>Historial de pagos</h3>
+      <p>
+        Consulta los pagos registrados por barbero, período, fecha y método.
+      </p>
+    </div>
+
+    <button
+      class="btn-outline history"
+      type="button"
+      (click)="openPaymentHistory()"
+    >
+      <i class="pi pi-history"></i>
+      Ver historial
+    </button>
   </div>
   <div class="staff-toolbar">
     <div class="toolbar-left">
@@ -45,12 +115,20 @@
           type="text"
           placeholder="Buscar por nombre o especialidad..."
           [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearch()"/>
+          (ngModelChange)="onSearch()"
+        />
       </div>
-      <button class="btn-filter" [class.active]="showFilters" (click)="showFilters = !showFilters">
+      <button
+        class="btn-filter"
+        [class.active]="showFilters"
+        (click)="showFilters = !showFilters"
+      >
         <i class="pi pi-filter"></i>
         Filtros
-        <span class="filter-dot" *ngIf="statusFilter !== 'all'"></span>
+        <span
+          class="filter-dot"
+          *ngIf="statusFilter !== 'all' || paymentFilter !== 'all'"
+        ></span>
       </button>
     </div>
     <div class="toolbar-right">
@@ -63,48 +141,96 @@
           optionValue="value"
           (onChange)="applyFilters()"
           styleClass="sort-dd"
-          [style]="{ minWidth: '170px' }">
+          [style]="{ minWidth: '170px' }"
+        >
         </p-dropdown>
       </div>
       <div class="view-toggle">
-        <button class="vt-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'">
+        <button
+          class="vt-btn"
+          [class.active]="viewMode === 'grid'"
+          (click)="viewMode = 'grid'"
+        >
           <i class="pi pi-th-large"></i>
         </button>
-        <button class="vt-btn" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+        <button
+          class="vt-btn"
+          [class.active]="viewMode === 'list'"
+          (click)="viewMode = 'list'"
+        >
           <i class="pi pi-bars"></i>
         </button>
       </div>
     </div>
   </div>
   <div class="filter-bar" *ngIf="showFilters">
-    <span class="filter-title">Estado:</span>
-    <button
-      *ngFor="let opt of statusOptions"
-      class="filter-chip"
-      [class.active]="statusFilter === opt.value"
-      (click)="statusFilter = opt.value; applyFilters()">
-      {{ opt.label }}
-    </button>
+    <div class="filter-group">
+      <span class="filter-title">Estado:</span>
+
+      <button
+        *ngFor="let opt of statusOptions"
+        class="filter-chip"
+        [class.active]="statusFilter === opt.value"
+        (click)="statusFilter = opt.value; applyFilters()"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-title">Pagos:</span>
+
+      <button
+        *ngFor="let opt of paymentFilterOptions"
+        class="filter-chip payment"
+        [class.active]="paymentFilter === opt.value"
+        (click)="paymentFilter = opt.value; applyFilters()"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
+
     <button class="filter-reset" (click)="resetFilters()">
       <i class="pi pi-times"></i> Limpiar
     </button>
   </div>
   <div class="results-row">
     <span class="results-count">
-      Mostrando {{ (page-1)*pageSize + 1 }}–{{ [page*pageSize, filtered.length] | min }}
+      Mostrando {{ (page - 1) * pageSize + 1 }}–{{
+        [page * pageSize, filtered.length] | min
+      }}
       de {{ filtered.length }} barberos
     </span>
   </div>
   <ng-container *ngIf="viewMode === 'grid'">
     <div class="barbers-grid" *ngIf="loading">
-      <div class="barber-card skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+      <div
+        class="barber-card skeleton"
+        *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
+      >
         <div class="sk-avatar"></div>
-        <p-skeleton width="60%" height="18px" styleClass="mx-auto mb-1"></p-skeleton>
-        <p-skeleton width="45%" height="13px" styleClass="mx-auto mb-2"></p-skeleton>
-        <p-skeleton width="80px" height="24px" styleClass="mx-auto mb-3"></p-skeleton>
+        <p-skeleton
+          width="60%"
+          height="18px"
+          styleClass="mx-auto mb-1"
+        ></p-skeleton>
+        <p-skeleton
+          width="45%"
+          height="13px"
+          styleClass="mx-auto mb-2"
+        ></p-skeleton>
+        <p-skeleton
+          width="80px"
+          height="24px"
+          styleClass="mx-auto mb-3"
+        ></p-skeleton>
         <p-skeleton width="100%" height="1px" styleClass="mb-3"></p-skeleton>
-        <div style="display:flex;gap:.75rem;justify-content:center">
-          <p-skeleton *ngFor="let j of [1,2,3]" width="60px" height="40px"></p-skeleton>
+        <div style="display: flex; gap: 0.75rem; justify-content: center">
+          <p-skeleton
+            *ngFor="let j of [1, 2, 3]"
+            width="60px"
+            height="40px"
+          ></p-skeleton>
         </div>
       </div>
     </div>
@@ -112,14 +238,22 @@
       <div
         class="barber-card"
         *ngFor="let barber of paginated"
-        [class.inactive]="barber.status === 'inactive'">
-        <button class="card-menu-btn" (click)="openStatusChange(barber)" pTooltip="Cambiar estado">
+        [class.inactive]="barber.status === 'inactive'"
+      >
+        <button
+          class="card-menu-btn"
+          (click)="openStatusChange(barber)"
+          pTooltip="Cambiar estado"
+        >
           <i class="pi pi-ellipsis-v"></i>
         </button>
         <div class="card-avatar-wrap">
           <div class="card-avatar">
-            <img *ngIf="barber.profilePhotoUrl"
-              [src]="barber.profilePhotoUrl" [alt]="barber.fullName"/>
+            <img
+              *ngIf="barber.profilePhotoUrl"
+              [src]="barber.profilePhotoUrl"
+              [alt]="barber.fullName"
+            />
             <span *ngIf="!barber.profilePhotoUrl" class="avatar-initials">
               {{ getInitials(barber.fullName) }}
             </span>
@@ -128,16 +262,24 @@
         </div>
         <div class="card-info">
           <h3 class="card-name">{{ barber.fullName }}</h3>
-          <p class="card-specialty">{{ barber.specialty ?? 'Barbero' }}</p>
+          <p class="card-specialty">{{ barber.specialty ?? "Barbero" }}</p>
           <span class="status-badge" [class]="statusClass(barber.status)">
             {{ statusLabel(barber.status) }}
           </span>
+          <div class="payment-mini" [ngClass]="paymentCardClass(barber)">
+            <i class="pi pi-wallet"></i>
+
+            <div>
+              <span>{{ paymentCardTitle(barber) }}</span>
+              <strong>{{ paymentCardSubtitle(barber) }}</strong>
+            </div>
+          </div>
         </div>
         <div class="card-divider"></div>
         <div class="card-metrics">
           <div class="metric-item">
             <i class="pi pi-star-fill"></i>
-            <span class="metric-val">{{ barber.rating ?? '—' }}</span>
+            <span class="metric-val">{{ barber.rating ?? "—" }}</span>
             <span class="metric-lbl">Rating</span>
           </div>
           <div class="metric-sep"></div>
@@ -149,19 +291,31 @@
           <div class="metric-sep"></div>
           <div class="metric-item">
             <i class="pi pi-clock"></i>
-            <span class="metric-val">{{ barber.nextAppointmentTime ?? '—' }}</span>
+            <span class="metric-val">{{
+              barber.nextAppointmentTime ?? "—"
+            }}</span>
             <span class="metric-lbl">Next Appt.</span>
           </div>
         </div>
-         <div class="card-actions">
+        <div class="card-actions payments-actions">
           <button class="card-btn outline" (click)="openEdit(barber)">
             <i class="pi pi-pencil"></i>
             Editar perfil
           </button>
+
           <button class="card-btn outline" (click)="viewSchedule(barber)">
             <i class="pi pi-calendar"></i>
             Ver horario
           </button>
+
+          <button
+            class="card-btn outline payment"
+            (click)="openPayments(barber)"
+          >
+            <i class="pi pi-wallet"></i>
+            Pagos
+          </button>
+
           <button class="card-btn danger" (click)="confirmDelete(barber)">
             <i class="pi pi-trash"></i>
           </button>
@@ -171,7 +325,9 @@
         <i class="pi pi-users"></i>
         <h3>Sin barberos</h3>
         <p>No se encontraron barberos con los filtros actuales</p>
-        <button class="btn-primary sm" (click)="resetFilters()">Limpiar filtros</button>
+        <button class="btn-primary sm" (click)="resetFilters()">
+          Limpiar filtros
+        </button>
       </div>
     </div>
   </ng-container>
@@ -186,39 +342,68 @@
         <span>Próx. cita</span>
         <span>Acciones</span>
       </div>
-      <div class="list-row" *ngFor="let barber of paginated" [class.inactive]="barber.status === 'inactive'">
+      <div
+        class="list-row"
+        *ngFor="let barber of paginated"
+        [class.inactive]="barber.status === 'inactive'"
+      >
         <div class="list-barber">
           <div class="list-avatar">
-            <img *ngIf="barber.profilePhotoUrl" [src]="barber.profilePhotoUrl" [alt]="barber.fullName"/>
-            <span *ngIf="!barber.profilePhotoUrl">{{ getInitials(barber.fullName) }}</span>
+            <img
+              *ngIf="barber.profilePhotoUrl"
+              [src]="barber.profilePhotoUrl"
+              [alt]="barber.fullName"
+            />
+            <span *ngIf="!barber.profilePhotoUrl">{{
+              getInitials(barber.fullName)
+            }}</span>
           </div>
           <div>
             <span class="list-name">{{ barber.fullName }}</span>
             <span class="list-email">{{ barber.email }}</span>
           </div>
         </div>
-        <span class="list-specialty">{{ barber.specialty ?? '—' }}</span>
+        <span class="list-specialty">{{ barber.specialty ?? "—" }}</span>
         <span>
           <span class="status-badge sm" [class]="statusClass(barber.status)">
             {{ statusLabel(barber.status) }}
           </span>
         </span>
         <span class="list-rating">
-          <i class="pi pi-star-fill"></i> {{ barber.rating ?? '—' }}
+          <i class="pi pi-star-fill"></i> {{ barber.rating ?? "—" }}
         </span>
         <span class="list-cuts">{{ formatNumber(barber.totalCuts) }}</span>
-        <span class="list-time">{{ barber.nextAppointmentTime ?? '—' }}</span>
-          <div class="list-actions">
+        <span class="list-time">{{ barber.nextAppointmentTime ?? "—" }}</span>
+        <div class="list-actions">
           <button class="icon-btn" pTooltip="Editar" (click)="openEdit(barber)">
             <i class="pi pi-pencil"></i>
           </button>
-          <button class="icon-btn" pTooltip="Ver horario" (click)="viewSchedule(barber)">
+          <button
+            class="icon-btn"
+            pTooltip="Ver horario"
+            (click)="viewSchedule(barber)"
+          >
             <i class="pi pi-calendar"></i>
           </button>
-          <button class="icon-btn" pTooltip="Cambiar estado" (click)="openStatusChange(barber)">
+          <button
+            class="icon-btn"
+            pTooltip="Cambiar estado"
+            (click)="openStatusChange(barber)"
+          >
             <i class="pi pi-ellipsis-v"></i>
           </button>
-          <button class="icon-btn danger" pTooltip="Eliminar" (click)="confirmDelete(barber)">
+          <button
+            class="icon-btn"
+            pTooltip="Pagos"
+            (click)="openPayments(barber)"
+          >
+            <i class="pi pi-wallet"></i>
+          </button>
+          <button
+            class="icon-btn danger"
+            pTooltip="Eliminar"
+            (click)="confirmDelete(barber)"
+          >
             <i class="pi pi-trash"></i>
           </button>
         </div>
@@ -227,21 +412,31 @@
   </ng-container>
   <div class="pagination-wrap" *ngIf="!loading && filtered.length > pageSize">
     <span class="page-info">
-      Showing {{ (page-1)*pageSize + 1 }} to
-      {{ [page*pageSize, filtered.length] | min }} of {{ filtered.length }} barbers
+      Showing {{ (page - 1) * pageSize + 1 }} to
+      {{ [page * pageSize, filtered.length] | min }} of
+      {{ filtered.length }} barbers
     </span>
     <div class="page-controls">
-      <button class="page-btn" [disabled]="page === 1" (click)="goPage(page - 1)">
+      <button
+        class="page-btn"
+        [disabled]="page === 1"
+        (click)="goPage(page - 1)"
+      >
         <i class="pi pi-chevron-left"></i>
       </button>
       <button
         *ngFor="let p of pages"
         class="page-btn num"
         [class.active]="p === page"
-        (click)="goPage(p)">
+        (click)="goPage(p)"
+      >
         {{ p }}
       </button>
-      <button class="page-btn" [disabled]="page === totalPages" (click)="goPage(page + 1)">
+      <button
+        class="page-btn"
+        [disabled]="page === totalPages"
+        (click)="goPage(page + 1)"
+      >
         <i class="pi pi-chevron-right"></i>
       </button>
     </div>
@@ -249,88 +444,131 @@
 </div>
 <p-dialog
   [(visible)]="showBarberForm"
-  [modal]="true" [draggable]="false" [resizable]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
   [style]="{ width: '500px' }"
   [header]="isEdit ? 'Editar barbero' : 'Agregar barbero'"
-  styleClass="dark-dialog">
-    <form [formGroup]="barberForm" class="barber-form">
-     <div class="photo-upload-section">
+  styleClass="dark-dialog"
+>
+  <form [formGroup]="barberForm" class="barber-form">
+    <div class="photo-upload-section">
       <div class="photo-preview" (click)="photoInput.click()">
-         <img *ngIf="photoPreview" [src]="photoPreview" alt="Foto de perfil"/>
-         <div class="photo-placeholder" *ngIf="!photoPreview">
+        <img *ngIf="photoPreview" [src]="photoPreview" alt="Foto de perfil" />
+        <div class="photo-placeholder" *ngIf="!photoPreview">
           <i class="pi pi-camera"></i>
           <span>Foto de perfil</span>
         </div>
-         <div class="photo-overlay">
+        <div class="photo-overlay">
           <i class="pi pi-upload"></i>
         </div>
       </div>
-       <input
+      <input
         #photoInput
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        style="display:none"
-        (change)="onFileSelected($event)"/>
+        style="display: none"
+        (change)="onFileSelected($event)"
+      />
       <p class="photo-hint">JPG, PNG o WebP · Máx. 5 MB</p>
     </div>
-     <div class="form-row">
-    </div>
+    <div class="form-row"></div>
   </form>
   <form [formGroup]="barberForm" class="barber-form">
     <div class="form-row">
       <div class="field">
         <label>Nombre completo *</label>
-        <input pInputText formControlName="fullName" placeholder="John Baker" class="w-full"/>
+        <input
+          pInputText
+          formControlName="fullName"
+          placeholder="John Baker"
+          class="w-full"
+        />
       </div>
       <div class="field">
         <label>Rol *</label>
         <p-dropdown
           formControlName="role"
           [options]="roleOptions"
-          optionLabel="label" optionValue="value"
-          styleClass="w-full">
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+        >
         </p-dropdown>
       </div>
     </div>
     <div class="form-row">
       <div class="field">
         <label>Email *</label>
-        <input pInputText formControlName="email" placeholder="john@barbershop.com" class="w-full"/>
+        <input
+          pInputText
+          formControlName="email"
+          placeholder="john@barbershop.com"
+          class="w-full"
+        />
       </div>
       <div class="field">
         <label>Teléfono</label>
-        <input pInputText formControlName="phone" placeholder="9991234567" class="w-full"/>
+        <input
+          pInputText
+          formControlName="phone"
+          placeholder="9991234567"
+          class="w-full"
+        />
       </div>
     </div>
     <div class="field">
       <label>Especialidad</label>
-      <input pInputText formControlName="specialty" placeholder="Fade Specialist, Beard Expert..." class="w-full"/>
+      <input
+        pInputText
+        formControlName="specialty"
+        placeholder="Fade Specialist, Beard Expert..."
+        class="w-full"
+      />
     </div>
     <div class="field" *ngIf="!isEdit">
       <label>Contraseña *</label>
-      <input pInputText type="password" formControlName="password" placeholder="Mínimo 6 caracteres" class="w-full"/>
+      <input
+        pInputText
+        type="password"
+        formControlName="password"
+        placeholder="Mínimo 6 caracteres"
+        class="w-full"
+      />
     </div>
   </form>
   <ng-template pTemplate="footer">
-    <button class="btn-outline" (click)="showBarberForm = false">Cancelar</button>
-    <button class="btn-primary" (click)="saveBarber()" [disabled]="barberForm.invalid || saving">
+    <button class="btn-outline" (click)="showBarberForm = false">
+      Cancelar
+    </button>
+    <button
+      class="btn-primary"
+      (click)="saveBarber()"
+      [disabled]="barberForm.invalid || saving"
+    >
       <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
-      {{ saving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Agregar barbero' }}
+      {{ saving ? "Guardando..." : isEdit ? "Actualizar" : "Agregar barbero" }}
     </button>
   </ng-template>
 </p-dialog>
 <p-dialog
   [(visible)]="showStatusDialog"
-  [modal]="true" [draggable]="false" [resizable]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
   [style]="{ width: '340px' }"
   header="Cambiar estado"
   styleClass="dark-dialog"
-  *ngIf="selectedBarber">
+  *ngIf="selectedBarber"
+>
   <div class="status-preview">
     <div class="sp-avatar">{{ getInitials(selectedBarber!.fullName) }}</div>
     <div>
       <p class="sp-name">{{ selectedBarber!.fullName }}</p>
-      <span class="status-badge sm" [class]="statusClass(selectedBarber!.status)">
+      <span
+        class="status-badge sm"
+        [class]="statusClass(selectedBarber!.status)"
+      >
         {{ statusLabel(selectedBarber!.status) }}
       </span>
     </div>
@@ -347,59 +585,1074 @@
     </button>
   </div>
   <ng-template pTemplate="footer">
-    <button class="btn-outline" (click)="showStatusDialog = false">Cancelar</button>
+    <button class="btn-outline" (click)="showStatusDialog = false">
+      Cancelar
+    </button>
   </ng-template>
 </p-dialog>
 <p-dialog
   [(visible)]="showScheduleView"
-  [modal]="true" [draggable]="false" [resizable]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
   [style]="{ width: '520px', maxWidth: '94vw' }"
   [header]="'Horario — ' + selectedBarber.fullName"
   styleClass="dark-dialog"
-  *ngIf="selectedBarber">
-   <ng-container *ngIf="scheduleLoading">
-    <div style="display:flex;flex-direction:column;gap:.75rem;padding:.25rem 0">
+  *ngIf="selectedBarber"
+>
+  <ng-container *ngIf="scheduleLoading">
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.25rem 0;
+      "
+    >
       <p-skeleton
-        *ngFor="let i of [1,2,3,4,5,6,7]"
+        *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]"
         height="52px"
-        borderRadius="10px">
+        borderRadius="10px"
+      >
       </p-skeleton>
     </div>
   </ng-container>
-   <div class="schedule-config" *ngIf="!scheduleLoading">
+  <div class="schedule-config" *ngIf="!scheduleLoading">
     <p class="schedule-desc">
-      Activa los días que trabaja <strong>{{ selectedBarber!.fullName }}</strong>
+      Activa los días que trabaja
+      <strong>{{ selectedBarber!.fullName }}</strong>
       y configura sus horarios de atención.
     </p>
     <div class="day-rows">
       <div
         class="day-row"
         *ngFor="let day of daySchedules"
-        [class.inactive]="!day.active">
-         <div class="day-toggle" (click)="toggleDay(day)">
+        [class.inactive]="!day.active"
+      >
+        <div class="day-toggle" (click)="toggleDay(day)">
           <div class="toggle-switch" [class.on]="day.active">
             <div class="toggle-knob"></div>
           </div>
           <span class="day-name">{{ day.label }}</span>
         </div>
-         <div class="day-hours" *ngIf="day.active">
-          <input type="time" [(ngModel)]="day.startTime" class="time-input"/>
+        <div class="day-hours" *ngIf="day.active">
+          <input type="time" [(ngModel)]="day.startTime" class="time-input" />
           <span class="time-sep">—</span>
-          <input type="time" [(ngModel)]="day.endTime"   class="time-input"/>
+          <input type="time" [(ngModel)]="day.endTime" class="time-input" />
         </div>
         <span class="day-closed-label" *ngIf="!day.active">Cerrado</span>
       </div>
     </div>
   </div>
   <ng-template pTemplate="footer">
-    <button class="btn-outline" (click)="showScheduleView = false">Cancelar</button>
+    <button class="btn-outline" (click)="showScheduleView = false">
+      Cancelar
+    </button>
     <button
       class="btn-primary"
       (click)="saveSchedules()"
-      [disabled]="scheduleLoading || savingSchedule">
+      [disabled]="scheduleLoading || savingSchedule"
+    >
       <i class="pi pi-spin pi-spinner" *ngIf="savingSchedule"></i>
-      <i class="pi pi-save"            *ngIf="!savingSchedule"></i>
-      {{ savingSchedule ? 'Guardando...' : 'Guardar horarios' }}
+      <i class="pi pi-save" *ngIf="!savingSchedule"></i>
+      {{ savingSchedule ? "Guardando..." : "Guardar horarios" }}
+    </button>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showPaymentsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '1080px', maxWidth: '96vw' }"
+  styleClass="payments-dialog"
+  [breakpoints]="{ '960px': '96vw', '640px': '98vw' }"
+>
+  <ng-template pTemplate="header">
+    <div class="payments-header" *ngIf="selectedBarber">
+      <div>
+        <h2>Pagos de {{ selectedBarber.fullName }}</h2>
+        <p>
+          Configura su esquema de pago, calcula períodos y registra pagos
+          realizados.
+        </p>
+      </div>
+
+      <div class="header-badges">
+        <span
+          class="config-pill"
+          [class.empty]="!paymentConfig"
+          [class.unsaved]="hasUnsavedPaymentChanges()"
+        >
+          {{
+            hasUnsavedPaymentChanges()
+              ? "Cambios sin guardar"
+              : paymentConfig
+                ? paymentTypeLabel(paymentConfig.paymentType)
+                : "Sin configurar"
+          }}
+        </span>
+
+        <span class="payments-role">
+          {{ selectedBarber.role === "owner" ? "Owner" : "Staff" }}
+        </span>
+      </div>
+    </div>
+  </ng-template>
+
+  <div
+    class="payments-modal-body"
+    *ngIf="!paymentLoading; else paymentsLoadingTpl"
+  >
+    <div class="payment-overview" *ngIf="selectedPaymentPeriod">
+      <div class="overview-card">
+        <span>Total a pagar</span>
+        <strong>{{ money(selectedPaymentPeriod.grossAmount) }}</strong>
+      </div>
+
+      <div class="overview-card">
+        <span>Pagado</span>
+        <strong>{{ money(selectedPaymentPeriod.paidAmount) }}</strong>
+      </div>
+
+      <div class="overview-card pending">
+        <span>Pendiente</span>
+        <strong>{{ money(selectedPaymentPeriod.pendingAmount) }}</strong>
+      </div>
+
+      <div class="overview-card">
+        <span>Avance</span>
+        <div class="pay-progress">
+          <div class="pay-progress-bar">
+            <span
+              [style.width.%]="paymentProgress(selectedPaymentPeriod)"
+            ></span>
+          </div>
+          <strong>{{ paymentProgress(selectedPaymentPeriod) }}%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="payments-workspace">
+      <div class="payments-left">
+        <section class="payment-section">
+          <div class="section-head">
+            <div>
+              <h3>Configuración de pago</h3>
+              <p>Define cómo se le pagará a este empleado.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="paymentConfigForm" class="payment-config-grid">
+            <div class="field">
+              <label>Tipo de pago</label>
+              <p-dropdown
+                [options]="paymentTypeOptions"
+                formControlName="paymentType"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="payment-dd"
+                appendTo="body"
+              >
+              </p-dropdown>
+            </div>
+
+            <div class="field" *ngIf="showFixedAmount()">
+              <label>Sueldo fijo</label>
+              <input
+                pInputText
+                type="number"
+                min="0"
+                formControlName="fixedAmount"
+                placeholder="Ej. 2500"
+              />
+            </div>
+
+            <div class="field" *ngIf="showCommissionAmount()">
+              <label>Comisión %</label>
+              <input
+                pInputText
+                type="number"
+                min="0"
+                max="100"
+                formControlName="commissionPercentage"
+                placeholder="Ej. 40"
+              />
+            </div>
+
+            <div class="field">
+              <label>Frecuencia</label>
+              <p-dropdown
+                [options]="paymentFrequencyOptions"
+                formControlName="frequency"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="payment-dd"
+                appendTo="body"
+              >
+              </p-dropdown>
+            </div>
+
+            <div class="field">
+              <label>Día de pago</label>
+              <input
+                pInputText
+                type="number"
+                min="1"
+                max="31"
+                formControlName="paymentDay"
+                placeholder="Ej. 6"
+              />
+            </div>
+
+            <div class="config-actions">
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="savingPaymentConfig || paymentConfigForm.invalid"
+                (click)="savePaymentConfig()"
+              >
+                <i
+                  class="pi"
+                  [ngClass]="
+                    savingPaymentConfig ? 'pi-spin pi-spinner' : 'pi-save'
+                  "
+                ></i>
+                Guardar
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="payment-section">
+          <div class="section-head compact">
+            <div>
+              <h3>Generar período</h3>
+              <p>
+                Calcula ventas, comisión y total a pagar en un rango de fechas.
+              </p>
+            </div>
+          </div>
+
+          <div class="quick-ranges">
+            <button
+              type="button"
+              class="range-chip primary"
+              [disabled]="
+                generatingPeriod || !paymentConfig || hasUnsavedPaymentChanges()
+              "
+              (click)="generateCurrentPaymentPeriod()"
+            >
+              Generar período actual
+            </button>
+            <button
+              type="button"
+              class="range-chip"
+              (click)="applyPaymentQuickRange('week')"
+            >
+              Esta semana
+            </button>
+            <button
+              type="button"
+              class="range-chip"
+              (click)="applyPaymentQuickRange('biweekly')"
+            >
+              Quincena actual
+            </button>
+            <button
+              type="button"
+              class="range-chip"
+              (click)="applyPaymentQuickRange('month')"
+            >
+              Mes actual
+            </button>
+          </div>
+
+          <form [formGroup]="paymentPeriodForm" class="period-form">
+            <div class="field">
+              <label>Inicio</label>
+              <input pInputText type="date" formControlName="periodStart" />
+            </div>
+
+            <div class="field">
+              <label>Fin</label>
+              <input pInputText type="date" formControlName="periodEnd" />
+            </div>
+
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="
+                generatingPeriod || !paymentConfig || hasUnsavedPaymentChanges()
+              "
+              (click)="generatePaymentPeriod()"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  generatingPeriod ? 'pi-spin pi-spinner' : 'pi-calculator'
+                "
+              ></i>
+              Calcular
+            </button>
+          </form>
+
+          <div class="payment-warning" *ngIf="!paymentConfig">
+            <i class="pi pi-info-circle"></i>
+            Primero guarda la configuración de pago para poder generar períodos.
+          </div>
+
+          <div
+            class="payment-warning unsaved"
+            *ngIf="paymentConfig && hasUnsavedPaymentChanges()"
+          >
+            <i class="pi pi-exclamation-circle"></i>
+            Guarda los cambios antes de calcular un nuevo período.
+          </div>
+        </section>
+
+        <section class="payment-section">
+          <div class="section-head compact">
+            <div>
+              <h3>Períodos de pago</h3>
+              <p>
+                Selecciona un período para revisar el detalle o registrar un
+                pago.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="periods-table"
+            *ngIf="paymentPeriods.length > 0; else noPeriodsTpl"
+          >
+            <div class="period-row header">
+              <span>Período</span>
+              <span>Ventas</span>
+              <span>Servicios</span>
+              <span>Total</span>
+              <span>Pendiente</span>
+              <span>Estado</span>
+              <span>Acciones</span>
+            </div>
+
+            <div
+              class="period-row"
+              *ngFor="let period of paymentPeriods"
+              [class.selected]="selectedPaymentPeriod?.id === period.id"
+              (click)="selectPaymentPeriod(period)"
+            >
+              <span class="period-date">
+                {{ period.periodStart }} / {{ period.periodEnd }}
+              </span>
+
+              <span>{{ money(period.totalSales) }}</span>
+              <span>{{ period.totalServices }}</span>
+              <span>{{ money(period.grossAmount) }}</span>
+              <span>{{ money(period.pendingAmount) }}</span>
+
+              <span>
+                <span class="period-status" [class]="period.status">
+                  {{ paymentStatusLabel(period.status) }}
+                </span>
+              </span>
+              <span class="period-actions">
+                <button
+                  type="button"
+                  class="period-delete-btn"
+                  *ngIf="canDeletePeriod(period)"
+                  [disabled]="deletingPeriodId === period.id"
+                  (click)="
+                    $event.stopPropagation(); deletePaymentPeriod(period)
+                  "
+                >
+                  <i
+                    class="pi"
+                    [ngClass]="
+                      deletingPeriodId === period.id
+                        ? 'pi-spin pi-spinner'
+                        : 'pi-trash'
+                    "
+                  >
+                  </i>
+                  Eliminar
+                </button>
+
+                <span class="period-no-action" *ngIf="!canDeletePeriod(period)">
+                  —
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <ng-template #noPeriodsTpl>
+            <div class="empty-payments">
+              <i class="pi pi-calendar-times"></i>
+              <h4>Sin períodos generados</h4>
+              <p>Genera un período para calcular cuánto se debe pagar.</p>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+
+      <aside class="payment-side-panel">
+        <ng-container *ngIf="selectedPaymentPeriod; else selectPeriodTpl">
+          <div class="side-card">
+            <div class="side-head">
+              <div>
+                <h3>Detalle del período</h3>
+                <p>
+                  {{ selectedPaymentPeriod.periodStart }} /
+                  {{ selectedPaymentPeriod.periodEnd }}
+                </p>
+              </div>
+
+              <span
+                class="period-status"
+                [class]="selectedPaymentPeriod.status"
+              >
+                {{ paymentStatusLabel(selectedPaymentPeriod.status) }}
+              </span>
+            </div>
+
+            <div class="side-card period-sales-card">
+              <div class="side-head">
+                <div>
+                  <h3>Ventas incluidas</h3>
+                  <p>
+                    {{ periodSales.length }} venta(s) encontradas en este
+                    período.
+                  </p>
+                </div>
+
+                <span class="sales-total-pill">
+                  {{ money(periodSalesTotal()) }}
+                </span>
+              </div>
+
+              <div class="period-sales-loading" *ngIf="periodSalesLoading">
+                <p-skeleton
+                  *ngFor="let i of [1, 2, 3]"
+                  height="58px"
+                  borderRadius="14px"
+                >
+                </p-skeleton>
+              </div>
+
+              <div
+                class="period-sales-list"
+                *ngIf="!periodSalesLoading && periodSales.length > 0"
+              >
+                <div class="period-sale-item" *ngFor="let sale of periodSales">
+                  <div class="sale-left">
+                    <div class="sale-icon">
+                      <i class="pi pi-receipt"></i>
+                    </div>
+
+                    <div>
+                      <strong>{{ sale.itemSummary }}</strong>
+                      <span>{{ sale.clientName }}</span>
+                      <small>{{ formatPaymentDate(sale.createdAt) }}</small>
+                    </div>
+                  </div>
+
+                  <div class="sale-right">
+                    <strong>{{ money(sale.total) }}</strong>
+                    <span>
+                      <i
+                        class="pi"
+                        [ngClass]="
+                          sale.paymentMethod === 'cash'
+                            ? 'pi-money-bill'
+                            : sale.paymentMethod === 'transfer'
+                              ? 'pi-send'
+                              : 'pi-ellipsis-h'
+                        "
+                      >
+                      </i>
+                      {{ paymentMethodLabel(sale.paymentMethod) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="empty-period-sales"
+                *ngIf="!periodSalesLoading && periodSales.length === 0"
+              >
+                <i class="pi pi-info-circle"></i>
+                <span>No hay ventas ligadas a este período.</span>
+              </div>
+            </div>
+
+            <div class="detail-list">
+              <div>
+                <span>Ventas generadas</span>
+                <strong>{{ money(selectedPaymentPeriod.totalSales) }}</strong>
+              </div>
+
+              <div>
+                <span>Servicios realizados</span>
+                <strong>{{ selectedPaymentPeriod.totalServices }}</strong>
+              </div>
+
+              <div>
+                <span>Sueldo fijo</span>
+                <strong>{{ money(selectedPaymentPeriod.fixedAmount) }}</strong>
+              </div>
+
+              <div>
+                <span>Comisión</span>
+                <strong>{{
+                  money(selectedPaymentPeriod.commissionAmount)
+                }}</strong>
+              </div>
+
+              <div class="total">
+                <span>Total a pagar</span>
+                <strong>{{ money(selectedPaymentPeriod.grossAmount) }}</strong>
+              </div>
+
+              <div>
+                <span>Pagado</span>
+                <strong>{{ money(selectedPaymentPeriod.paidAmount) }}</strong>
+              </div>
+
+              <div class="pending">
+                <span>Pendiente</span>
+                <strong>{{
+                  money(selectedPaymentPeriod.pendingAmount)
+                }}</strong>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn-outline full"
+              *ngIf="selectedPaymentPeriod.status === 'open'"
+              (click)="closePaymentPeriod(selectedPaymentPeriod)"
+            >
+              <i class="pi pi-lock"></i>
+              Marcar listo para pagar
+            </button>
+          </div>
+
+          <div
+            class="side-card"
+            *ngIf="selectedPaymentPeriod.status !== 'paid'"
+          >
+            <div class="side-head">
+              <div>
+                <h3>Registrar pago</h3>
+                <p>Captura el monto pagado al empleado.</p>
+              </div>
+            </div>
+
+            <form
+              [formGroup]="registerPaymentForm"
+              class="register-payment-form-v2"
+            >
+              <div class="field">
+                <label>Monto pagado</label>
+                <input
+                  pInputText
+                  type="number"
+                  min="1"
+                  formControlName="amount"
+                />
+              </div>
+
+              <div class="field">
+                <label>Método</label>
+                <p-dropdown
+                  [options]="paymentMethodOptions"
+                  formControlName="paymentMethod"
+                  optionLabel="label"
+                  optionValue="value"
+                  styleClass="payment-dd"
+                  appendTo="body"
+                >
+                </p-dropdown>
+              </div>
+
+              <div class="field">
+                <label>Referencia</label>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="reference"
+                  placeholder="Opcional"
+                />
+              </div>
+
+              <div class="field">
+                <label>Notas</label>
+                <textarea
+                  pInputTextarea
+                  rows="2"
+                  formControlName="notes"
+                  placeholder="Ej. Pago semanal en efectivo"
+                >
+                </textarea>
+              </div>
+
+              <button
+                type="button"
+                class="btn-primary full"
+                [disabled]="
+                  registeringPayment ||
+                  selectedPaymentPeriod.status !== 'closed'
+                "
+                (click)="registerStaffPayment()"
+              >
+                <i
+                  class="pi"
+                  [ngClass]="
+                    registeringPayment ? 'pi-spin pi-spinner' : 'pi-check'
+                  "
+                ></i>
+                Registrar pago
+              </button>
+            </form>
+          </div>
+
+          <div
+            class="side-card paid-period-card"
+            *ngIf="selectedPaymentPeriod.status === 'paid'"
+          >
+            <div class="paid-period-icon">
+              <i class="pi pi-check-circle"></i>
+            </div>
+
+            <h3>Pago liquidado</h3>
+            <p>Este período ya fue pagado completamente.</p>
+
+            <div class="paid-period-total">
+              <span>Total pagado</span>
+              <strong>{{ money(selectedPaymentPeriod.paidAmount) }}</strong>
+            </div>
+          </div>
+
+          <div class="side-card" *ngIf="periodPayments.length > 0">
+            <div class="side-head">
+              <div>
+                <h3>Historial</h3>
+                <p>Pagos registrados en este período.</p>
+              </div>
+            </div>
+
+            <div
+              class="payment-history-item"
+              *ngFor="let payment of periodPayments"
+            >
+              <div>
+                <strong>{{ money(payment.amount) }}</strong>
+                <span>{{ paymentMethodLabel(payment.paymentMethod) }}</span>
+              </div>
+
+              <div>
+                <small>{{ payment.paidAt | date: "dd/MM/yyyy HH:mm" }}</small>
+                <small *ngIf="payment.paidByName"
+                  >Registró: {{ payment.paidByName }}</small
+                >
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #selectPeriodTpl>
+          <div class="select-period-empty">
+            <i class="pi pi-hand-pointer"></i>
+            <h3>Selecciona un período</h3>
+            <p>
+              Al seleccionar un período podrás ver el detalle, cerrarlo y
+              registrar pagos.
+            </p>
+          </div>
+        </ng-template>
+      </aside>
+    </div>
+  </div>
+
+  <ng-template #paymentsLoadingTpl>
+    <div class="payments-loading">
+      <p-skeleton width="100%" height="90px"></p-skeleton>
+      <p-skeleton width="100%" height="180px"></p-skeleton>
+      <p-skeleton width="100%" height="260px"></p-skeleton>
+    </div>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showPaymentHistoryDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [baseZIndex]="12000"
+  [style]="paymentHistoryDialogStyle"
+  [contentStyle]="paymentHistoryContentStyle"
+  styleClass="payment-history-dialog"
+  [breakpoints]="{ '960px': '96vw', '640px': '98vw' }"
+>
+  <ng-template pTemplate="header">
+    <div class="history-dialog-header">
+      <div>
+        <h2>Historial de pagos</h2>
+        <p>Revisa todos los pagos registrados a tu staff.</p>
+      </div>
+
+      <div class="history-total">
+        <span>Total mostrado</span>
+        <strong>{{ money(totalPaymentHistoryAmount) }}</strong>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="history-body">
+    <form [formGroup]="paymentHistoryForm" class="history-filters">
+      <div class="field">
+        <label>Barbero</label>
+        <p-dropdown
+          [options]="paymentHistoryBarberOptions"
+          formControlName="userId"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="history-dd"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Método</label>
+        <p-dropdown
+          [options]="paymentHistoryMethodOptions"
+          formControlName="paymentMethod"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="history-dd"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Inicio</label>
+        <input pInputText type="date" formControlName="startDate" />
+      </div>
+
+      <div class="field">
+        <label>Fin</label>
+        <input pInputText type="date" formControlName="endDate" />
+      </div>
+
+      <button type="button" class="btn-primary" (click)="loadPaymentHistory()">
+        <i class="pi pi-search"></i>
+        Buscar
+      </button>
+    </form>
+
+    <div class="history-quick">
+      <button
+        type="button"
+        class="range-chip"
+        (click)="applyPaymentHistoryQuickRange('week')"
+      >
+        Esta semana
+      </button>
+
+      <button
+        type="button"
+        class="range-chip"
+        (click)="applyPaymentHistoryQuickRange('month')"
+      >
+        Este mes
+      </button>
+
+      <button
+        type="button"
+        class="range-chip"
+        (click)="applyPaymentHistoryQuickRange('all')"
+      >
+        Todo
+      </button>
+    </div>
+
+    <div class="history-loading" *ngIf="paymentHistoryLoading">
+      <p-skeleton width="100%" height="60px"></p-skeleton>
+      <p-skeleton width="100%" height="60px"></p-skeleton>
+      <p-skeleton width="100%" height="60px"></p-skeleton>
+    </div>
+
+    <div
+      class="history-table"
+      *ngIf="!paymentHistoryLoading && paymentHistory.length > 0"
+    >
+      <div class="history-row header">
+        <span>Fecha</span>
+        <span>Barbero</span>
+        <span>Período</span>
+        <span>Método</span>
+        <span>Monto</span>
+        <span>Registró</span>
+        <span>Estado</span>
+        <span>Recibo</span>
+      </div>
+
+      <div
+        class="history-row"
+        *ngFor="let payment of paymentHistory"
+        [class.cancelled]="isCancelledPayment(payment)"
+      >
+        <span>
+          {{ payment.paidAt | date: "dd/MM/yyyy HH:mm" }}
+        </span>
+
+        <span>
+          <strong>{{ payment.userName }}</strong>
+          <small *ngIf="payment.notes">{{ payment.notes }}</small>
+        </span>
+
+        <span> {{ payment.periodStart }} / {{ payment.periodEnd }} </span>
+
+        <span>
+          <span class="history-method">
+            {{ paymentMethodLabel(payment.paymentMethod) }}
+          </span>
+        </span>
+
+        <span class="history-amount">
+          {{ money(payment.amount) }}
+        </span>
+
+        <span>
+          {{ payment.paidByName || "—" }}
+        </span>
+
+        <span>
+          <span
+            class="payment-record-status"
+            [ngClass]="paymentRecordStatusClass(payment)"
+          >
+            {{ paymentRecordStatusLabel(payment) }}
+          </span>
+        </span>
+
+        <span>
+          <button
+            type="button"
+            class="receipt-btn"
+            (click)="openPaymentReceipt(payment)"
+          >
+            <i class="pi pi-receipt"></i>
+            Ver recibo
+          </button>
+        </span>
+      </div>
+    </div>
+
+    <div
+      class="empty-payments"
+      *ngIf="!paymentHistoryLoading && paymentHistory.length === 0"
+    >
+      <i class="pi pi-history"></i>
+      <h4>Sin pagos registrados</h4>
+      <p>No hay pagos que coincidan con los filtros seleccionados.</p>
+    </div>
+  </div>
+</p-dialog>
+<p-dialog
+  [(visible)]="showPaymentReceiptDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [baseZIndex]="13000"
+  [style]="{ width: '620px', maxWidth: '94vw' }"
+  styleClass="payment-receipt-dialog"
+  *ngIf="selectedPaymentReceipt"
+>
+  <ng-template pTemplate="header">
+    <div class="receipt-dialog-header">
+      <div>
+        <h2>Recibo de pago</h2>
+        <p>{{ receiptNumber(selectedPaymentReceipt) }}</p>
+      </div>
+
+      <span
+        class="receipt-paid-badge"
+        [class.cancelled]="isCancelledPayment(selectedPaymentReceipt)"
+      >
+        {{ paymentRecordStatusLabel(selectedPaymentReceipt) }}
+      </span>
+    </div>
+  </ng-template>
+
+  <div class="receipt-paper">
+    <div class="receipt-total-box">
+      <span>Monto pagado</span>
+      <strong>{{ money(selectedPaymentReceipt.amount) }}</strong>
+    </div>
+
+    <div class="receipt-detail-grid">
+      <div>
+        <span>Barbero</span>
+        <strong>{{ selectedPaymentReceipt.userName }}</strong>
+      </div>
+
+      <div>
+        <span>Método</span>
+        <strong>{{
+          paymentMethodLabel(selectedPaymentReceipt.paymentMethod)
+        }}</strong>
+      </div>
+
+      <div>
+        <span>Período</span>
+        <strong>
+          {{ selectedPaymentReceipt.periodStart }} /
+          {{ selectedPaymentReceipt.periodEnd }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Fecha de pago</span>
+        <strong>{{
+          selectedPaymentReceipt.paidAt | date: "dd/MM/yyyy HH:mm"
+        }}</strong>
+      </div>
+
+      <div>
+        <span>Registró</span>
+        <strong>{{ selectedPaymentReceipt.paidByName || "—" }}</strong>
+      </div>
+
+      <div>
+        <span>Referencia</span>
+        <strong>{{
+          selectedPaymentReceipt.reference || "Sin referencia"
+        }}</strong>
+      </div>
+    </div>
+
+    <div class="receipt-notes">
+      <span>Notas</span>
+      <strong>{{ selectedPaymentReceipt.notes || "Sin notas" }}</strong>
+    </div>
+  </div>
+
+  <div
+    class="receipt-cancel-box"
+    *ngIf="isCancelledPayment(selectedPaymentReceipt)"
+  >
+    <span>Pago anulado</span>
+    <strong>
+      {{ selectedPaymentReceipt.cancelReason || "Sin motivo registrado" }}
+    </strong>
+
+    <small *ngIf="selectedPaymentReceipt.cancelledAt">
+      {{ selectedPaymentReceipt.cancelledAt | date: "dd/MM/yyyy HH:mm" }}
+    </small>
+
+    <small *ngIf="selectedPaymentReceipt.cancelledByName">
+      Anuló: {{ selectedPaymentReceipt.cancelledByName }}
+    </small>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      class="btn-outline danger"
+      *ngIf="canCancelPayment(selectedPaymentReceipt)"
+      (click)="onCancelPaymentClick($event, selectedPaymentReceipt)"
+    >
+      <i class="pi pi-ban"></i>
+      Anular pago
+    </button>
+
+    <button
+      type="button"
+      class="btn-outline"
+      (click)="showPaymentReceiptDialog = false"
+    >
+      Cerrar
+    </button>
+
+    <button type="button" class="btn-primary" (click)="printPaymentReceipt()">
+      <i class="pi pi-print"></i>
+      Imprimir / guardar PDF
+    </button>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showCancelPaymentDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [baseZIndex]="16000"
+  [style]="{ width: '460px', maxWidth: '94vw' }"
+  styleClass="cancel-payment-dialog"
+  *ngIf="selectedPaymentToCancel">
+
+  <ng-template pTemplate="header">
+    <div class="cancel-payment-header">
+      <div>
+        <h2>Anular pago</h2>
+        <p>Esta acción marcará el pago como anulado y regresará el monto pendiente al período.</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="cancel-payment-body">
+    <div class="cancel-payment-alert">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <strong>¿Seguro que deseas anular este pago?</strong>
+        <span>
+          Pago de {{ money(selectedPaymentToCancel.amount) }} a
+          {{ selectedPaymentToCancel.userName }}.
+        </span>
+      </div>
+    </div>
+
+    <form [formGroup]="cancelPaymentForm" class="cancel-payment-form">
+      <div class="field">
+        <label>Motivo de anulación</label>
+        <textarea
+          pInputTextarea
+          rows="4"
+          formControlName="reason"
+          placeholder="Ej. Pago registrado por error en pruebas">
+        </textarea>
+
+        <small
+          class="field-error"
+          *ngIf="cancelPaymentForm.get('reason')?.invalid && cancelPaymentForm.get('reason')?.touched">
+          El motivo es obligatorio.
+        </small>
+      </div>
+    </form>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      class="btn-outline"
+      (click)="showCancelPaymentDialog = false; selectedPaymentToCancel = null">
+      Cancelar
+    </button>
+
+    <button
+      type="button"
+      class="btn-primary danger"
+      [disabled]="cancelPaymentForm.invalid || cancelingPayment"
+      (click)="cancelStaffPayment()">
+      <i
+        class="pi"
+        [ngClass]="cancelingPayment ? 'pi-spin pi-spinner' : 'pi-ban'">
+      </i>
+      {{ cancelingPayment ? 'Anulando...' : 'Anular pago' }}
     </button>
   </ng-template>
 </p-dialog>

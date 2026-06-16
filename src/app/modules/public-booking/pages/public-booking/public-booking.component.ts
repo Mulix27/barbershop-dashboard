@@ -7,6 +7,7 @@ import {
   PublicServiceOption
 } from '../../models/public-booking.model';
 import { PublicBookingService } from '../../services/public-booking.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 interface CalendarDay {
   date: string;
@@ -51,7 +52,8 @@ export class PublicBookingComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private publicBookingService: PublicBookingService
+    private publicBookingService: PublicBookingService,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -404,5 +406,95 @@ export class PublicBookingComponent implements OnInit {
   private getMinutesFromTime(time: string): number {
     const [hours, minutes] = time.substring(0, 5).split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  get themeColor(): string {
+    return this.barbershop?.primaryColor || '#006B4F';
+  }
+
+  get heroBackground(): string | null {
+    const coverImageUrl = this.barbershop?.coverImageUrl;
+
+    if (!coverImageUrl) {
+      return null;
+    }
+
+    return `linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.18)), url("${coverImageUrl}")`;
+  }
+
+  get displayPhone(): string | null {
+    return this.barbershop?.whatsappPhone || this.barbershop?.phone || null;
+  }
+
+  get displayEmail(): string | null {
+    return this.barbershop?.contactEmail || this.barbershop?.email || null;
+  }
+
+  get displayAddress(): string {
+    const shop = this.barbershop;
+
+    if (!shop) {
+      return '';
+    }
+
+    const addressParts = [
+      shop.addressLine || shop.address,
+      shop.postalCode,
+      shop.city,
+      shop.state
+    ];
+
+    return addressParts
+      .filter(part => !!part && String(part).trim().length > 0)
+      .join(', ');
+  }
+
+  get whatsappUrl(): string | null {
+    const phone = this.displayPhone;
+
+    if (!phone) {
+      return null;
+    }
+
+    const digits = phone.replace(/\D/g, '');
+
+    if (!digits) {
+      return null;
+    }
+
+    const normalizedPhone = digits.length === 10 ? `52${digits}` : digits;
+
+    return `https://wa.me/${normalizedPhone}`;
+  }
+
+  get safeMapUrl(): SafeResourceUrl | null {
+    const shop = this.barbershop;
+
+    if (!shop) {
+      return null;
+    }
+
+    let query = '';
+
+    if (shop.latitude != null && shop.longitude != null) {
+      query = `${shop.latitude},${shop.longitude}`;
+    } else {
+      query = this.displayAddress;
+    }
+
+    if (!query) {
+      return null;
+    }
+
+    const url = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  scrollToSection(sectionId: string): void {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
   }
 }

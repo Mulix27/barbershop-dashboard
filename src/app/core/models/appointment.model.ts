@@ -35,3 +35,11 @@ export interface DayAvailability {
   barbershopOpen: boolean;
   slots: TimeSlot[];
 }
+
+export type AppointmentPaymentMethod = 'cash' | 'transfer' | 'other';
+
+export interface CompleteAppointmentRequest {
+  paymentMethod: AppointmentPaymentMethod;
+  discount?: number | null;
+  notes?: string | null;
+}

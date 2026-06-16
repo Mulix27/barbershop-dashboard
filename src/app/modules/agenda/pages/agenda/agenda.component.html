@@ -38,6 +38,7 @@
             optionLabel="label"
             optionValue="value"
             styleClass="view-selector"
+            (onChange)="onViewModeChange($event.value)"
           >
           </p-selectButton>
         </div>
@@ -58,10 +59,39 @@
 
     <!-- Fecha seleccionada -->
     <div class="date-display" [class.closed]="!isWorkingDay()">
-      <span class="date-label">{{ selectedDateLabel | titlecase }}</span>
+      <span class="date-label">
+        {{
+          viewMode === "week"
+            ? selectedWeekLabel
+            : (selectedDateLabel | titlecase)
+        }}
+      </span>
       <span class="closed-badge" *ngIf="!isWorkingDay()">
         <i class="pi pi-ban"></i> Día no laborable
       </span>
+    </div>
+
+    <div class="agenda-filter-strip" *ngIf="canManage && !isSingleBarber">
+      <div class="agenda-filter-left">
+        <i class="pi pi-users"></i>
+        <div>
+          <span>Vista por barbero</span>
+          <strong>{{ selectedBarberFilterLabel }}</strong>
+        </div>
+      </div>
+
+      <p-dropdown
+        [options]="barberFilterOptions"
+        [(ngModel)]="selectedBarberFilter"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="barber-filter-dd"
+        appendTo="body"
+        [filter]="true"
+        filterBy="label"
+        (onChange)="applyAppointmentFilters()"
+      >
+      </p-dropdown>
     </div>
 
     <!-- Grid del calendario -->
@@ -80,7 +110,7 @@
       </ng-container>
 
       <!-- Vista de slots -->
-      <div class="slots-grid" *ngIf="!loading">
+      <div class="slots-grid" *ngIf="!loading && viewMode === 'day'">
         <div
           class="slot-row"
           *ngFor="let slot of timeSlots"
@@ -113,7 +143,7 @@
                   isFinalStatus(appt.status) ? 'is-final' : '',
                   isMiniAppt(appt) ? 'mini' : '',
                   isCompactAppt(appt) ? 'compact' : '',
-                  isNormalAppt(appt) ? 'normal' : ''
+                  isNormalAppt(appt) ? 'normal' : '',
                 ]"
                 [style.height.px]="getApptHeight(appt)"
                 (click)="$event.stopPropagation(); onAppointmentClick(appt)"
@@ -193,7 +223,9 @@
                     type="button"
                     class="appointment-whatsapp-btn"
                     *ngIf="appt.clientPhone"
-                    (click)="$event.stopPropagation(); sendAppointmentWhatsapp(appt)"
+                    (click)="
+                      $event.stopPropagation(); sendAppointmentWhatsapp(appt)
+                    "
                   >
                     <i class="pi pi-whatsapp"></i>
                     Enviar WhatsApp
@@ -201,6 +233,19 @@
                 </div>
               </div>
             </ng-container>
+
+            <button
+              type="button"
+              class="parallel-add-btn"
+              *ngIf="canAddAnotherAppointmentAtSlot(slot.time)"
+              (click)="
+                $event.stopPropagation(); openParallelAppointment(slot.time)
+              "
+            >
+              <i class="pi pi-plus"></i>
+              <span>Agendar otra cita</span>
+              <small>{{ availableBarbersLabel(slot.time) }}</small>
+            </button>
 
             <!-- Slot vacío — solo si no está cubierto y no está ocupado -->
             <div
@@ -212,7 +257,8 @@
                 isWorkingDay() &&
                 isWithinWorkingHours(slot.time)
               "
-              (click)="openNewAppt(slot.time)">
+              (click)="openNewAppt(slot.time)"
+            >
               <i class="pi pi-plus"></i>
               <span>Agendar cita</span>
             </div>
@@ -223,21 +269,261 @@
               *ngIf="
                 !isSlotOccupied(slot.time) &&
                 !isSlotCoveredByAppt(slot.time) &&
-                (!isWorkingDay() || isPastSlot(slot.time) || !isWithinWorkingHours(slot.time))
-              ">
+                (!isWorkingDay() ||
+                  isPastSlot(slot.time) ||
+                  !isWithinWorkingHours(slot.time))
+              "
+            >
               <i class="pi pi-lock"></i>
               <span>{{
-                !isWorkingDay() ? 'Día no laborable' :
-                !isWithinWorkingHours(slot.time) ? 'Fuera de horario' :
-                'Horario vencido'
+                !isWorkingDay()
+                  ? "Día no laborable"
+                  : !isWithinWorkingHours(slot.time)
+                    ? "Fuera de horario"
+                    : "Horario vencido"
               }}</span>
             </div>
           </div>
         </div>
       </div>
 
+      <div
+        class="barber-columns-grid"
+        *ngIf="
+          !loading && viewMode === 'columns' && canManage && !isSingleBarber
+        "
+      >
+        <div
+          class="barber-columns-header"
+          [style.gridTemplateColumns]="columnsGridTemplate"
+        >
+          <div class="columns-time-head">Hora</div>
+
+          <div
+            class="barber-column-head"
+            *ngFor="let barber of visibleColumnBarbers"
+          >
+            <div class="barber-head-avatar">
+              {{ getBarberInitials(barber.fullName) }}
+            </div>
+
+            <div>
+              <strong>{{ barber.fullName }}</strong>
+              <span>{{ barber.specialty || "Barbero" }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="barber-columns-body">
+          <div
+            class="barber-column-row"
+            *ngFor="let slot of timeSlots"
+            [style.gridTemplateColumns]="columnsGridTemplate"
+            [class.current-time]="isCurrentTime(slot.time)"
+          >
+            <div class="column-time">
+              <span [class.current-label]="isCurrentTime(slot.time)">
+                {{ slot.label }}
+              </span>
+              <div class="current-dot" *ngIf="isCurrentTime(slot.time)"></div>
+            </div>
+
+            <div
+              class="barber-slot-cell"
+              *ngFor="let barber of visibleColumnBarbers"
+              [class.covered]="
+                isSlotCoveredByApptForBarber(slot.time, barber.userId)
+              "
+              [class.has-appt]="
+                !!getApptStartingAtSlotForBarber(slot.time, barber.userId)
+              "
+            >
+              <ng-container
+                *ngIf="
+                  getApptStartingAtSlotForBarber(
+                    slot.time,
+                    barber.userId
+                  ) as appt
+                "
+              >
+                <div
+                  class="appointment-block column-appt"
+                  [ngClass]="[
+                    'status-' + appt.status,
+                    isFinalStatus(appt.status) ? 'is-final' : '',
+                    isMiniAppt(appt) ? 'mini' : '',
+                    isCompactAppt(appt) ? 'compact' : '',
+                    isNormalAppt(appt) ? 'normal' : '',
+                  ]"
+                  [style.height.px]="getApptHeight(appt)"
+                  (click)="$event.stopPropagation(); onAppointmentClick(appt)"
+                >
+                  <div class="appt-block-header">
+                    <div class="appt-client-info">
+                      <div class="appt-avatar">
+                        {{ appt.clientName.charAt(0).toUpperCase() }}
+                      </div>
+
+                      <div>
+                        <span class="appt-client-name">{{
+                          appt.clientName
+                        }}</span>
+
+                        <span class="appt-service">
+                          {{
+                            appt.serviceName ??
+                              appt.haircutName ??
+                              "Servicio no especificado"
+                          }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="appt-block-right">
+                      <span class="appt-time-range">
+                        {{ formatTime(appt.startTime) }} –
+                        {{ formatTime(appt.endTime) }}
+                      </span>
+
+                      <p-tag
+                        [value]="statusLabel(appt.status)"
+                        [severity]="statusSeverity(appt.status)"
+                        styleClass="appt-tag"
+                      >
+                      </p-tag>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <div
+                class="column-covered-slot"
+                *ngIf="isSlotCoveredByApptForBarber(slot.time, barber.userId)"
+              ></div>
+
+              <button
+                type="button"
+                class="column-empty-slot"
+                *ngIf="
+                  !isSlotOccupiedForBarber(slot.time, barber.userId) &&
+                  !getApptStartingAtSlotForBarber(slot.time, barber.userId) &&
+                  !isPastSlot(slot.time) &&
+                  isWorkingDayForBarber(barber.userId) &&
+                  isWithinWorkingHoursForBarber(slot.time, barber.userId)
+                "
+                (click)="openNewAppt(slot.time, barber.userId)"
+              >
+                <i class="pi pi-plus"></i>
+                <span>Agendar</span>
+              </button>
+
+              <div
+                class="column-blocked-slot"
+                *ngIf="
+                  !isSlotOccupiedForBarber(slot.time, barber.userId) &&
+                  !isSlotCoveredByApptForBarber(slot.time, barber.userId) &&
+                  (!isWorkingDayForBarber(barber.userId) ||
+                    isPastSlot(slot.time) ||
+                    !isWithinWorkingHoursForBarber(slot.time, barber.userId))
+                "
+              >
+                <i class="pi pi-lock"></i>
+                <span>{{ columnBlockedLabel(slot.time, barber.userId) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="week-grid" *ngIf="!loading && viewMode === 'week'">
+        <div
+          class="week-header"
+          [style.gridTemplateColumns]="'92px repeat(7, minmax(160px, 1fr))'"
+        >
+          <div class="week-time-head">Hora</div>
+
+          <div
+            class="week-day-head"
+            *ngFor="let day of weekDays"
+            [class.today]="isTodayDate(day)"
+          >
+            <span>{{ formatWeekDayName(day) }}</span>
+            <strong>{{ formatWeekDayNumber(day) }}</strong>
+          </div>
+        </div>
+
+        <div class="week-body">
+          <div
+            class="week-row"
+            *ngFor="let slot of timeSlots"
+            [style.gridTemplateColumns]="'92px repeat(7, minmax(160px, 1fr))'"
+          >
+            <div class="week-time">
+              <span>{{ slot.label }}</span>
+            </div>
+
+            <div
+              class="week-cell"
+              *ngFor="let day of weekDays"
+              [class.past]="isPastSlotForDate(day, slot.time)"
+              [class.closed]="
+                !isWorkingDayForDate(day) ||
+                !isWithinWorkingHoursForDate(day, slot.time)
+              "
+              [class.today]="isTodayDate(day)"
+            >
+              <ng-container
+                *ngIf="getAppointmentsForWeekSlot(day, slot.time) as appts"
+              >
+                <div
+                  class="week-appt"
+                  *ngFor="let appt of appts"
+                  [ngClass]="'status-' + appt.status"
+                  (click)="$event.stopPropagation(); onAppointmentClick(appt)"
+                >
+                  <strong>{{ appt.clientName }}</strong>
+                  <span>
+                    {{ appt.serviceName ?? appt.haircutName ?? "Servicio" }}
+                  </span>
+                  <small *ngIf="appt.assignedToName">
+                    {{ appt.assignedToName }}
+                  </small>
+                </div>
+
+                <button
+                  type="button"
+                  class="week-empty-slot"
+                  *ngIf="
+                    appts.length === 0 &&
+                    !isPastSlotForDate(day, slot.time) &&
+                    isWorkingDayForDate(day) &&
+                    isWithinWorkingHoursForDate(day, slot.time)
+                  "
+                  (click)="openNewApptForWeek(day, slot.time)"
+                >
+                  <i class="pi pi-plus"></i>
+                  Agendar
+                </button>
+
+                <div
+                  class="week-blocked-slot"
+                  *ngIf="
+                    appts.length === 0 &&
+                    (isPastSlotForDate(day, slot.time) ||
+                      !isWorkingDayForDate(day) ||
+                      !isWithinWorkingHoursForDate(day, slot.time))
+                  "
+                >
+                  <i class="pi pi-lock"></i>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Día no laborable -->
-      <div class="day-closed" *ngIf="!loading && !isWorkingDay()">
+      <div class="day-closed" *ngIf="!loading && viewMode === 'day' && !isWorkingDay()">
         <i class="pi pi-calendar-times"></i>
         <h3>Día no laborable</h3>
         <p>Este día no está configurado como día de trabajo</p>
@@ -339,7 +625,7 @@
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '380px' }"
+  [style]="{ width: '460px', maxWidth: '94vw' }"
   header="Actualizar cita"
   styleClass="dark-dialog"
   *ngIf="selectedAppt"
@@ -358,6 +644,61 @@
             "Sin servicio"
         }}
       </p>
+    </div>
+  </div>
+
+  <div
+    class="reassign-card"
+    *ngIf="canManage && !isSingleBarber && selectedAppt"
+  >
+    <div class="reassign-head">
+      <div>
+        <h4>Barbero asignado</h4>
+        <p>
+          {{ selectedAppt.assignedToName || "Sin asignar" }}
+        </p>
+      </div>
+
+      <span class="reassign-badge" *ngIf="selectedAppt.assignedToName">
+        Actual
+      </span>
+    </div>
+
+    <form [formGroup]="reassignBarberForm" class="reassign-form">
+      <div class="field">
+        <label>Cambiar a</label>
+
+        <p-dropdown
+          [options]="appointmentBarberOptions"
+          formControlName="barberId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Selecciona un barbero"
+          styleClass="reassign-dd"
+          appendTo="body"
+          [filter]="true"
+          filterBy="label"
+        >
+        </p-dropdown>
+      </div>
+
+      <button
+        type="button"
+        class="btn-primary full reassign-btn"
+        [disabled]="!canReassignSelectedAppointment() || reassigningBarber"
+        (click)="reassignSelectedAppointment()"
+      >
+        <i
+          class="pi"
+          [ngClass]="reassigningBarber ? 'pi-spin pi-spinner' : 'pi-user-edit'"
+        ></i>
+        {{ reassigningBarber ? "Reasignando..." : "Reasignar barbero" }}
+      </button>
+    </form>
+
+    <div class="reassign-hint">
+      <i class="pi pi-info-circle"></i>
+      El sistema validará si el barbero está libre en este horario.
     </div>
   </div>
 
@@ -685,6 +1026,113 @@
     <button class="btn-primary" (click)="saveSchedules()">
       <i class="pi pi-save"></i>
       Guardar horarios
+    </button>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showCompleteAppointmentDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px', maxWidth: '94vw' }"
+  styleClass="complete-appointment-dialog"
+  *ngIf="selectedApptToComplete">
+
+  <ng-template pTemplate="header">
+    <div class="complete-dialog-header">
+      <div>
+        <h2>Completar cita</h2>
+        <p>Genera la venta y registra el método de pago.</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="complete-appointment-body">
+    <div class="complete-summary-card">
+      <div class="complete-client">
+        <div class="complete-avatar">
+          {{ selectedApptToComplete.clientName.charAt(0).toUpperCase() }}
+        </div>
+
+        <div>
+          <strong>{{ selectedApptToComplete.clientName }}</strong>
+          <span>
+            {{ selectedApptToComplete.serviceName || selectedApptToComplete.haircutName || 'Servicio' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="complete-total">
+        <span>Total servicio</span>
+        <strong>{{ money(selectedApptToComplete.servicePrice || 0) }}</strong>
+      </div>
+    </div>
+
+    <div class="complete-detail-grid">
+      <div>
+        <span>Horario</span>
+        <strong>
+          {{ formatTime(selectedApptToComplete.startTime) }} –
+          {{ formatTime(selectedApptToComplete.endTime) }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Barbero</span>
+        <strong>{{ selectedApptToComplete.assignedToName || 'Sin asignar' }}</strong>
+      </div>
+    </div>
+
+    <form [formGroup]="completeAppointmentForm" class="complete-form">
+      <div class="field">
+        <label>Método de pago</label>
+        <p-dropdown
+          [options]="paymentMethodOptions"
+          formControlName="paymentMethod"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="complete-dd"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Descuento</label>
+        <input
+          pInputText
+          type="number"
+          min="0"
+          formControlName="discount"
+          placeholder="0" />
+      </div>
+
+      <div class="field">
+        <label>Notas</label>
+        <textarea
+          pInputTextarea
+          rows="3"
+          formControlName="notes"
+          placeholder="Ej. Pago en efectivo, transferencia confirmada, etc.">
+        </textarea>
+      </div>
+    </form>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      class="btn-outline"
+      (click)="showCompleteAppointmentDialog = false">
+      Cancelar
+    </button>
+
+    <button
+      type="button"
+      class="btn-primary"
+      [disabled]="completingAppointment || completeAppointmentForm.invalid"
+      (click)="confirmCompleteAppointment()">
+      <i class="pi" [ngClass]="completingAppointment ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+      {{ completingAppointment ? 'Completando...' : 'Completar y generar venta' }}
     </button>
   </ng-template>
 </p-dialog>

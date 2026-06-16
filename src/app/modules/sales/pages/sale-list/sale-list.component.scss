@@ -967,3 +967,255 @@ $pink-soft: rgba(190, 71, 120, 0.10);
     max-width: 100% !important;
   }
 }
+
+.sales-history-card {
+  padding: 1.15rem;
+}
+
+.history-header {
+  align-items: center;
+
+  p {
+    margin: 0.25rem 0 0;
+    color: $text-muted;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+}
+
+.history-refresh {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 11px;
+  border: 1px solid $border;
+  background: $surface-soft;
+  color: $text;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+
+  .pi {
+    font-size: 12px;
+  }
+
+  &:hover {
+    background: $accent-soft;
+    color: $accent;
+    border-color: rgba(37, 99, 235, 0.18);
+    transform: translateY(-1px);
+  }
+}
+
+.history-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  th {
+    text-align: left;
+    padding: 0.65rem 0.7rem;
+    background: $surface-soft;
+    border-bottom: 1px solid $border;
+    color: $text-muted;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 0.75rem 0.7rem;
+    border-bottom: 1px solid $border;
+    color: $text;
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background: $surface-hover;
+  }
+}
+
+.sale-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+
+  strong {
+    color: $text;
+    font-size: 0.87rem;
+    font-weight: 850;
+    max-width: 230px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    color: $text-muted;
+    font-size: 0.74rem;
+    font-weight: 650;
+  }
+}
+
+.origin-pill,
+.payment-pill,
+.status-pill {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 850;
+  white-space: nowrap;
+
+  .pi {
+    font-size: 12px;
+  }
+}
+
+.origin-pill.from-appointment {
+  background: $accent-soft;
+  color: $accent;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+}
+
+.origin-pill.from-pos {
+  background: $primary-soft;
+  color: $primary;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.payment-pill {
+  background: $surface-soft;
+  color: $text;
+  border: 1px solid $border;
+
+  .pi {
+    color: $accent;
+  }
+}
+
+.client-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+
+  span {
+    font-weight: 750;
+    color: $text;
+    white-space: nowrap;
+  }
+}
+
+.mini-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: $accent-soft;
+  color: $accent;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 950;
+  flex-shrink: 0;
+}
+
+.barber-name {
+  color: $text;
+  font-weight: 780;
+  white-space: nowrap;
+}
+
+.history-amount {
+  color: $text;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.status-pill {
+  &.status-completed {
+    background: $success-soft;
+    color: $success;
+    border: 1px solid rgba(22, 163, 74, 0.16);
+  }
+
+  &.status-cancelled,
+  &.status-refunded {
+    background: $danger-soft;
+    color: $danger;
+    border: 1px solid rgba(220, 38, 38, 0.16);
+  }
+}
+
+.empty-history {
+  padding: 2rem 1rem;
+  text-align: center;
+  border-radius: 16px;
+  background: $surface-soft;
+  border: 1px dashed $border;
+
+  .pi {
+    font-size: 2rem;
+    color: $text-soft;
+    margin-bottom: 0.7rem;
+  }
+
+  h3 {
+    margin: 0 0 0.25rem;
+    color: $text;
+    font-size: 1rem;
+    font-weight: 850;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted;
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 768px) {
+  .sales-history-card {
+    padding: 1rem 0.85rem;
+  }
+
+  .history-header {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .history-refresh {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -42,22 +42,43 @@ export class AgendaComponent implements OnInit {
   loading = true;
   selectedDate = new Date();
   calendarDate = new Date();
-  viewMode = 'day';
+  viewMode: 'day' | 'columns' | 'week' = 'day';
 
-  viewOptions = [
-    { label: 'Día', value: 'day' },
-    { label: 'Semana', value: 'week' }
-  ];
+  viewOptions: { label: string; value: 'day' | 'columns' | 'week' }[] = [];
+
+  private configureViewMode(): void {
+    if (this.canManage && !this.isSingleBarber) {
+      this.viewOptions = [
+        { label: 'Columnas', value: 'columns' },
+        { label: 'Semana', value: 'week' }
+      ];
+
+      this.viewMode = 'columns';
+      return;
+    }
+
+    this.viewOptions = [
+      { label: 'Día', value: 'day' },
+      { label: 'Semana', value: 'week' }
+    ];
+
+    this.viewMode = 'day';
+  }
 
   // ── Datos ──────────────────────────────────────────────────
   appointments: Appointment[] = [];
   barbershopId = '';
   isSingleBarber = false;
 
+  allAppointments: Appointment[] = [];
+  weekAppointments: Appointment[] = [];
+  selectedBarberFilter = 'all';
+  barberSchedules: Record<string, DaySchedule[]> = {};
+
   // ── Slots ─────────────────────────────────────────────────
   timeSlots: TimeSlot[] = [];
   workStart = '08:00';
-  workEnd = '20:00';
+  workEnd = '22:30';
   slotStep = 30;
 
   // ── Horarios ──────────────────────────────────────────────
@@ -78,6 +99,104 @@ export class AgendaComponent implements OnInit {
   get cancelledAppts(): number { return this.appointments.filter(a => a.status === 'cancelled').length; }
   get inProgressAppts(): number { return this.appointments.filter(a => a.status === 'in_progress').length; }
 
+  get weekDays(): Date[] {
+    const base = new Date(this.selectedDate);
+    const day = base.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+
+    const monday = new Date(base);
+    monday.setDate(base.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return date;
+    });
+  }
+
+  get selectedWeekLabel(): string {
+    const days = this.weekDays;
+    const start = days[0];
+    const end = days[6];
+
+    const startLabel = start.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: 'short'
+    });
+
+    const endLabel = end.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    return `${startLabel} - ${endLabel}`;
+  }
+
+  formatWeekDayName(date: Date): string {
+    return date.toLocaleDateString('es-MX', { weekday: 'short' });
+  }
+
+  formatWeekDayNumber(date: Date): string {
+    return date.toLocaleDateString('es-MX', { day: '2-digit' });
+  }
+
+  isSameDate(a: Date, b: Date): boolean {
+    return this.formatDateISO(a) === this.formatDateISO(b);
+  }
+
+  isTodayDate(date: Date): boolean {
+    return this.isSameDate(date, new Date());
+  }
+
+  isPastSlotForDate(date: Date, time: string): boolean {
+    const today = new Date();
+
+    if (this.formatDateISO(date) < this.formatDateISO(today)) {
+      return true;
+    }
+
+    if (this.formatDateISO(date) > this.formatDateISO(today)) {
+      return false;
+    }
+
+    const [h, m] = time.split(':').map(Number);
+    const slot = new Date(date);
+    slot.setHours(h, m, 0, 0);
+
+    return slot < today;
+  }
+
+  isWorkingDayForDate(date: Date): boolean {
+    const dow = date.getDay();
+    const iso = dow === 0 ? 7 : dow;
+    const daySchedule = this.daySchedules.find(d => d.dayOfWeek === iso);
+
+    return daySchedule?.active ?? false;
+  }
+
+  isWithinWorkingHoursForDate(date: Date, time: string): boolean {
+    const dow = date.getDay();
+    const iso = dow === 0 ? 7 : dow;
+    const daySchedule = this.daySchedules.find(d => d.dayOfWeek === iso);
+
+    if (!daySchedule || !daySchedule.active) {
+      return false;
+    }
+
+    const [h, m] = time.split(':').map(Number);
+    const slotMin = h * 60 + m;
+
+    const [startH, startM] = daySchedule.startTime.split(':').map(Number);
+    const [endH, endM] = daySchedule.endTime.split(':').map(Number);
+
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+
+    return slotMin >= startMin && slotMin < endMin;
+  }
+
   nextAppt: Appointment | null = null;
 
   // ── Dialogs ───────────────────────────────────────────────
@@ -85,6 +204,9 @@ export class AgendaComponent implements OnInit {
   showSchedule = false;
   showStatusMenu = false;
   selectedAppt: Appointment | null = null;
+
+  reassignBarberForm!: FormGroup;
+  reassigningBarber = false;
 
   // ── Clientes ──────────────────────────────────────────────
   clients: Client[] = [];
@@ -107,6 +229,44 @@ export class AgendaComponent implements OnInit {
   barbers: BarberOptionResponse[] = [];
   loadingBarbers = false;
 
+  get visibleColumnBarbers(): BarberOptionResponse[] {
+    if (!this.canManage || this.isSingleBarber) {
+      return [];
+    }
+
+    if (
+      this.selectedBarberFilter !== 'all' &&
+      this.selectedBarberFilter !== 'unassigned'
+    ) {
+      return this.barbers.filter(barber => barber.userId === this.selectedBarberFilter);
+    }
+
+    return this.barbers;
+  }
+
+  get columnsGridTemplate(): string {
+    const columns = Math.max(this.visibleColumnBarbers.length, 1);
+    return `92px repeat(${columns}, minmax(220px, 1fr))`;
+  }
+
+  get barberFilterOptions(): { label: string; value: string }[] {
+    return [
+      { label: 'Todos los barberos', value: 'all' },
+      { label: 'Sin asignar', value: 'unassigned' },
+      ...this.barbers.map(barber => ({
+        label: barber.fullName,
+        value: barber.userId
+      }))
+    ];
+  }
+
+  get selectedBarberFilterLabel(): string {
+    if (this.selectedBarberFilter === 'all') return 'Todos los barberos';
+    if (this.selectedBarberFilter === 'unassigned') return 'Sin asignar';
+
+    return this.barbers.find(b => b.userId === this.selectedBarberFilter)?.fullName ?? 'Barbero';
+  }
+
   statusOptions = [
     { label: 'Confirmar', value: 'confirmed', icon: 'pi-check', severity: 'success' },
     { label: 'En progreso', value: 'in_progress', icon: 'pi-play', severity: 'info' },
@@ -127,6 +287,17 @@ export class AgendaComponent implements OnInit {
   isReleasedStatus(status: string): boolean {
     return this.RELEASED_STATUSES.includes(status);
   }
+
+  showCompleteAppointmentDialog = false;
+  completingAppointment = false;
+  selectedApptToComplete: Appointment | null = null;
+  completeAppointmentForm!: FormGroup;
+
+  paymentMethodOptions = [
+    { label: 'Efectivo', value: 'cash' },
+    { label: 'Transferencia', value: 'transfer' },
+    { label: 'Otro', value: 'other' }
+  ];
 
 
   userRole = '';
@@ -161,6 +332,7 @@ export class AgendaComponent implements OnInit {
       this.loadBarbers();
     }
 
+    this.configureViewMode();
     this.buildForm();
     this.generateTimeSlots();
     this.loadSchedules();
@@ -188,6 +360,16 @@ export class AgendaComponent implements OnInit {
       servicePrice: [null],
       serviceDurationMin: [null],
       assignedToId: [null],
+    });
+
+    this.reassignBarberForm = this.fb.group({
+      barberId: [null, Validators.required]
+    });
+
+    this.completeAppointmentForm = this.fb.group({
+      paymentMethod: ['cash', Validators.required],
+      discount: [0, [Validators.min(0)]],
+      notes: ['']
     });
   }
 
@@ -281,22 +463,97 @@ export class AgendaComponent implements OnInit {
   }
 
   loadAppointments(): void {
+    if (this.viewMode === 'week') {
+      this.loadWeekAppointments();
+      return;
+    }
+
     this.loading = true;
     const dateStr = this.formatDateISO(this.selectedDate);
 
-    // Barber solo ve su agenda
     const request$ = this.userRole === 'barber'
       ? this.appointmentService.getMyAgenda(dateStr)
       : this.appointmentService.getByDate(dateStr);
 
     request$.subscribe({
       next: (res) => {
-        this.appointments = res.success ? res.data : [];
-        this.setNextAppt();
+        this.allAppointments = res.success ? res.data : [];
+        this.applyAppointmentFilters();
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.allAppointments = [];
+        this.appointments = [];
+        this.setNextAppt();
+        this.loading = false;
+      }
     });
+  }
+
+  loadWeekAppointments(): void {
+    this.loading = true;
+
+    const requests = this.weekDays.map(date => {
+      const dateStr = this.formatDateISO(date);
+
+      return this.userRole === 'barber'
+        ? this.appointmentService.getMyAgenda(dateStr)
+        : this.appointmentService.getByDate(dateStr);
+    });
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const appointments: Appointment[] = [];
+
+        responses.forEach(res => {
+          if (res.success && res.data) {
+            appointments.push(...res.data);
+          }
+        });
+
+        this.weekAppointments = appointments;
+        this.allAppointments = this.weekAppointments;
+
+        this.applyAppointmentFilters();
+
+        this.loading = false;
+      },
+      error: () => {
+        this.weekAppointments = [];
+        this.allAppointments = [];
+        this.appointments = [];
+        this.setNextAppt();
+        this.loading = false;
+      }
+    });
+  }
+
+  onViewModeChange(mode?: 'day' | 'columns' | 'week'): void {
+    if (mode) {
+      this.viewMode = mode;
+    }
+
+    this.allAppointments = [];
+    this.weekAppointments = [];
+    this.appointments = [];
+    this.nextAppt = null;
+
+    this.loadAppointments();
+  }
+
+  applyAppointmentFilters(): void {
+    let result = [...this.allAppointments];
+
+    if (this.canManage && !this.isSingleBarber && this.selectedBarberFilter !== 'all') {
+      if (this.selectedBarberFilter === 'unassigned') {
+        result = result.filter(appt => !appt.assignedToId);
+      } else {
+        result = result.filter(appt => appt.assignedToId === this.selectedBarberFilter);
+      }
+    }
+
+    this.appointments = result;
+    this.setNextAppt();
   }
 
   loadSchedules(): void {
@@ -359,12 +616,68 @@ export class AgendaComponent implements OnInit {
 
   loadBarbers(): void {
     this.loadingBarbers = true;
+
     this.barberStaffService.getOptions().subscribe({
       next: (res) => {
         this.barbers = res.success ? res.data : [];
         this.loadingBarbers = false;
+        this.loadBarberSchedulesForColumns();
       },
-      error: () => { this.loadingBarbers = false; }
+      error: () => {
+        this.barbers = [];
+        this.loadingBarbers = false;
+      }
+    });
+  }
+
+  private createDefaultSchedules(): DaySchedule[] {
+    return [
+      { dayOfWeek: 1, label: 'Lunes', active: false, startTime: '09:00', endTime: '18:00' },
+      { dayOfWeek: 2, label: 'Martes', active: false, startTime: '09:00', endTime: '18:00' },
+      { dayOfWeek: 3, label: 'Miércoles', active: false, startTime: '09:00', endTime: '18:00' },
+      { dayOfWeek: 4, label: 'Jueves', active: false, startTime: '09:00', endTime: '18:00' },
+      { dayOfWeek: 5, label: 'Viernes', active: false, startTime: '09:00', endTime: '18:00' },
+      { dayOfWeek: 6, label: 'Sábado', active: false, startTime: '09:00', endTime: '15:00' },
+      { dayOfWeek: 7, label: 'Domingo', active: false, startTime: '09:00', endTime: '13:00' },
+    ];
+  }
+
+  loadBarberSchedulesForColumns(): void {
+    if (!this.barbers.length) {
+      this.barberSchedules = {};
+      return;
+    }
+
+    const requests = this.barbers.map(barber =>
+      this.barberScheduleService.getSchedules(barber.userId)
+    );
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const map: Record<string, DaySchedule[]> = {};
+
+        responses.forEach((res, index) => {
+          const barber = this.barbers[index];
+          const schedules = this.createDefaultSchedules();
+
+          (res.data ?? []).forEach(schedule => {
+            const day = schedules.find(d => d.dayOfWeek === schedule.dayOfWeek);
+
+            if (day) {
+              day.active = schedule.isActive;
+              day.startTime = schedule.startTime?.substring(0, 5);
+              day.endTime = schedule.endTime?.substring(0, 5);
+            }
+          });
+
+          map[barber.userId] = schedules;
+        });
+
+        this.barberSchedules = map;
+      },
+      error: () => {
+        this.barberSchedules = {};
+      }
     });
   }
 
@@ -538,18 +851,125 @@ export class AgendaComponent implements OnInit {
     });
   }
 
+  private getCalendarAppointments(): Appointment[] {
+    return this.allAppointments.length ? this.allAppointments : this.appointments;
+  }
+
+  getBarberInitials(name: string): string {
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  getScheduleForBarberDay(barberId: string): DaySchedule | null {
+    const dow = this.selectedDate.getDay();
+    const iso = dow === 0 ? 7 : dow;
+
+    return this.barberSchedules[barberId]?.find(day => day.dayOfWeek === iso) ?? null;
+  }
+
+  isWorkingDayForBarber(barberId: string): boolean {
+    const day = this.getScheduleForBarberDay(barberId);
+    return day?.active ?? false;
+  }
+
+  isWithinWorkingHoursForBarber(time: string, barberId: string): boolean {
+    const daySchedule = this.getScheduleForBarberDay(barberId);
+
+    if (!daySchedule || !daySchedule.active) {
+      return false;
+    }
+
+    const [h, m] = time.split(':').map(Number);
+    const slotMin = h * 60 + m;
+
+    const [startH, startM] = daySchedule.startTime.split(':').map(Number);
+    const [endH, endM] = daySchedule.endTime.split(':').map(Number);
+
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+
+    return slotMin >= startMin && slotMin < endMin;
+  }
+
+  getApptStartingAtSlotForBarber(time: string, barberId: string): Appointment | null {
+    const apptsAtSlot = this.getCalendarAppointments().filter(appt =>
+      appt.assignedToId === barberId &&
+      appt.startTime?.substring(0, 5) === time
+    );
+
+    const blockingAppt = apptsAtSlot.find(appt => this.isBlockingStatus(appt.status));
+
+    if (blockingAppt) {
+      return blockingAppt;
+    }
+
+    return apptsAtSlot.find(appt => this.isReleasedStatus(appt.status)) ?? null;
+  }
+
+  isSlotCoveredByApptForBarber(time: string, barberId: string): boolean {
+    const [h, m] = time.split(':').map(Number);
+    const slotMin = h * 60 + m;
+
+    return this.getCalendarAppointments().some(appt => {
+      if (appt.assignedToId !== barberId || !this.isBlockingStatus(appt.status)) {
+        return false;
+      }
+
+      const [ah, am] = appt.startTime.substring(0, 5).split(':').map(Number);
+      const startMin = ah * 60 + am;
+      const endMin = startMin + this.getApptDuration(appt);
+
+      return slotMin > startMin && slotMin < endMin;
+    });
+  }
+
+  hasBlockingApptStartingAtSlotForBarber(time: string, barberId: string): boolean {
+    return this.getCalendarAppointments().some(appt =>
+      appt.assignedToId === barberId &&
+      this.isBlockingStatus(appt.status) &&
+      appt.startTime?.substring(0, 5) === time
+    );
+  }
+
+  isSlotOccupiedForBarber(time: string, barberId: string): boolean {
+    return this.isSlotCoveredByApptForBarber(time, barberId) ||
+      this.hasBlockingApptStartingAtSlotForBarber(time, barberId);
+  }
+
+  columnBlockedLabel(time: string, barberId: string): string {
+    if (!this.isWorkingDayForBarber(barberId)) {
+      return 'No trabaja';
+    }
+
+    if (!this.isWithinWorkingHoursForBarber(time, barberId)) {
+      return 'Fuera de horario';
+    }
+
+    if (this.isPastSlot(time)) {
+      return 'Horario vencido';
+    }
+
+    return 'No disponible';
+  }
+
   // ── Navegación de fecha ───────────────────────────────────
   prevDay(): void {
     const d = new Date(this.selectedDate);
-    d.setDate(d.getDate() - 1);
+    d.setDate(d.getDate() + (this.viewMode === 'week' ? -7 : -1));
     this.selectedDate = d;
+    this.calendarDate = d;
     this.loadAppointments();
   }
 
   nextDay(): void {
     const d = new Date(this.selectedDate);
-    d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate() + (this.viewMode === 'week' ? 7 : 1));
     this.selectedDate = d;
+    this.calendarDate = d;
     this.loadAppointments();
   }
 
@@ -616,28 +1036,48 @@ export class AgendaComponent implements OnInit {
     }
 
     this.selectedAppt = appt;
+
+    if (this.reassignBarberForm) {
+      this.reassignBarberForm.reset({
+        barberId: appt.assignedToId ?? null
+      });
+    }
+
     this.showStatusMenu = true;
   }
 
   updateStatus(appt: Appointment, newStatus: string): void {
     this.showStatusMenu = false;
+
+    if (newStatus === 'completed') {
+      this.openCompleteAppointment(appt);
+      return;
+    }
+
     this.appointmentService.updateStatus(appt.id, newStatus).subscribe({
       next: (res) => {
         if (res.success) {
-          const idx = this.appointments.findIndex(a => a.id === appt.id);
-          if (idx >= 0) this.appointments[idx] = res.data;
+          this.replaceAppointmentInState(res.data);
+          this.applyAppointmentFilters();
 
-          const detail = newStatus === 'completed' && res.data?.saleId
-            ? 'Cita completada — venta generada automáticamente'
-            : 'Estado de cita actualizado';
-
-          this.messageService.add({ severity: 'success', summary: 'Actualizado', detail });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Actualizado',
+            detail: 'Estado de cita actualizado'
+          });
         }
+      },
+      error: (err) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err?.error?.message || 'No se pudo actualizar la cita'
+        });
       }
     });
   }
 
-  openNewAppt(time?: string): void {
+  openNewAppt(time?: string, barberId?: string): void {
     if (!this.isWorkingDay()) {
       this.messageService.add({
         severity: 'warn',
@@ -656,6 +1096,26 @@ export class AgendaComponent implements OnInit {
       return;
     }
 
+    if (barberId && time && !this.isWithinWorkingHoursForBarber(time, barberId)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Fuera de horario',
+        detail: 'El barbero seleccionado no trabaja en ese horario.'
+      });
+      return;
+    }
+
+    const defaultBarberId =
+      barberId ??
+      (
+        this.canManage &&
+          !this.isSingleBarber &&
+          this.selectedBarberFilter !== 'all' &&
+          this.selectedBarberFilter !== 'unassigned'
+          ? this.selectedBarberFilter
+          : null
+      );
+
     this.selectedService = null;
     this.calculatedEndTime = '';
     this.selectedClient = null;
@@ -663,14 +1123,22 @@ export class AgendaComponent implements OnInit {
     this.clientHaircuts = [];
     this.isNewClient = false;
 
-    this.apptForm.reset({ source: 'dashboard' });
-    this.apptForm.reset({ source: 'dashboard', assignedToId: null });
+    this.apptForm.reset({
+      source: 'dashboard',
+      assignedToId: defaultBarberId
+    });
 
     if (time) {
       const [h, m] = time.split(':').map(Number);
       const d = new Date();
+
       d.setHours(h, m, 0, 0);
-      this.apptForm.patchValue({ startTime: d, appointmentDate: this.selectedDate });
+
+      this.apptForm.patchValue({
+        startTime: d,
+        appointmentDate: this.selectedDate
+      });
+
       this.recalcEndTime();
     }
 
@@ -766,6 +1234,84 @@ export class AgendaComponent implements OnInit {
     this.openApptMenu(appt);
   }
 
+  reassignSelectedAppointment(): void {
+    if (!this.selectedAppt || this.reassignBarberForm.invalid || this.reassigningBarber) {
+      this.reassignBarberForm.markAllAsTouched();
+      return;
+    }
+
+    const barberId = this.reassignBarberForm.value.barberId;
+
+    if (!barberId) {
+      this.reassignBarberForm.markAllAsTouched();
+      return;
+    }
+
+    if (barberId === this.selectedAppt.assignedToId) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Sin cambios',
+        detail: 'La cita ya está asignada a ese barbero'
+      });
+      return;
+    }
+
+    this.reassigningBarber = true;
+
+    this.appointmentService.assignBarber(this.selectedAppt.id, barberId).subscribe({
+      next: (res) => {
+        if (res.success) {
+          const updated = res.data;
+
+          const idxAll = this.allAppointments.findIndex(a => a.id === updated.id);
+          if (idxAll >= 0) {
+            this.allAppointments[idxAll] = updated;
+          }
+
+          const idxWeek = this.weekAppointments.findIndex(a => a.id === updated.id);
+          if (idxWeek >= 0) {
+            this.weekAppointments[idxWeek] = updated;
+          }
+
+          const idx = this.appointments.findIndex(a => a.id === updated.id);
+          if (idx >= 0) {
+            this.appointments[idx] = updated;
+          }
+
+          this.selectedAppt = updated;
+          this.reassignBarberForm.patchValue({
+            barberId: updated.assignedToId ?? null
+          });
+
+          this.applyAppointmentFilters();
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Barbero reasignado',
+            detail: `La cita fue asignada a ${updated.assignedToName ?? this.getSelectedReassignBarberName()}`
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo reasignar el barbero'
+          });
+        }
+
+        this.reassigningBarber = false;
+      },
+      error: (err) => {
+        this.reassigningBarber = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No se pudo reasignar',
+          detail: err?.error?.message || 'El barbero seleccionado no está disponible en ese horario'
+        });
+      }
+    });
+  }
+
   // ── Helpers ───────────────────────────────────────────────
   private handleAppointmentResponse(res: any, timeStr: string): void {
     if (res.success) {
@@ -848,5 +1394,310 @@ export class AgendaComponent implements OnInit {
 
   canOpenSlot(time: string): boolean {
     return !this.isPastSlot(time) && !this.isSlotOccupied(time);
+  }
+
+  getAppointmentsForWeekSlot(date: Date, time: string): Appointment[] {
+    const dateStr = this.formatDateISO(date);
+
+    return this.weekAppointments
+      .filter(appt =>
+        appt.appointmentDate === dateStr &&
+        appt.startTime?.substring(0, 5) === time
+      )
+      .filter(appt => {
+        if (!this.canManage || this.isSingleBarber || this.selectedBarberFilter === 'all') {
+          return true;
+        }
+
+        if (this.selectedBarberFilter === 'unassigned') {
+          return !appt.assignedToId;
+        }
+
+        return appt.assignedToId === this.selectedBarberFilter;
+      });
+  }
+
+  isWeekSlotOccupied(date: Date, time: string): boolean {
+    return this.getAppointmentsForWeekSlot(date, time)
+      .some(appt => this.isBlockingStatus(appt.status));
+  }
+
+  openNewApptForWeek(date: Date, time: string): void {
+    this.selectedDate = new Date(date);
+    this.calendarDate = new Date(date);
+
+    const defaultBarberId =
+      this.canManage &&
+        !this.isSingleBarber &&
+        this.selectedBarberFilter !== 'all' &&
+        this.selectedBarberFilter !== 'unassigned'
+        ? this.selectedBarberFilter
+        : undefined;
+
+    this.openNewAppt(time, defaultBarberId);
+  }
+
+  private timeToMinutes(time: string): number {
+    const [h, m] = time.substring(0, 5).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  private isBarberBusyAtSlot(barberId: string, time: string): boolean {
+    const dateStr = this.formatDateISO(this.selectedDate);
+    const slotStart = this.timeToMinutes(time);
+    const slotEnd = slotStart + this.slotStep;
+
+    return this.getCalendarAppointments().some(appt => {
+      if (appt.appointmentDate !== dateStr) {
+        return false;
+      }
+
+      if (appt.assignedToId !== barberId) {
+        return false;
+      }
+
+      if (!this.isBlockingStatus(appt.status)) {
+        return false;
+      }
+
+      const apptStart = this.timeToMinutes(appt.startTime);
+      const apptEnd = this.timeToMinutes(appt.endTime);
+
+      return apptStart < slotEnd && apptEnd > slotStart;
+    });
+  }
+
+  getAvailableBarbersForDaySlot(time: string): BarberOptionResponse[] {
+    if (!this.canManage || this.isSingleBarber) {
+      return [];
+    }
+
+    if (!this.isWorkingDay() || this.isPastSlot(time)) {
+      return [];
+    }
+
+    let candidates = [...this.barbers];
+
+    if (
+      this.selectedBarberFilter !== 'all' &&
+      this.selectedBarberFilter !== 'unassigned'
+    ) {
+      candidates = candidates.filter(barber => barber.userId === this.selectedBarberFilter);
+    }
+
+    return candidates.filter(barber =>
+      this.isWorkingDayForBarber(barber.userId) &&
+      this.isWithinWorkingHoursForBarber(time, barber.userId) &&
+      !this.isBarberBusyAtSlot(barber.userId, time)
+    );
+  }
+
+  canAddAnotherAppointmentAtSlot(time: string): boolean {
+    if (this.viewMode !== 'day') {
+      return false;
+    }
+
+    if (!this.canManage || this.isSingleBarber) {
+      return false;
+    }
+
+    const hasAppointmentAtSlot = !!this.getApptStartingAtSlot(time);
+
+    return hasAppointmentAtSlot && this.getAvailableBarbersForDaySlot(time).length > 0;
+  }
+
+  availableBarbersLabel(time: string): string {
+    const available = this.getAvailableBarbersForDaySlot(time);
+
+    if (available.length === 1) {
+      return `${available[0].fullName} libre`;
+    }
+
+    return `${available.length} barberos libres`;
+  }
+
+  openParallelAppointment(time: string): void {
+    const available = this.getAvailableBarbersForDaySlot(time);
+
+    if (!available.length) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin barberos disponibles',
+        detail: 'No hay barberos libres en ese horario.'
+      });
+      return;
+    }
+
+    const barberId =
+      this.selectedBarberFilter !== 'all' &&
+        this.selectedBarberFilter !== 'unassigned'
+        ? this.selectedBarberFilter
+        : available[0].userId;
+
+    this.openNewAppt(time, barberId);
+  }
+
+  get appointmentBarberOptions(): { label: string; value: string }[] {
+    return this.barbers.map(barber => ({
+      label: barber.fullName,
+      value: barber.userId
+    }));
+  }
+
+  getSelectedReassignBarberName(): string {
+    const barberId = this.reassignBarberForm?.get('barberId')?.value;
+
+    if (!barberId) {
+      return 'Selecciona un barbero';
+    }
+
+    return this.barbers.find(barber => barber.userId === barberId)?.fullName ?? 'Barbero';
+  }
+
+  canReassignSelectedAppointment(): boolean {
+    if (!this.selectedAppt) {
+      return false;
+    }
+
+    if (!this.canManage || this.isSingleBarber) {
+      return false;
+    }
+
+    if (this.isFinalStatus(this.selectedAppt.status)) {
+      return false;
+    }
+
+    const barberId = this.reassignBarberForm?.get('barberId')?.value;
+
+    if (!barberId) {
+      return false;
+    }
+
+    return barberId !== this.selectedAppt.assignedToId;
+  }
+
+  private setDefaultViewMode(): void {
+    if (this.canManage && !this.isSingleBarber) {
+      this.viewMode = 'columns';
+      return;
+    }
+
+    this.viewMode = 'day';
+  }
+
+  openCompleteAppointment(appt: Appointment): void {
+    this.selectedApptToComplete = appt;
+
+    this.completeAppointmentForm.reset({
+      paymentMethod: 'cash',
+      discount: 0,
+      notes: ''
+    });
+
+    this.showCompleteAppointmentDialog = true;
+  }
+
+  confirmCompleteAppointment(): void {
+    if (
+      !this.selectedApptToComplete ||
+      this.completeAppointmentForm.invalid ||
+      this.completingAppointment
+    ) {
+      this.completeAppointmentForm.markAllAsTouched();
+      return;
+    }
+
+    const appt = this.selectedApptToComplete;
+    const discount = Number(this.completeAppointmentForm.value.discount ?? 0);
+
+    if (discount < 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Descuento inválido',
+        detail: 'El descuento no puede ser negativo'
+      });
+      return;
+    }
+
+    if (appt.servicePrice && discount > appt.servicePrice) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Descuento inválido',
+        detail: 'El descuento no puede ser mayor al precio del servicio'
+      });
+      return;
+    }
+
+    this.completingAppointment = true;
+
+    this.appointmentService.completeAppointment(appt.id, {
+      paymentMethod: this.completeAppointmentForm.value.paymentMethod,
+      discount,
+      notes: this.completeAppointmentForm.value.notes || null
+    }).subscribe({
+      next: (res) => {
+        this.completingAppointment = false;
+
+        if (res.success) {
+          this.replaceAppointmentInState(res.data);
+          this.applyAppointmentFilters();
+
+          this.showCompleteAppointmentDialog = false;
+          this.selectedApptToComplete = null;
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Cita completada',
+            detail: res.data.saleId
+              ? 'Se generó la venta correctamente'
+              : 'La cita fue completada'
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo completar la cita'
+          });
+        }
+      },
+      error: (err) => {
+        this.completingAppointment = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No se pudo completar',
+          detail: err?.error?.message || 'Revisa que la cita tenga precio y barbero asignado'
+        });
+      }
+    });
+  }
+
+  private replaceAppointmentInState(updated: Appointment): void {
+    const idxAll = this.allAppointments.findIndex(a => a.id === updated.id);
+    if (idxAll >= 0) {
+      this.allAppointments[idxAll] = updated;
+    }
+
+    const idxWeek = this.weekAppointments.findIndex(a => a.id === updated.id);
+    if (idxWeek >= 0) {
+      this.weekAppointments[idxWeek] = updated;
+    }
+
+    const idx = this.appointments.findIndex(a => a.id === updated.id);
+    if (idx >= 0) {
+      this.appointments[idx] = updated;
+    }
+
+    if (this.selectedAppt?.id === updated.id) {
+      this.selectedAppt = updated;
+    }
+  }
+
+  money(value?: number | null): string {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 2
+    }).format(value ?? 0);
   }
 }

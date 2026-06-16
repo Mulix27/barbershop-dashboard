@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/auth.model';
-import { Appointment } from '../models/appointment.model';
+import { Appointment, CompleteAppointmentRequest } from '../models/appointment.model';
 import { DayAvailability } from '../models/appointment.model';
 import { environment } from '../../../environments/environment';
 
@@ -31,6 +31,16 @@ export class AppointmentService {
   getMyAgenda(date?: string): Observable<ApiResponse<Appointment[]>> {
     const params = date ? new HttpParams().set('date', date) : undefined;
     return this.http.get<ApiResponse<Appointment[]>>(`${API}/api/appointments/my-agenda`, { params });
+  }
+
+  completeAppointment(
+    id: string,
+    request: CompleteAppointmentRequest
+  ): Observable<ApiResponse<Appointment>> {
+    return this.http.post<ApiResponse<Appointment>>(
+      `${API}/api/appointments/${id}/complete`,
+      request
+    );
   }
 
   assignBarber(id: string, barberId: string): Observable<ApiResponse<Appointment>> {

@@ -3,7 +3,9 @@
   <div class="page-header">
     <div>
       <h1>Analítica de Ventas</h1>
-      <p class="header-sub">Monitorea el rendimiento y métricas clave de ventas</p>
+      <p class="header-sub">
+        Monitorea el rendimiento y métricas clave de ventas
+      </p>
     </div>
     <div class="header-actions">
       <div class="period-selector">
@@ -11,7 +13,8 @@
           *ngFor="let opt of periodOptions"
           class="period-btn"
           [class.active]="selectedPeriod === opt.value"
-          (click)="selectedPeriod = opt.value; onPeriodChange()">
+          (click)="selectedPeriod = opt.value; onPeriodChange()"
+        >
           {{ opt.label }}
         </button>
       </div>
@@ -23,7 +26,11 @@
   </div>
   <ng-container *ngIf="loading">
     <div class="metrics-grid">
-      <p-skeleton *ngFor="let i of [1,2,3,4]" height="100px" borderRadius="14px"></p-skeleton>
+      <p-skeleton
+        *ngFor="let i of [1, 2, 3, 4]"
+        height="100px"
+        borderRadius="14px"
+      ></p-skeleton>
     </div>
     <div class="charts-row">
       <p-skeleton height="300px" borderRadius="14px"></p-skeleton>
@@ -54,7 +61,9 @@
       </div>
       <div class="metric-card">
         <div class="metric-top">
-          <div class="metric-icon sales"><i class="pi pi-shopping-cart"></i></div>
+          <div class="metric-icon sales">
+            <i class="pi pi-shopping-cart"></i>
+          </div>
           <div class="metric-info">
             <span class="metric-label">Ventas totales</span>
             <span class="metric-value">{{ totalSales }}</span>
@@ -67,7 +76,9 @@
           <div class="metric-icon clients"><i class="pi pi-users"></i></div>
           <div class="metric-info">
             <span class="metric-label">Clientes nuevos</span>
-            <span class="metric-value">{{ clientMetrics?.newClients ?? 0 }}</span>
+            <span class="metric-value">{{
+              clientMetrics?.newClients ?? 0
+            }}</span>
             <span class="metric-period">
               {{ clientMetrics?.recurringClients ?? 0 }} recurrentes
             </span>
@@ -82,10 +93,12 @@
           <span class="period-tag">{{ periodLabel() }}</span>
         </div>
         <div class="chart-wrap">
-          <canvas baseChart
+          <canvas
+            baseChart
             [data]="barberChartData"
             [options]="barberChartOptions"
-            type="bar">
+            type="bar"
+          >
           </canvas>
         </div>
       </div>
@@ -98,10 +111,12 @@
           <span class="period-tag">{{ periodLabel() }}</span>
         </div>
         <div class="chart-wrap">
-          <canvas baseChart
+          <canvas
+            baseChart
             [data]="trendChartData"
             [options]="trendChartOptions"
-            type="line">
+            type="line"
+          >
           </canvas>
         </div>
       </div>
@@ -131,9 +146,20 @@
                 <div class="pct-bar">
                   <div
                     class="pct-fill"
-                    [style.width.%]="totalRevenue > 0 ? (svc.totalRevenue / totalRevenue * 100) : 0">
-                  </div>
-                  <span>{{ totalRevenue > 0 ? (svc.totalRevenue / totalRevenue * 100 | number:'1.1-1') : 0 }}%</span>
+                    [style.width.%]="
+                      totalRevenue > 0
+                        ? (svc.totalRevenue / totalRevenue) * 100
+                        : 0
+                    "
+                  ></div>
+                  <span
+                    >{{
+                      totalRevenue > 0
+                        ? ((svc.totalRevenue / totalRevenue) * 100
+                          | number: "1.1-1")
+                        : 0
+                    }}%</span
+                  >
                 </div>
               </td>
             </tr>
@@ -180,28 +206,36 @@
         </div>
         <div class="breakdown-content">
           <div class="donut-wrap">
-            <canvas baseChart
+            <canvas
+              baseChart
               [data]="donutData"
               [options]="donutOptions"
-              type="doughnut">
+              type="doughnut"
+            >
             </canvas>
             <div class="donut-center">
               <span class="donut-total-label">Total</span>
-              <span class="donut-total">{{ formatCurrency(totalRevenue) }}</span>
+              <span class="donut-total">{{
+                formatCurrency(totalRevenue)
+              }}</span>
             </div>
           </div>
           <div class="payment-list">
             <div class="payment-item" *ngFor="let p of paymentMethods">
               <div class="payment-left">
-                <i class="pi"
+                <i
+                  class="pi"
                   [class.pi-money-bill]="p.paymentMethod === 'cash'"
                   [class.pi-credit-card]="p.paymentMethod === 'card'"
-                  [class.pi-send]="p.paymentMethod === 'transfer'">
+                  [class.pi-send]="p.paymentMethod === 'transfer'"
+                >
                 </i>
                 <span>{{ paymentLabel(p.paymentMethod) }}</span>
               </div>
               <div class="payment-right">
-                <span class="payment-amount">{{ formatCurrency(p.revenue) }}</span>
+                <span class="payment-amount">{{
+                  formatCurrency(p.revenue)
+                }}</span>
                 <span class="payment-count">{{ p.totalSales }} ventas</span>
               </div>
             </div>
@@ -242,14 +276,137 @@
             <span class="peak-rank">#{{ i + 1 }}</span>
             <span class="peak-label">{{ h.label }}</span>
             <div class="peak-bar">
-              <div class="peak-fill"
-                [style.width.%]="peakHours[0] ? (h.totalAppointments / peakHours[0].totalAppointments * 100) : 0">
-              </div>
+              <div
+                class="peak-fill"
+                [style.width.%]="
+                  peakHours[0]
+                    ? (h.totalAppointments / peakHours[0].totalAppointments) *
+                      100
+                    : 0
+                "
+              ></div>
             </div>
             <span class="peak-count">{{ h.totalAppointments }}</span>
           </div>
           <div class="empty-row" *ngIf="peakHours.length === 0">Sin datos</div>
         </div>
+      </div>
+    </div>
+
+    <div class="card sales-history-card">
+      <div class="card-header history-header">
+        <div>
+          <h2>Historial de ventas</h2>
+          <p>Últimas ventas registradas desde agenda y punto de venta</p>
+        </div>
+
+        <button class="history-refresh" type="button" (click)="loadSales()">
+          <i class="pi pi-refresh"></i>
+          Actualizar
+        </button>
+      </div>
+
+      <ng-container *ngIf="salesLoading">
+        <div class="history-loading">
+          <p-skeleton
+            *ngFor="let i of [1, 2, 3, 4]"
+            height="58px"
+            borderRadius="14px"
+          >
+          </p-skeleton>
+        </div>
+      </ng-container>
+
+      <div
+        class="history-table-wrap"
+        *ngIf="!salesLoading && recentSales.length > 0"
+      >
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Venta</th>
+              <th>Origen</th>
+              <th>Cliente</th>
+              <th>Barbero</th>
+              <th>Método</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let sale of recentSales">
+              <td>
+                <div class="sale-main">
+                  <strong>{{ saleItemsSummary(sale) }}</strong>
+                  <span>{{ formatDateTime(sale.createdAt) }}</span>
+                </div>
+              </td>
+
+              <td>
+                <span
+                  class="origin-pill"
+                  [class.from-appointment]="isAppointmentSale(sale)"
+                  [class.from-pos]="!isAppointmentSale(sale)"
+                >
+                  <i
+                    class="pi"
+                    [ngClass]="
+                      isAppointmentSale(sale)
+                        ? 'pi-calendar'
+                        : 'pi-shopping-cart'
+                    "
+                  >
+                  </i>
+                  {{ saleOriginLabel(sale) }}
+                </span>
+              </td>
+
+              <td>
+                <div class="client-cell">
+                  <div class="mini-avatar">
+                    {{ sale.clientName.charAt(0).toUpperCase() }}
+                  </div>
+                  <span>{{ sale.clientName }}</span>
+                </div>
+              </td>
+
+              <td>
+                <span class="barber-name">
+                  {{ saleBarberName(sale) }}
+                </span>
+              </td>
+
+              <td>
+                <span class="payment-pill">
+                  <i class="pi" [ngClass]="paymentIcon(sale.paymentMethod)"></i>
+                  {{ paymentLabel(sale.paymentMethod) }}
+                </span>
+              </td>
+
+              <td class="history-amount">
+                {{ formatCurrency(sale.total) }}
+              </td>
+
+              <td>
+                <span class="status-pill status-{{ sale.status }}">
+                  {{ statusLabel(sale.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="empty-history"
+        *ngIf="!salesLoading && recentSales.length === 0"
+      >
+        <i class="pi pi-shopping-cart"></i>
+        <h3>Sin ventas registradas</h3>
+        <p>
+          Cuando completes citas o registres ventas manuales aparecerán aquí.
+        </p>
       </div>
     </div>
     <div class="summary-strip" *ngIf="salesByDayOfWeek.length > 0">
@@ -262,6 +419,4 @@
       </div>
     </div>
   </ng-container>
-  <div class="sales-history" *ngIf="activeTab === 1">
-  </div>
 </div>
