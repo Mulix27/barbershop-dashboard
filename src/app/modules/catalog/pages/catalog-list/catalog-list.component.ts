@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
-import { ProductService } from '../../../../core/services/product.service';
+import { ProductService, StockMovementResponse, StockMovementType } from '../../../../core/services/product.service';
 import { CatalogService, ServiceCategoryResponse, ServiceCategoryRequest } from '../../../../core/services/catalog.service';
 import { Product } from '../../../../core/models/catalog.model';
 
@@ -74,6 +74,31 @@ export class CatalogListComponent implements OnInit {
   stockDelta = 0;
   stockAdjustType = 'add';
   productForm!: FormGroup;
+
+  showStockMovements = false;
+  loadingStockMovements = false;
+  stockMovements: StockMovementResponse[] = [];
+  stockReason = '';
+
+  showQuickRestock = false;
+  restockQuantity = 1;
+  restockReason = 'Compra a proveedor';
+  restockingProduct = false;
+
+  showInventoryMovements = false;
+  loadingInventoryMovements = false;
+  inventoryMovements: StockMovementResponse[] = [];
+  inventoryMovementType: StockMovementType | 'all' = 'all';
+
+  inventoryMovementTypeOptions: { label: string; value: StockMovementType | 'all' }[] = [
+    { label: 'Todos', value: 'all' },
+    { label: 'Entradas', value: 'manual_in' },
+    { label: 'Salidas', value: 'manual_out' },
+    { label: 'Ventas', value: 'sale' },
+    { label: 'Devoluciones', value: 'sale_cancel_return' },
+    { label: 'Stock inicial', value: 'initial_stock' },
+    { label: 'Correcciones', value: 'correction' }
+  ];
 
   // ── Dialogs: Servicios ────────────────────────────────────
   showServiceForm = false;
@@ -238,25 +263,126 @@ export class CatalogListComponent implements OnInit {
 
   openStockAdjust(p: Product): void {
     this.selectedProduct = p;
-    this.stockDelta = 0;
+    this.stockDelta = 1;
+    this.stockReason = '';
     this.stockAdjustType = 'add';
     this.showStockAdjust = true;
   }
 
+  setStockAdjustType(type: 'add' | 'remove'): void {
+    this.stockAdjustType = type;
+
+    if (!this.stockDelta || this.stockDelta <= 0) {
+      this.stockDelta = 1;
+    }
+  }
+
   adjustStock(): void {
     if (!this.selectedProduct || this.stockDelta <= 0) return;
+
     const qty = this.stockAdjustType === 'add' ? this.stockDelta : -this.stockDelta;
-    this.productService.adjustStock(this.selectedProduct.id, qty).subscribe({
+
+    if (this.stockAdjustType === 'remove' && this.selectedProduct.stock - this.stockDelta < 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Stock insuficiente',
+        detail: 'No puedes quitar más unidades de las disponibles'
+      });
+      return;
+    }
+
+    this.productService.adjustStock(this.selectedProduct.id, qty, this.stockReason).subscribe({
       next: (res) => {
         if (res.success) {
-          this.messageService.add({ severity: 'success', summary: 'Stock actualizado', detail: `Nuevo stock: ${res.data.stock}` });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Stock actualizado',
+            detail: `Nuevo stock: ${res.data.stock}`
+          });
+
           this.showStockAdjust = false;
+          this.stockReason = '';
           this.loadData();
         } else {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: res.message });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message
+          });
         }
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo actualizar el stock'
+        });
       }
     });
+  }
+
+  openQuickRestock(product: Product): void {
+    this.selectedProduct = product;
+    this.restockQuantity = Math.max(product.stockMin - product.stock + 1, 1);
+    this.restockReason = 'Compra a proveedor';
+    this.showQuickRestock = true;
+  }
+
+  increaseRestockQuantity(): void {
+    this.restockQuantity = Number(this.restockQuantity || 0) + 1;
+  }
+
+  decreaseRestockQuantity(): void {
+    const nextValue = Number(this.restockQuantity || 1) - 1;
+    this.restockQuantity = Math.max(1, nextValue);
+  }
+
+  get quickRestockNewStock(): number {
+    if (!this.selectedProduct) return 0;
+    return this.selectedProduct.stock + Number(this.restockQuantity || 0);
+  }
+
+  confirmQuickRestock(): void {
+    if (!this.selectedProduct || this.restockQuantity <= 0 || this.restockingProduct) return;
+
+    this.restockingProduct = true;
+
+    this.productService
+      .adjustStock(this.selectedProduct.id, this.restockQuantity, this.restockReason)
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Producto reabastecido',
+              detail: `Nuevo stock: ${res.data.stock}`
+            });
+
+            this.showQuickRestock = false;
+            this.restockingProduct = false;
+            this.restockReason = 'Compra a proveedor';
+            this.restockQuantity = 1;
+            this.loadData();
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: res.message || 'No se pudo reabastecer el producto'
+            });
+
+            this.restockingProduct = false;
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo reabastecer el producto'
+          });
+
+          this.restockingProduct = false;
+        }
+      });
   }
 
   // ── CRUD Servicios (nuevo modelo) ─────────────────────────
@@ -317,6 +443,50 @@ export class CatalogListComponent implements OnInit {
     });
   }
 
+  openInventoryMovements(): void {
+    this.inventoryMovementType = 'all';
+    this.showInventoryMovements = true;
+    this.loadInventoryMovements();
+  }
+
+  setInventoryMovementType(type: StockMovementType | 'all'): void {
+    this.inventoryMovementType = type;
+    this.loadInventoryMovements();
+  }
+
+  loadInventoryMovements(): void {
+    this.loadingInventoryMovements = true;
+
+    this.productService.getRecentStockMovements(this.inventoryMovementType, 50).subscribe({
+      next: (res) => {
+        this.inventoryMovements = res.success ? res.data : [];
+        this.loadingInventoryMovements = false;
+      },
+      error: () => {
+        this.loadingInventoryMovements = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los movimientos de inventario'
+        });
+      }
+    });
+  }
+
+  get inventoryTotalIn(): number {
+    return this.inventoryMovements
+      .filter(m => m.quantityChange > 0)
+      .reduce((sum, m) => sum + m.quantityChange, 0);
+  }
+
+  get inventoryTotalOut(): number {
+    return Math.abs(
+      this.inventoryMovements
+        .filter(m => m.quantityChange < 0)
+        .reduce((sum, m) => sum + m.quantityChange, 0)
+    );
+  }
+
   // ── Upload imagen producto ────────────────────────────────
 
   onProductImageSelected(event: Event): void {
@@ -371,6 +541,66 @@ export class CatalogListComponent implements OnInit {
     return cat.variants.filter(v => v.isActive).length;
   }
 
+  openStockMovements(product: Product): void {
+    this.selectedProduct = product;
+    this.stockMovements = [];
+    this.loadingStockMovements = true;
+    this.showStockMovements = true;
+
+    this.productService.getStockMovements(product.id).subscribe({
+      next: (res) => {
+        this.stockMovements = res.success ? res.data : [];
+        this.loadingStockMovements = false;
+      },
+      error: () => {
+        this.loadingStockMovements = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el historial de stock'
+        });
+      }
+    });
+  }
+
+  movementLabel(type: StockMovementType): string {
+    const labels: Record<StockMovementType, string> = {
+      initial_stock: 'Stock inicial',
+      sale: 'Venta',
+      manual_in: 'Entrada manual',
+      manual_out: 'Salida manual',
+      correction: 'Corrección',
+      sale_cancel_return: 'Devolución por cancelación'
+    };
+
+    return labels[type] ?? type;
+  }
+
+  movementIcon(type: StockMovementType): string {
+    const icons: Record<StockMovementType, string> = {
+      initial_stock: 'pi-box',
+      sale: 'pi-shopping-cart',
+      manual_in: 'pi-plus-circle',
+      manual_out: 'pi-minus-circle',
+      correction: 'pi-refresh',
+      sale_cancel_return: 'pi-undo'
+    };
+
+    return icons[type] ?? 'pi-info-circle';
+  }
+
+  movementClass(movement: StockMovementResponse): string {
+    if (movement.movementType === 'initial_stock') return 'initial';
+    if (movement.quantityChange > 0) return 'positive';
+    if (movement.quantityChange < 0) return 'negative';
+    return 'neutral';
+  }
+
+  signedQuantity(value: number): string {
+    if (value > 0) return `+${value}`;
+    return `${value}`;
+  }
+
   getCategoryForEdit(): any {
     if (!this.selectedCategory) return null;
     return {
@@ -383,5 +613,14 @@ export class CatalogListComponent implements OnInit {
       isActive: this.selectedCategory.isActive,
       variants: this.selectedCategory.variants
     };
+  }
+
+  increaseStockDelta(): void {
+    this.stockDelta = Number(this.stockDelta || 0) + 1;
+  }
+
+  decreaseStockDelta(): void {
+    const nextValue = Number(this.stockDelta || 1) - 1;
+    this.stockDelta = Math.max(1, nextValue);
   }
 }

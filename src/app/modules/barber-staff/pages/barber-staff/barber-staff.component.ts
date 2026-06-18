@@ -22,7 +22,9 @@ import {
   StaffPaymentSummaryResponse,
   StaffPaymentCardSummaryResponse,
   StaffPaymentHistoryResponse,
-  StaffPaymentPeriodSaleResponse
+  StaffPaymentPeriodSaleResponse,
+  STAFF_COMMISSION_BASE_LABELS,
+  StaffCommissionBase,
 } from '../../../../core/models/staff-payment.model';
 
 interface DaySchedule {
@@ -176,6 +178,11 @@ export class BarberStaffComponent implements OnInit {
     { label: 'Otro', value: 'other' }
   ];
 
+  commissionBaseOptions = [
+    { label: 'Solo servicios', value: 'services_only' },
+    { label: 'Servicios y productos', value: 'services_and_products' }
+  ];
+
   paymentSummary: StaffPaymentSummaryResponse | null = null;
   paymentSummaryLoading = false;
   paymentCardSummaries: Record<string, StaffPaymentCardSummaryResponse> = {};
@@ -270,6 +277,7 @@ export class BarberStaffComponent implements OnInit {
       paymentType: [null, Validators.required],
       fixedAmount: [null],
       commissionPercentage: [null],
+      commissionBase: [null],
       frequency: [null],
       paymentDay: [null]
     });
@@ -614,6 +622,12 @@ export class BarberStaffComponent implements OnInit {
 
   openPayments(barber: BarberStaff): void {
     this.selectedBarber = barber;
+    this.selectedPaymentPeriod = null;
+    this.periodPayments = [];
+    this.selectedPaymentReceipt = null;
+    this.selectedPaymentToCancel = null;
+    this.showPaymentReceiptDialog = false;
+    this.showCancelPaymentDialog = false;
     this.showPaymentsDialog = true;
     this.resetPaymentState();
     this.loadPaymentData(barber.userId);
@@ -632,7 +646,8 @@ export class BarberStaffComponent implements OnInit {
       fixedAmount: null,
       commissionPercentage: null,
       frequency: null,
-      paymentDay: null
+      paymentDay: null,
+      commissionBase: 'services_only',
     });
 
     this.paymentPeriodForm.reset({
@@ -667,7 +682,8 @@ export class BarberStaffComponent implements OnInit {
             fixedAmount: this.paymentConfig.fixedAmount ?? 0,
             commissionPercentage: this.paymentConfig.commissionPercentage ?? 0,
             frequency: this.paymentConfig.frequency ?? 'weekly',
-            paymentDay: this.paymentConfig.paymentDay ?? 6
+            paymentDay: this.paymentConfig.paymentDay ?? 6,
+            commissionBase: this.paymentConfig.commissionBase ?? 'services_only',
           });
         } else {
           this.paymentConfigForm.reset({
@@ -759,7 +775,10 @@ export class BarberStaffComponent implements OnInit {
       fixedAmount: paymentType === 'fixed' || paymentType === 'mixed' ? Number(value.fixedAmount ?? 0) : null,
       commissionPercentage: paymentType === 'commission' || paymentType === 'mixed' ? Number(value.commissionPercentage ?? 0) : null,
       frequency: value.frequency as StaffPaymentFrequency,
-      paymentDay: value.paymentDay ? Number(value.paymentDay) : null
+      paymentDay: value.paymentDay ? Number(value.paymentDay) : null,
+      commissionBase: paymentType === 'commission' || paymentType === 'mixed'
+        ? (value.commissionBase as StaffCommissionBase ?? 'services_only')
+        : 'services_only',
     };
 
     this.paymentService.saveConfig(this.selectedBarber.userId, request).subscribe({
@@ -1097,6 +1116,10 @@ export class BarberStaffComponent implements OnInit {
       ? Number(value.commissionPercentage ?? 0)
       : null;
 
+    const commissionBase = this.showCommissionAmount()
+      ? (value.commissionBase ?? 'services_only')
+      : 'services_only';
+
     const frequency = value.frequency ?? null;
     const paymentDay = value.paymentDay ? Number(value.paymentDay) : null;
 
@@ -1104,9 +1127,14 @@ export class BarberStaffComponent implements OnInit {
       this.paymentConfig.paymentType !== paymentType ||
       Number(this.paymentConfig.fixedAmount ?? 0) !== Number(fixedAmount ?? 0) ||
       Number(this.paymentConfig.commissionPercentage ?? 0) !== Number(commissionPercentage ?? 0) ||
+      (this.paymentConfig.commissionBase ?? 'services_only') !== commissionBase ||
       (this.paymentConfig.frequency ?? null) !== frequency ||
       Number(this.paymentConfig.paymentDay ?? 0) !== Number(paymentDay ?? 0)
     );
+  }
+
+  commissionBaseLabel(value?: StaffCommissionBase | null): string {
+    return value ? STAFF_COMMISSION_BASE_LABELS[value] : 'Solo servicios';
   }
 
   applyPaymentQuickRange(range: 'week' | 'biweekly' | 'month'): void {
@@ -1766,5 +1794,47 @@ export class BarberStaffComponent implements OnInit {
     return {
       overflow: 'auto'
     };
+  }
+
+  isPaymentCancelled(payment: StaffPaymentResponse | StaffPaymentHistoryResponse): boolean {
+    return payment?.status === 'cancelled';
+  }
+
+  periodPaymentStatusLabel(payment: StaffPaymentResponse | StaffPaymentHistoryResponse): string {
+    return this.isPaymentCancelled(payment) ? 'Anulado' : 'Activo';
+  }
+
+  periodPaymentDate(payment: StaffPaymentResponse | StaffPaymentHistoryResponse): string | null {
+    const p = payment as any;
+
+    if (this.isPaymentCancelled(payment)) {
+      return p.cancelledAt ?? p.paidAt ?? null;
+    }
+
+    return p.paidAt ?? null;
+  }
+
+  periodPaymentUserLabel(payment: StaffPaymentResponse | StaffPaymentHistoryResponse): string {
+    const p = payment as any;
+
+    if (this.isPaymentCancelled(payment)) {
+      return p.cancelledByName
+        ? `Anuló: ${p.cancelledByName}`
+        : 'Pago anulado';
+    }
+
+    return p.paidByName
+      ? `Registró: ${p.paidByName}`
+      : 'Registrado';
+  }
+
+  periodPaymentReason(payment: StaffPaymentResponse | StaffPaymentHistoryResponse): string | null {
+    const p = payment as any;
+
+    if (!this.isPaymentCancelled(payment)) {
+      return null;
+    }
+
+    return p.cancelReason ?? 'Sin motivo registrado';
   }
 }

@@ -34,6 +34,15 @@
         <i class="pi pi-plus"></i>
         {{ activeTab === "products" ? "Nuevo producto" : "Nueva categoría" }}
       </button>
+      <button
+        type="button"
+        class="btn-outline inventory-movements-btn"
+        *ngIf="activeTab === 'products'"
+        (click)="openInventoryMovements()"
+      >
+        <i class="pi pi-history"></i>
+        Movimientos
+      </button>
     </div>
   </div>
 
@@ -200,6 +209,14 @@
               </button>
               <button
                 class="card-action-btn"
+                pTooltip="Movimientos"
+                tooltipPosition="left"
+                (click)="openStockMovements(product); $event.stopPropagation()"
+              >
+                <i class="pi pi-history"></i>
+              </button>
+              <button
+                class="card-action-btn"
                 pTooltip="Editar"
                 tooltipPosition="left"
                 (click)="openEdit(product); $event.stopPropagation()"
@@ -245,6 +262,15 @@
                   {{ stockLabel(product) }}
                 </span>
               </div>
+              <button
+                type="button"
+                class="quick-restock-btn"
+                *ngIf="product.lowStock || product.stock === 0"
+                (click)="openQuickRestock(product); $event.stopPropagation()"
+              >
+                <i class="pi pi-plus-circle"></i>
+                Reabastecer
+              </button>
             </div>
           </div>
           <div class="empty-grid" *ngIf="filtered.length === 0">
@@ -302,6 +328,21 @@
                       (click)="openStockAdjust(p)"
                     >
                       <i class="pi pi-chart-line"></i>
+                    </button>
+                    <button
+                      class="card-action-btn restock-action"
+                      pTooltip="Reabastecer"
+                      (click)="openQuickRestock(p)"
+                      *ngIf="p.lowStock || p.stock === 0"
+                    >
+                      <i class="pi pi-plus-circle"></i>
+                    </button>
+                    <button
+                      class="card-action-btn"
+                      pTooltip="Movimientos"
+                      (click)="openStockMovements(p)"
+                    >
+                      <i class="pi pi-history"></i>
                     </button>
                     <button
                       class="card-action-btn"
@@ -630,14 +671,15 @@
 </p-dialog>
 
 <!-- ════════ DIALOG: Ajustar stock ════════ -->
+<!-- ════════ DIALOG: Ajustar stock ════════ -->
 <p-dialog
   [(visible)]="showStockAdjust"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '380px' }"
+  [style]="{ width: '430px', maxWidth: '94vw' }"
   header="Ajustar stock"
-  styleClass="dark-dialog"
+  styleClass="dark-dialog stock-adjust-dialog"
   *ngIf="selectedProduct"
 >
   <div class="stock-adjust">
@@ -645,32 +687,75 @@
       <span>Stock actual</span>
       <strong>{{ selectedProduct!.stock }} unidades</strong>
     </div>
+
+    <div class="adjust-mode-label">Tipo de ajuste</div>
+
     <div class="adjust-type">
       <button
+        type="button"
         class="adjust-btn"
         [class.active]="stockAdjustType === 'add'"
-        (click)="stockAdjustType = 'add'"
+        (click)="setStockAdjustType('add')"
       >
-        <i class="pi pi-plus"></i> Agregar
+        <i class="pi pi-arrow-down-left"></i>
+        Entrada
+        <small>Sumar al inventario</small>
       </button>
+
       <button
+        type="button"
         class="adjust-btn danger"
         [class.active]="stockAdjustType === 'remove'"
-        (click)="stockAdjustType = 'remove'"
+        (click)="setStockAdjustType('remove')"
       >
-        <i class="pi pi-minus"></i> Quitar
+        <i class="pi pi-arrow-up-right"></i>
+        Salida
+        <small>Restar del inventario</small>
       </button>
     </div>
+
     <div class="field">
       <label>Cantidad</label>
-      <p-inputNumber
-        [(ngModel)]="stockDelta"
-        [min]="1"
-        styleClass="w-full"
-        inputStyleClass="w-full"
-        placeholder="0"
-      ></p-inputNumber>
+
+      <div class="stock-qty-control">
+        <button
+          type="button"
+          class="qty-step-btn"
+          (click)="decreaseStockDelta()"
+          [disabled]="stockDelta <= 1"
+        >
+          <i class="pi pi-minus"></i>
+        </button>
+
+        <p-inputNumber
+          [(ngModel)]="stockDelta"
+          [min]="1"
+          [useGrouping]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          placeholder="1"
+        ></p-inputNumber>
+
+        <button
+          type="button"
+          class="qty-step-btn"
+          (click)="increaseStockDelta()"
+        >
+          <i class="pi pi-plus"></i>
+        </button>
+      </div>
     </div>
+
+    <div class="field">
+      <label>Motivo</label>
+      <textarea
+        class="stock-reason-input"
+        [(ngModel)]="stockReason"
+        rows="3"
+        placeholder="Ej. Compra a proveedor, conteo físico, producto dañado..."
+      ></textarea>
+    </div>
+
     <div class="stock-preview" *ngIf="stockDelta > 0">
       <span>Nuevo stock:</span>
       <strong
@@ -687,14 +772,21 @@
       </strong>
     </div>
   </div>
+
   <ng-template pTemplate="footer">
-    <button class="btn-outline" (click)="showStockAdjust = false">
+    <button class="btn-outline" type="button" (click)="showStockAdjust = false">
       Cancelar
     </button>
+
     <button
       class="btn-primary"
+      type="button"
       (click)="adjustStock()"
-      [disabled]="stockDelta <= 0"
+      [disabled]="
+        stockDelta <= 0 ||
+        (stockAdjustType === 'remove' &&
+          selectedProduct!.stock - stockDelta < 0)
+      "
     >
       Confirmar ajuste
     </button>
@@ -720,4 +812,303 @@
     (cancelled)="onServiceCancelled()"
   >
   </app-service-form>
+</p-dialog>
+<p-dialog
+  [(visible)]="showStockMovements"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '720px', maxWidth: '94vw' }"
+  [breakpoints]="{ '768px': '96vw', '520px': '98vw' }"
+  styleClass="dark-dialog stock-movements-dialog"
+  *ngIf="selectedProduct"
+>
+  <ng-template pTemplate="header">
+    <div class="stock-history-header">
+      <div>
+        <h2>Historial de stock</h2>
+        <p>{{ selectedProduct!.name }}</p>
+      </div>
+
+      <div class="stock-current-pill">
+        <span>Stock actual</span>
+        <strong>{{ selectedProduct!.stock }}</strong>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="stock-history-body">
+    <div class="stock-history-loading" *ngIf="loadingStockMovements">
+      <p-skeleton width="100%" height="72px"></p-skeleton>
+      <p-skeleton width="100%" height="72px"></p-skeleton>
+      <p-skeleton width="100%" height="72px"></p-skeleton>
+    </div>
+
+    <div
+      class="stock-empty-history"
+      *ngIf="!loadingStockMovements && stockMovements.length === 0"
+    >
+      <i class="pi pi-history"></i>
+      <h3>Sin movimientos</h3>
+      <p>Este producto aún no tiene historial de stock.</p>
+    </div>
+
+    <div
+      class="stock-timeline"
+      *ngIf="!loadingStockMovements && stockMovements.length > 0"
+    >
+      <div
+        class="stock-movement-item"
+        *ngFor="let movement of stockMovements"
+        [class]="movementClass(movement)"
+      >
+        <div class="movement-icon">
+          <i class="pi" [ngClass]="movementIcon(movement.movementType)"></i>
+        </div>
+
+        <div class="movement-content">
+          <div class="movement-main">
+            <div>
+              <h4>{{ movementLabel(movement.movementType) }}</h4>
+              <p>{{ movement.reason || "Sin motivo registrado" }}</p>
+            </div>
+
+            <div class="movement-qty">
+              {{ signedQuantity(movement.quantityChange) }}
+            </div>
+          </div>
+
+          <div class="movement-meta">
+            <span>
+              <i class="pi pi-calendar"></i>
+              {{ movement.createdAt | date: "dd/MM/yyyy HH:mm" }}
+            </span>
+
+            <span>
+              Stock: {{ movement.stockBefore }} → {{ movement.stockAfter }}
+            </span>
+
+            <span *ngIf="movement.saleId"> Venta relacionada </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</p-dialog>
+<!-- ════════ DIALOG: Reabastecer rápido ════════ -->
+<p-dialog
+  [(visible)]="showQuickRestock"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '440px', maxWidth: '94vw' }"
+  header="Reabastecer producto"
+  styleClass="dark-dialog quick-restock-dialog"
+  *ngIf="selectedProduct"
+>
+  <div class="quick-restock">
+    <div class="restock-product-head">
+      <div class="restock-product-icon">
+        <img
+          *ngIf="selectedProduct!.imageUrl"
+          [src]="selectedProduct!.imageUrl"
+          [alt]="selectedProduct!.name"
+        />
+        <i *ngIf="!selectedProduct!.imageUrl" class="pi pi-box"></i>
+      </div>
+
+      <div>
+        <h3>{{ selectedProduct!.name }}</h3>
+        <p *ngIf="selectedProduct!.sku">SKU: {{ selectedProduct!.sku }}</p>
+        <p *ngIf="!selectedProduct!.sku">Sin SKU registrado</p>
+      </div>
+    </div>
+
+    <div class="restock-stock-row">
+      <div>
+        <span>Stock actual</span>
+        <strong>{{ selectedProduct!.stock }}</strong>
+      </div>
+
+      <i class="pi pi-arrow-right"></i>
+
+      <div class="new">
+        <span>Nuevo stock</span>
+        <strong>{{ quickRestockNewStock }}</strong>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Cantidad a agregar</label>
+
+      <div class="stock-qty-control">
+        <button
+          type="button"
+          class="qty-step-btn"
+          (click)="decreaseRestockQuantity()"
+          [disabled]="restockQuantity <= 1"
+        >
+          <i class="pi pi-minus"></i>
+        </button>
+
+        <p-inputNumber
+          [(ngModel)]="restockQuantity"
+          [min]="1"
+          [useGrouping]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          placeholder="1"
+        ></p-inputNumber>
+
+        <button
+          type="button"
+          class="qty-step-btn"
+          (click)="increaseRestockQuantity()"
+        >
+          <i class="pi pi-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Motivo</label>
+      <textarea
+        class="stock-reason-input"
+        [(ngModel)]="restockReason"
+        rows="3"
+        placeholder="Ej. Compra a proveedor, pedido semanal, reposición..."
+      ></textarea>
+    </div>
+
+    <div class="restock-hint">
+      <i class="pi pi-info-circle"></i>
+      Este movimiento se guardará en el historial de stock del producto.
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      class="btn-outline"
+      type="button"
+      (click)="showQuickRestock = false"
+    >
+      Cancelar
+    </button>
+
+    <button
+      class="btn-primary"
+      type="button"
+      (click)="confirmQuickRestock()"
+      [disabled]="restockQuantity <= 0 || restockingProduct"
+    >
+      <i class="pi pi-spin pi-spinner" *ngIf="restockingProduct"></i>
+      {{
+        restockingProduct ? "Reabasteciendo..." : "Confirmar reabastecimiento"
+      }}
+    </button>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showInventoryMovements"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '820px', maxWidth: '96vw' }"
+  [breakpoints]="{ '768px': '96vw', '520px': '98vw' }"
+  styleClass="dark-dialog inventory-movements-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="inventory-movements-header">
+      <div>
+        <h2>Movimientos de inventario</h2>
+        <p>Revisa entradas, salidas, ventas y ajustes recientes.</p>
+      </div>
+
+      <div class="inventory-movement-summary">
+        <div>
+          <span>Entradas</span>
+          <strong>+{{ inventoryTotalIn }}</strong>
+        </div>
+
+        <div>
+          <span>Salidas</span>
+          <strong>-{{ inventoryTotalOut }}</strong>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="inventory-movements-body">
+    <div class="movement-filters">
+      <button
+        type="button"
+        class="movement-filter-btn"
+        *ngFor="let option of inventoryMovementTypeOptions"
+        [class.active]="inventoryMovementType === option.value"
+        (click)="setInventoryMovementType(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+
+    <div class="inventory-loading" *ngIf="loadingInventoryMovements">
+      <p-skeleton width="100%" height="78px"></p-skeleton>
+      <p-skeleton width="100%" height="78px"></p-skeleton>
+      <p-skeleton width="100%" height="78px"></p-skeleton>
+    </div>
+
+    <div
+      class="inventory-empty"
+      *ngIf="!loadingInventoryMovements && inventoryMovements.length === 0"
+    >
+      <i class="pi pi-history"></i>
+      <h3>Sin movimientos</h3>
+      <p>No hay movimientos registrados con este filtro.</p>
+    </div>
+
+    <div
+      class="inventory-movement-list"
+      *ngIf="!loadingInventoryMovements && inventoryMovements.length > 0"
+    >
+      <div
+        class="inventory-movement-row"
+        *ngFor="let movement of inventoryMovements"
+        [ngClass]="movementClass(movement)"
+      >
+        <div class="movement-row-icon">
+          <i class="pi" [ngClass]="movementIcon(movement.movementType)"></i>
+        </div>
+
+        <div class="movement-row-main">
+          <div class="movement-row-top">
+            <div>
+              <h4>{{ movement.productName }}</h4>
+              <p>{{ movementLabel(movement.movementType) }}</p>
+            </div>
+
+            <strong class="movement-row-qty">
+              {{ signedQuantity(movement.quantityChange) }}
+            </strong>
+          </div>
+
+          <div class="movement-row-reason">
+            {{ movement.reason || "Sin motivo registrado" }}
+          </div>
+
+          <div class="movement-row-meta">
+            <span>
+              <i class="pi pi-calendar"></i>
+              {{ movement.createdAt | date: "dd/MM/yyyy HH:mm" }}
+            </span>
+
+            <span>
+              Stock: {{ movement.stockBefore }} → {{ movement.stockAfter }}
+            </span>
+
+            <span *ngIf="movement.saleId"> Venta relacionada </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </p-dialog>

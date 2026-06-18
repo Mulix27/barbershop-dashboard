@@ -780,6 +780,18 @@
               />
             </div>
 
+            <div class="field" *ngIf="showCommissionAmount()">
+              <label>Comisión sobre</label>
+              <p-dropdown
+                [options]="commissionBaseOptions"
+                formControlName="commissionBase"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+              >
+              </p-dropdown>
+            </div>
+
             <div class="field">
               <label>Frecuencia</label>
               <p-dropdown
@@ -1237,24 +1249,42 @@
             <div class="side-head">
               <div>
                 <h3>Historial</h3>
-                <p>Pagos registrados en este período.</p>
+                <p>Pagos activos y anulados de este período.</p>
               </div>
             </div>
 
             <div
               class="payment-history-item"
               *ngFor="let payment of periodPayments"
+              [class.cancelled]="isPaymentCancelled(payment)"
             >
-              <div>
-                <strong>{{ money(payment.amount) }}</strong>
-                <span>{{ paymentMethodLabel(payment.paymentMethod) }}</span>
+              <div class="payment-history-main">
+                <div>
+                  <strong>{{ money(payment.amount) }}</strong>
+                  <span>{{ paymentMethodLabel(payment.paymentMethod) }}</span>
+                </div>
+
+                <span
+                  class="payment-status-chip"
+                  [class.cancelled]="isPaymentCancelled(payment)"
+                >
+                  {{ periodPaymentStatusLabel(payment) }}
+                </span>
               </div>
 
-              <div>
-                <small>{{ payment.paidAt | date: "dd/MM/yyyy HH:mm" }}</small>
-                <small *ngIf="payment.paidByName"
-                  >Registró: {{ payment.paidByName }}</small
-                >
+              <div class="payment-history-meta">
+                <small>{{
+                  periodPaymentDate(payment) | date: "dd/MM/yyyy HH:mm"
+                }}</small>
+                <small>{{ periodPaymentUserLabel(payment) }}</small>
+              </div>
+
+              <div
+                class="payment-cancel-reason"
+                *ngIf="isPaymentCancelled(payment)"
+              >
+                <i class="pi pi-info-circle"></i>
+                <span>{{ periodPaymentReason(payment) }}</span>
               </div>
             </div>
           </div>
@@ -1593,13 +1623,16 @@
   [baseZIndex]="16000"
   [style]="{ width: '460px', maxWidth: '94vw' }"
   styleClass="cancel-payment-dialog"
-  *ngIf="selectedPaymentToCancel">
-
+  *ngIf="selectedPaymentToCancel"
+>
   <ng-template pTemplate="header">
     <div class="cancel-payment-header">
       <div>
         <h2>Anular pago</h2>
-        <p>Esta acción marcará el pago como anulado y regresará el monto pendiente al período.</p>
+        <p>
+          Esta acción marcará el pago como anulado y regresará el monto
+          pendiente al período.
+        </p>
       </div>
     </div>
   </ng-template>
@@ -1623,12 +1656,17 @@
           pInputTextarea
           rows="4"
           formControlName="reason"
-          placeholder="Ej. Pago registrado por error en pruebas">
+          placeholder="Ej. Pago registrado por error en pruebas"
+        >
         </textarea>
 
         <small
           class="field-error"
-          *ngIf="cancelPaymentForm.get('reason')?.invalid && cancelPaymentForm.get('reason')?.touched">
+          *ngIf="
+            cancelPaymentForm.get('reason')?.invalid &&
+            cancelPaymentForm.get('reason')?.touched
+          "
+        >
           El motivo es obligatorio.
         </small>
       </div>
@@ -1639,7 +1677,8 @@
     <button
       type="button"
       class="btn-outline"
-      (click)="showCancelPaymentDialog = false; selectedPaymentToCancel = null">
+      (click)="showCancelPaymentDialog = false; selectedPaymentToCancel = null"
+    >
       Cancelar
     </button>
 
@@ -1647,12 +1686,14 @@
       type="button"
       class="btn-primary danger"
       [disabled]="cancelPaymentForm.invalid || cancelingPayment"
-      (click)="cancelStaffPayment()">
+      (click)="cancelStaffPayment()"
+    >
       <i
         class="pi"
-        [ngClass]="cancelingPayment ? 'pi-spin pi-spinner' : 'pi-ban'">
+        [ngClass]="cancelingPayment ? 'pi-spin pi-spinner' : 'pi-ban'"
+      >
       </i>
-      {{ cancelingPayment ? 'Anulando...' : 'Anular pago' }}
+      {{ cancelingPayment ? "Anulando..." : "Anular pago" }}
     </button>
   </ng-template>
 </p-dialog>

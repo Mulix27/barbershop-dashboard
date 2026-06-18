@@ -9,10 +9,14 @@ import { SaleService } from '../../../../core/services/sale.service';
 import { ClientService } from '../../../../core/services/client.service';
 import { CatalogService } from '../../../../core/services/catalog.service';
 import { ProductService } from '../../../../core/services/product.service';
+import { BarberStaffService } from '../../../../core/services/barber-staff.service';
+import { AuthService } from '../../../../core/services/auth.service';
+
 import { Client } from 'src/app/core/models/client.model';
-import { HaircutCatalogItem } from 'src/app/core/models/catalog.model';
 import { Product } from 'src/app/core/models/catalog.model';
+import { ServiceSelectOption } from '../../../../core/services/catalog.service';
 import { SaleRequest } from 'src/app/core/models/sale.model';
+import { BarberOptionResponse } from 'src/app/core/models/barber-staff.model';
 
 interface CartItem {
   id: string;
@@ -25,6 +29,7 @@ interface CartItem {
 interface ApiResponse<T> {
   success: boolean;
   data: T;
+  message?: string;
 }
 
 @Component({
@@ -34,22 +39,23 @@ interface ApiResponse<T> {
 })
 export class NewSaleComponent implements OnInit {
 
-  // ── Datos ──────────────────────────────────────────────────
-  services: HaircutCatalogItem[] = [];
+  services: ServiceSelectOption[] = [];
   products: Product[] = [];
   loading = true;
 
-  // ── Búsqueda de cliente ───────────────────────────────────
   clientSearch = '';
   clientResults: Client[] = [];
   selectedClient: Client | null = null;
   searchingClient = false;
   private clientSearch$ = new Subject<string>();
 
-  // ── Carrito ───────────────────────────────────────────────
+  barbers: BarberOptionResponse[] = [];
+  selectedBarberId: string | null = null;
+  loadingBarbers = false;
+  isSingleBarber = false;
+
   cart: CartItem[] = [];
 
-  // ── Pago ──────────────────────────────────────────────────
   paymentMethod = 'cash';
   discount = 0;
   saving = false;
@@ -60,43 +66,99 @@ export class NewSaleComponent implements OnInit {
     { label: 'Transferencia', value: 'transfer', icon: 'pi-send' }
   ];
 
-  activeItemTab = 'services'; // services | products
+  activeItemTab: 'services' | 'products' = 'services';
 
   constructor(
     private saleService: SaleService,
     private clientService: ClientService,
     private catalogService: CatalogService,
     private productService: ProductService,
+    private barberStaffService: BarberStaffService,
+    private authService: AuthService,
     private messageService: MessageService,
     private router: Router
   ) { }
 
   ngOnInit(): void {
+    const user = this.authService.getUser() as any;
+    this.isSingleBarber = !!user?.singleBarber;
+
+    if (this.isSingleBarber) {
+      this.selectedBarberId = user?.id ?? user?.userId ?? null;
+    }
+
     forkJoin({
-      services: this.catalogService.getAll(),
+      services: this.catalogService.getSelectOptions(),
       products: this.productService.getAll()
     }).subscribe({
       next: ({ services, products }) => {
-        this.services = services.success ? services.data : [];
-        this.products = products.success
-          ? products.data.filter((p: Product) => p.stock > 0)
+        this.services = services.success
+          ? services.data.filter((s: ServiceSelectOption) => Number(s.price ?? 0) > 0)
           : [];
+
+        this.products = products.success
+          ? products.data.filter((p: Product) => Number(p.stock ?? 0) > 0)
+          : [];
+
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+      }
     });
 
-    // Búsqueda de cliente con debounce
+    this.loadBarbers();
+
     this.clientSearch$.pipe(
       debounceTime(350),
       distinctUntilChanged()
     ).subscribe(q => this.searchClient(q));
   }
 
-  // ── Búsqueda de cliente ───────────────────────────────────
+  loadBarbers(): void {
+    this.loadingBarbers = true;
+
+    this.barberStaffService.getOptions().subscribe({
+      next: (res) => {
+        this.barbers = res.success ? res.data : [];
+
+        if (!this.selectedBarberId && this.barbers.length === 1) {
+          this.selectedBarberId = this.barbers[0].userId;
+        }
+
+        this.loadingBarbers = false;
+      },
+      error: () => {
+        this.barbers = [];
+        this.loadingBarbers = false;
+      }
+    });
+  }
+
+  get barberOptions(): { label: string; value: string }[] {
+    return this.barbers.map(barber => ({
+      label: barber.specialty
+        ? `${barber.fullName} · ${barber.specialty}`
+        : barber.fullName,
+      value: barber.userId
+    }));
+  }
+
+  get selectedBarberName(): string {
+    if (!this.selectedBarberId) return 'Sin seleccionar';
+    return this.barbers.find(b => b.userId === this.selectedBarberId)?.fullName ?? 'Barbero';
+  }
+
+  get requiresBarberSelection(): boolean {
+    return !this.isSingleBarber;
+  }
 
   onClientSearch(q: string): void {
-    if (!q.trim()) { this.clientResults = []; return; }
+    if (!q.trim()) {
+      this.clientResults = [];
+      return;
+    }
+
     this.clientSearch$.next(q);
   }
 
@@ -107,18 +169,18 @@ export class NewSaleComponent implements OnInit {
       ? this.clientService.getByPhone(q)
       : this.clientService.search(q);
 
-    obs.subscribe(
-      (res: ApiResponse<Client | Client[]>) => {
+    obs.subscribe({
+      next: (res) => {
         if (res.success) {
           this.clientResults = Array.isArray(res.data) ? res.data : [res.data];
         }
 
         this.searchingClient = false;
       },
-      () => {
+      error: () => {
         this.searchingClient = false;
       }
-    );
+    });
   }
 
   selectClient(c: Client): void {
@@ -132,24 +194,66 @@ export class NewSaleComponent implements OnInit {
     this.clientSearch = '';
   }
 
-  // ── Carrito ───────────────────────────────────────────────
+  addService(service: ServiceSelectOption): void {
+    const price = this.getServicePrice(service);
 
-  addService(service: HaircutCatalogItem): void {
-    const existing = this.cart.find(i => i.id === service.id && i.type === 'service');
+    if (price <= 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Servicio sin precio',
+        detail: `El servicio ${service.displayName} no tiene precio configurado`
+      });
+      return;
+    }
+
+    const serviceId = this.getServiceCartId(service);
+    const existing = this.cart.find(i => i.id === serviceId && i.type === 'service');
+
     if (existing) {
       existing.quantity++;
     } else {
-      this.cart.push({ id: service.id, type: 'service', name: service.name, price: service.price, quantity: 1 });
+      this.cart.push({
+        id: serviceId,
+        type: 'service',
+        name: service.displayName,
+        price,
+        quantity: 1
+      });
     }
   }
 
   addProduct(product: Product): void {
+    const price = Number(product.price ?? 0);
+
+    if (price <= 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Producto sin precio',
+        detail: `El producto ${product.name} no tiene precio configurado`
+      });
+      return;
+    }
+
     const existing = this.cart.find(i => i.id === product.id && i.type === 'product');
+
     if (existing) {
-      if (existing.quantity < product.stock) existing.quantity++;
-      else this.messageService.add({ severity: 'warn', summary: 'Stock', detail: 'No hay más stock disponible' });
+      if (existing.quantity < Number(product.stock ?? 0)) {
+        existing.quantity++;
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Stock',
+          detail: 'No hay más stock disponible'
+        });
+      }
     } else {
-      this.cart.push({ id: product.id, type: 'product', name: product.name, price: product.price, quantity: 1 });
+      this.cart.push({
+        id: product.id,
+        type: 'product',
+        name: product.name,
+        price,
+        quantity: 1
+      });
     }
   }
 
@@ -159,29 +263,39 @@ export class NewSaleComponent implements OnInit {
 
   changeQty(item: CartItem, delta: number): void {
     item.quantity += delta;
-    if (item.quantity <= 0) this.removeItem(item);
+
+    if (item.quantity <= 0) {
+      this.removeItem(item);
+    }
   }
 
-  // ── Totales ───────────────────────────────────────────────
-
   get subtotal(): number {
-    return this.cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    return this.cart.reduce((s, i) => s + Number(i.price ?? 0) * Number(i.quantity ?? 0), 0);
   }
 
   get total(): number {
-    return Math.max(0, this.subtotal - (this.discount || 0));
+    return Math.max(0, this.subtotal - Number(this.discount || 0));
   }
-
-  // ── Confirmar venta ───────────────────────────────────────
 
   confirmSale(): void {
     if (this.cart.length === 0 || this.saving) return;
+
+    if (this.requiresBarberSelection && !this.selectedBarberId) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Selecciona un barbero',
+        detail: 'Indica qué barbero atendió esta venta'
+      });
+      return;
+    }
+
     this.saving = true;
 
     const body: SaleRequest = {
       clientId: this.selectedClient?.id,
+      attendedByUserId: this.selectedBarberId ?? undefined,
       paymentMethod: this.paymentMethod,
-      discount: this.discount || 0,
+      discount: Number(this.discount || 0),
       items: this.cart.map(i => ({
         itemType: i.type,
         itemRefId: i.id,
@@ -194,29 +308,63 @@ export class NewSaleComponent implements OnInit {
         if (res.success) {
           this.messageService.add({
             severity: 'success',
-            summary: '¡Venta registrada!',
-            detail: `Total: $${this.total.toFixed(2)}`
+            summary: 'Venta registrada',
+            detail: `Total: ${this.formatCurrency(this.total)}`
           });
-          setTimeout(() => this.router.navigate(['/sales']), 1500);
+
+          setTimeout(() => this.router.navigate(['/sales']), 1200);
         } else {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: res.message });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: res.message || 'No se pudo registrar la venta'
+          });
+
           this.saving = false;
         }
       },
-      error: () => { this.saving = false; }
+      error: (err) => {
+        this.saving = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err?.error?.message || 'No se pudo registrar la venta'
+        });
+      }
     });
   }
 
-  // ── Helpers ───────────────────────────────────────────────
+  getServicePrice(service: ServiceSelectOption): number {
+    return Number(service.price ?? 0);
+  }
+
+  getServiceCartId(service: ServiceSelectOption): string {
+    return service.variantId ?? service.categoryId;
+  }
+
+  getProductPrice(product: Product): number {
+    return Number(product.price ?? 0);
+  }
 
   formatCurrency(v: number): string {
     return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', minimumFractionDigits: 2
-    }).format(v);
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 2
+    }).format(Number(v ?? 0));
   }
 
   getInitials(name: string): string {
-    return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+    if (!name) return '—';
+
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   }
 
   isInCart(id: string, type: string): boolean {
