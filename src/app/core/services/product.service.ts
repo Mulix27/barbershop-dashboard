@@ -7,6 +7,27 @@ import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
 
+export type StockMovementType =
+  | 'initial_stock'
+  | 'sale'
+  | 'manual_in'
+  | 'manual_out'
+  | 'correction'
+  | 'sale_cancel_return';
+
+export interface StockMovementResponse {
+  id: string;
+  productId: string;
+  productName: string;
+  saleId?: string | null;
+  movementType: StockMovementType;
+  quantityChange: number;
+  stockBefore: number;
+  stockAfter: number;
+  reason?: string | null;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   constructor(private http: HttpClient) { }
@@ -37,10 +58,37 @@ export class ProductService {
     return this.http.put<ApiResponse<Product>>(`${API}/api/products/${id}`, data);
   }
 
-  adjustStock(id: string, quantity: number): Observable<ApiResponse<Product>> {
+  adjustStock(id: string, quantity: number, reason?: string | null): Observable<ApiResponse<Product>> {
+    let params = new HttpParams().set('quantity', quantity);
+
+    if (reason && reason.trim()) {
+      params = params.set('reason', reason.trim());
+    }
+
     return this.http.patch<ApiResponse<Product>>(
-      `${API}/api/products/${id}/stock`, null,
-      { params: new HttpParams().set('quantity', quantity) }
+      `${API}/api/products/${id}/stock`,
+      null,
+      { params }
+    );
+  }
+
+  getRecentStockMovements(
+    type: StockMovementType | 'all' = 'all',
+    limit = 30
+  ): Observable<ApiResponse<StockMovementResponse[]>> {
+    const params = new HttpParams()
+      .set('type', type)
+      .set('limit', limit);
+
+    return this.http.get<ApiResponse<StockMovementResponse[]>>(
+      `${API}/api/products/stock-movements/recent`,
+      { params }
+    );
+  }
+
+  getStockMovements(id: string): Observable<ApiResponse<StockMovementResponse[]>> {
+    return this.http.get<ApiResponse<StockMovementResponse[]>>(
+      `${API}/api/products/${id}/stock-movements`
     );
   }
 

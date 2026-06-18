@@ -23,6 +23,13 @@ export interface Sale {
   createdAt: string;
   origin?: 'appointment' | 'pos';
   notes?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+  cancelReason?: string | null;
+}
+
+export interface CancelSaleRequest {
+  reason: string;
 }
 
 export interface SaleRequest {

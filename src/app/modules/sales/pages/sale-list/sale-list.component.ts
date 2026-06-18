@@ -6,6 +6,18 @@ import { ReportService } from '../../../../core/services/report.service';
 import { SaleService } from '../../../../core/services/sale.service';
 import { Sale } from 'src/app/core/models/sale.model';
 import { FullReport } from 'src/app/core/models/report.model';
+import { MessageService } from 'primeng/api';
+
+interface PaymentMethodSummaryItem {
+  method: string;
+  label: string;
+  icon: string;
+  amount: number;
+  salesCount: number;
+  percent: number;
+  color: string;
+  softColor: string;
+}
 
 @Component({
   selector: 'app-sale-list',
@@ -23,6 +35,9 @@ export class SalesListComponent implements OnInit {
     { label: 'Este mes', value: 'month' },
     { label: 'Personalizado', value: 'custom' }
   ];
+
+  showCancelSaleDialog = false;
+  cancelSaleReason = '';
 
   selectedPeriod = 'month';
   customFrom: Date | null = null;
@@ -173,20 +188,10 @@ export class SalesListComponent implements OnInit {
   donutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '72%',
+    cutout: '74%',
     plugins: {
       legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          color: '#475569',
-          font: {
-            size: 12,
-            weight: 600
-          },
-          padding: 12,
-          boxWidth: 12
-        }
+        display: false
       },
       tooltip: {
         backgroundColor: '#111827',
@@ -196,16 +201,29 @@ export class SalesListComponent implements OnInit {
         borderWidth: 1,
         padding: 10,
         callbacks: {
-          label: (ctx) => ` ${this.formatCurrency(Number(ctx.raw ?? 0))}`
+          label: (ctx) => {
+            const value = Number(ctx.raw ?? 0);
+            const total = this.paymentMethodsTotal;
+            const percent = total > 0 ? (value / total) * 100 : 0;
+
+            return ` ${this.formatCurrency(value)} · ${percent.toFixed(1)}%`;
+          }
         }
       }
     }
   };
 
+  showSaleDetail = false;
+  selectedSale: Sale | null = null;
+  loadingSaleDetail = false;
+  cancellingSale = false;
+
   constructor(
     private reportService: ReportService,
     private saleService: SaleService,
-    private router: Router
+    private router: Router,
+    private messageService: MessageService,
+
   ) { }
 
   ngOnInit(): void {
@@ -268,45 +286,33 @@ export class SalesListComponent implements OnInit {
     const colors = ['#2563EB', '#7C3AED', '#16A34A', '#BE4778', '#F97316', '#64748B'];
 
     this.barberChartData = {
-      labels: days.map(d => {
-        const date = new Date(d.period + 'T12:00:00');
-        return date.toLocaleDateString('es-MX', {
-          day: 'numeric',
-          month: 'short'
-        });
-      }),
-      datasets: barbers.map((barber, index) => {
-        const color = colors[index % colors.length];
-        const valueByDay = Number(barber.revenue ?? 0) / Math.max(days.length, 1);
-
-        return {
-          label: barber.barberName,
-          data: Array(days.length).fill(valueByDay),
-          backgroundColor: `${color}26`,
-          borderColor: color,
+      labels: barbers.map(b => b.barberName),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: barbers.map(b => Number(b.revenue ?? 0)),
+          backgroundColor: barbers.map((_, index) => `${colors[index % colors.length]}26`),
+          borderColor: barbers.map((_, index) => colors[index % colors.length]),
           borderWidth: 2,
           borderRadius: 6
-        };
-      })
+        }
+      ]
     };
 
     const payments = data.paymentMethods ?? [];
+    const paymentColors = payments.map((p, index) => this.paymentMethodMeta(p.paymentMethod, index).color);
 
     this.donutData = {
       labels: payments.map(p => this.paymentLabel(p.paymentMethod)),
       datasets: [
         {
           data: payments.map(p => Number(p.revenue ?? 0)),
-          backgroundColor: [
-            '#2563EB',
-            '#16A34A',
-            '#7C3AED',
-            '#F97316',
-            '#64748B'
-          ],
+          backgroundColor: paymentColors,
           borderColor: '#FFFFFF',
           hoverBorderColor: '#FFFFFF',
-          borderWidth: 3
+          borderWidth: 4,
+          hoverOffset: 6,
+          spacing: 2
         }
       ]
     };
@@ -369,6 +375,72 @@ export class SalesListComponent implements OnInit {
 
   get salesByDayOfWeek() {
     return this.report?.salesByDayOfWeek ?? [];
+  }
+
+  get paymentMethodsTotal(): number {
+    return this.paymentMethods.reduce((total, item) => {
+      return total + Number(item.revenue ?? 0);
+    }, 0);
+  }
+
+  get paymentMethodsSummary(): PaymentMethodSummaryItem[] {
+    const total = this.paymentMethodsTotal;
+
+    return this.paymentMethods.map((item, index) => {
+      const amount = Number(item.revenue ?? 0);
+      const meta = this.paymentMethodMeta(item.paymentMethod, index);
+
+      return {
+        method: item.paymentMethod,
+        label: this.paymentLabel(item.paymentMethod),
+        icon: meta.icon,
+        amount,
+        salesCount: Number(item.totalSales ?? 0),
+        percent: total > 0 ? Math.round((amount / total) * 100) : 0,
+        color: meta.color,
+        softColor: meta.softColor
+      };
+    });
+  }
+
+  private paymentMethodMeta(method: string, index: number): { icon: string; color: string; softColor: string } {
+    const meta: Record<string, { icon: string; color: string; softColor: string }> = {
+      cash: {
+        icon: 'pi-money-bill',
+        color: '#2563EB',
+        softColor: 'rgba(37, 99, 235, 0.12)'
+      },
+      transfer: {
+        icon: 'pi-send',
+        color: '#16A34A',
+        softColor: 'rgba(22, 163, 74, 0.12)'
+      },
+      card: {
+        icon: 'pi-credit-card',
+        color: '#7C3AED',
+        softColor: 'rgba(124, 58, 237, 0.12)'
+      },
+      other: {
+        icon: 'pi-ellipsis-h',
+        color: '#64748B',
+        softColor: 'rgba(100, 116, 139, 0.12)'
+      }
+    };
+
+    const fallbackColors = [
+      {
+        icon: 'pi-wallet',
+        color: '#F97316',
+        softColor: 'rgba(249, 115, 22, 0.12)'
+      },
+      {
+        icon: 'pi-wallet',
+        color: '#BE4778',
+        softColor: 'rgba(190, 71, 120, 0.12)'
+      }
+    ];
+
+    return meta[method] ?? fallbackColors[index % fallbackColors.length];
   }
 
   get paymentMethods() {
@@ -504,6 +576,544 @@ export class SalesListComponent implements OnInit {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  openSaleDetail(sale: Sale): void {
+    this.selectedSale = sale;
+    this.showSaleDetail = true;
+    this.loadingSaleDetail = true;
+
+    this.saleService.getById(sale.id).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.selectedSale = res.data;
+        }
+
+        this.loadingSaleDetail = false;
+      },
+      error: () => {
+        this.loadingSaleDetail = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el detalle de la venta'
+        });
+      }
+    });
+  }
+
+  closeSaleDetail(): void {
+    this.showSaleDetail = false;
+    this.selectedSale = null;
+  }
+
+  saleReceiptNumber(sale?: Sale | null): string {
+    if (!sale?.id) return 'REC-VENTA';
+    return `VENTA-${sale.id.substring(0, 8).toUpperCase()}`;
+  }
+
+  saleItemsCount(sale?: Sale | null): number {
+    return sale?.items?.reduce((total, item) => total + Number(item.quantity ?? 0), 0) ?? 0;
+  }
+
+  saleItemTypeLabel(type: string): string {
+    return type === 'service' ? 'Servicio' : 'Producto';
+  }
+
+  canCancelSale(sale?: Sale | null): boolean {
+    return !!sale && sale.status === 'completed';
+  }
+
+  cancelSelectedSale(): void {
+    this.openCancelSaleDialog();
+  }
+
+  printSaleReceipt(): void {
+    if (!this.selectedSale) return;
+
+    const sale = this.selectedSale;
+    const items = sale.items ?? [];
+
+    const itemsHtml = items.length > 0
+      ? items.map(item => `
+        <tr>
+          <td>
+            <strong>${this.escapeHtml(item.itemName || this.saleItemTypeLabel(item.itemType))}</strong>
+            <small>${this.saleItemTypeLabel(item.itemType)} · Cant. ${item.quantity}</small>
+          </td>
+          <td class="right">${this.formatCurrency(Number(item.unitPrice ?? 0))}</td>
+          <td class="right total">${this.formatCurrency(Number(item.total ?? 0))}</td>
+        </tr>
+      `).join('')
+      : `
+        <tr>
+          <td colspan="3" class="empty">Sin conceptos registrados</td>
+        </tr>
+      `;
+
+    const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${this.saleReceiptNumber(sale)}</title>
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+
+          body {
+            margin: 0;
+            padding: 24px;
+            background: #f4f6f8;
+            color: #020617;
+            font-family: Inter, Arial, sans-serif;
+          }
+
+          .ticket {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            border-radius: 20px;
+            padding: 24px;
+          }
+
+          .header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+          }
+
+          h1 {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+          }
+
+          .folio {
+            margin-top: 5px;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 800;
+          }
+
+          .status {
+            color: #16a34a;
+            background: rgba(22, 163, 74, 0.10);
+            border: 1px solid rgba(22, 163, 74, 0.20);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+          }
+
+          .total-box {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(37, 99, 235, 0.10);
+            border: 1px solid rgba(37, 99, 235, 0.22);
+          }
+
+          .total-box span {
+            display: block;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+          }
+
+          .total-box strong {
+            display: block;
+            color: #2563eb;
+            font-size: 42px;
+            line-height: 1;
+            letter-spacing: -0.06em;
+          }
+
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+          }
+
+          .box {
+            min-height: 78px;
+            padding: 13px;
+            border-radius: 15px;
+            background: #f8fafc;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+          }
+
+          .box span {
+            display: block;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 7px;
+          }
+
+          .box strong {
+            display: block;
+            color: #020617;
+            font-size: 14px;
+            line-height: 1.25;
+          }
+
+          .section {
+            margin-top: 18px;
+          }
+
+          .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+          }
+
+          .section-title h2 {
+            margin: 0;
+            font-size: 16px;
+            letter-spacing: -0.03em;
+          }
+
+          .section-title span {
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.10);
+            border: 1px solid rgba(37, 99, 235, 0.16);
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 900;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 14px;
+            overflow: hidden;
+          }
+
+          th {
+            text-align: left;
+            padding: 10px;
+            color: #64748b;
+            background: #f8fafc;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+          }
+
+          td {
+            padding: 12px 10px;
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+            vertical-align: top;
+            font-size: 13px;
+          }
+
+          td strong {
+            display: block;
+            font-size: 14px;
+          }
+
+          td small {
+            display: block;
+            margin-top: 3px;
+            color: #64748b;
+            font-weight: 700;
+          }
+
+          .right {
+            text-align: right;
+            white-space: nowrap;
+          }
+
+          .total {
+            font-weight: 900;
+          }
+
+          .empty {
+            text-align: center;
+            color: #64748b;
+            font-weight: 700;
+          }
+
+          .totals {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+          }
+
+          .totals-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 7px 0;
+            color: #64748b;
+            font-weight: 800;
+          }
+
+          .totals-row strong {
+            color: #020617;
+          }
+
+          .grand {
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(15, 23, 42, 0.10);
+            color: #020617;
+            font-size: 17px;
+          }
+
+          .grand strong {
+            color: #2563eb;
+            font-size: 24px;
+          }
+
+          .footer {
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(15, 23, 42, 0.10);
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+          }
+
+          @media print {
+            body {
+              padding: 0;
+              background: #ffffff;
+            }
+
+            .ticket {
+              max-width: none;
+              border: none;
+              border-radius: 0;
+              box-shadow: none;
+            }
+
+            @page {
+              size: auto;
+              margin: 12mm;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <main class="ticket">
+          <div class="header">
+            <div>
+              <h1>Detalle de venta</h1>
+              <div class="folio">${this.saleReceiptNumber(sale)}</div>
+            </div>
+            <div class="status">${this.statusLabel(sale.status)}</div>
+          </div>
+
+          <div class="total-box">
+            <span>Total de venta</span>
+            <strong>${this.formatCurrency(Number(sale.total ?? 0))}</strong>
+          </div>
+
+          <div class="grid">
+            <div class="box">
+              <span>Cliente</span>
+              <strong>${this.escapeHtml(sale.clientName || 'Cliente de paso')}</strong>
+            </div>
+
+            <div class="box">
+              <span>Barbero</span>
+              <strong>${this.escapeHtml(this.saleBarberName(sale))}</strong>
+            </div>
+
+            <div class="box">
+              <span>Origen</span>
+              <strong>${this.escapeHtml(this.saleOriginLabel(sale))}</strong>
+            </div>
+
+            <div class="box">
+              <span>Método</span>
+              <strong>${this.escapeHtml(this.paymentLabel(sale.paymentMethod))}</strong>
+            </div>
+
+            <div class="box">
+              <span>Fecha</span>
+              <strong>${this.escapeHtml(this.formatDateTime(sale.createdAt))}</strong>
+            </div>
+
+            <div class="box">
+              <span>Conceptos</span>
+              <strong>${this.saleItemsCount(sale)}</strong>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="section-title">
+              <h2>Conceptos vendidos</h2>
+              <span>${items.length} registro(s)</span>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th class="right">Precio</th>
+                  <th class="right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          </section>
+
+          <div class="totals">
+            <div class="totals-row">
+              <span>Subtotal</span>
+              <strong>${this.formatCurrency(Number(sale.subtotal ?? 0))}</strong>
+            </div>
+
+            <div class="totals-row">
+              <span>Descuento</span>
+              <strong>${this.formatCurrency(Number(sale.discount ?? 0))}</strong>
+            </div>
+
+            <div class="totals-row grand">
+              <span>Total</span>
+              <strong>${this.formatCurrency(Number(sale.total ?? 0))}</strong>
+            </div>
+          </div>
+
+          <div class="footer">
+            BarberShop Dashboard · ${new Date().toLocaleDateString('es-MX')}
+          </div>
+        </main>
+
+        <script>
+          window.onload = function () {
+            setTimeout(function () {
+              window.focus();
+              window.print();
+              window.close();
+            }, 250);
+          };
+        </script>
+      </body>
+    </html>
+  `;
+
+    const printWindow = window.open('', '_blank', 'width=720,height=900');
+
+    if (!printWindow) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Impresión bloqueada',
+        detail: 'Permite ventanas emergentes para imprimir el ticket'
+      });
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  openCancelSaleDialog(): void {
+    if (!this.selectedSale || !this.canCancelSale(this.selectedSale)) return;
+
+    this.cancelSaleReason = '';
+    this.showCancelSaleDialog = true;
+  }
+
+  closeCancelSaleDialog(): void {
+    if (this.cancellingSale) return;
+
+    this.showCancelSaleDialog = false;
+    this.cancelSaleReason = '';
+  }
+
+  confirmCancelSale(): void {
+    if (!this.selectedSale || !this.canCancelSale(this.selectedSale) || this.cancellingSale) return;
+
+    const reason = this.cancelSaleReason.trim();
+
+    if (!reason) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Motivo requerido',
+        detail: 'Captura el motivo de cancelación'
+      });
+      return;
+    }
+
+    this.cancellingSale = true;
+
+    this.saleService.cancel(this.selectedSale.id, reason).subscribe({
+      next: (res) => {
+        this.cancellingSale = false;
+
+        if (res.success) {
+          this.selectedSale = res.data;
+
+          const index = this.sales.findIndex(s => s.id === res.data.id);
+          if (index >= 0) {
+            this.sales[index] = res.data;
+          }
+
+          this.showCancelSaleDialog = false;
+          this.cancelSaleReason = '';
+
+          this.loadReport();
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Venta cancelada',
+            detail: 'La venta fue cancelada correctamente y el stock fue ajustado'
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'No se pudo cancelar',
+            detail: res.message || 'Ocurrió un error al cancelar la venta'
+          });
+        }
+      },
+      error: (err) => {
+        this.cancellingSale = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No se pudo cancelar',
+          detail: err?.error?.message || 'La venta no pudo cancelarse'
+        });
+      }
     });
   }
 }

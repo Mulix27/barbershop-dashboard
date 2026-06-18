@@ -7,6 +7,7 @@ export interface StaffPaymentConfigRequest {
     paymentType: StaffPaymentType;
     fixedAmount?: number | null;
     commissionPercentage?: number | null;
+    commissionBase?: StaffCommissionBase | null;
     frequency?: StaffPaymentFrequency | null;
     paymentDay?: number | null;
 }
@@ -18,10 +19,16 @@ export interface StaffPaymentConfigResponse {
     paymentType: StaffPaymentType;
     fixedAmount?: number | null;
     commissionPercentage?: number | null;
+    commissionBase?: StaffCommissionBase | null;
     frequency?: StaffPaymentFrequency | null;
     paymentDay?: number | null;
     isActive: boolean;
 }
+
+export const STAFF_COMMISSION_BASE_LABELS: Record<StaffCommissionBase, string> = {
+    services_only: 'Solo servicios',
+    services_and_products: 'Servicios y productos'
+};
 
 export interface GenerateStaffPaymentPeriodRequest {
     periodStart: string;
@@ -172,3 +179,4 @@ export interface StaffPaymentPeriodSaleResponse {
     createdAt: string;
 }
 
+export type StaffCommissionBase = 'services_only' | 'services_and_products';

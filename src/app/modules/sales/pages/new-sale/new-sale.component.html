@@ -1,10 +1,8 @@
 <p-toast position="top-right"></p-toast>
 
 <div class="pos-layout">
-
   <!-- ── Panel izquierdo: catálogo ──────────────────────── -->
   <div class="pos-catalog">
-
     <div class="catalog-header">
       <button class="btn-back" (click)="goBack()">
         <i class="pi pi-arrow-left"></i>
@@ -16,7 +14,6 @@
     <div class="client-search">
       <div class="search-label">Cliente (opcional)</div>
       <div class="search-box" [class.has-client]="selectedClient">
-
         <ng-container *ngIf="!selectedClient">
           <i class="pi pi-search search-icon"></i>
           <input
@@ -25,13 +22,16 @@
             placeholder="Buscar por nombre o teléfono..."
             [(ngModel)]="clientSearch"
             (ngModelChange)="onClientSearch($event)"
-            class="w-full"/>
+            class="w-full"
+          />
           <i class="pi pi-spin pi-spinner" *ngIf="searchingClient"></i>
         </ng-container>
 
         <ng-container *ngIf="selectedClient">
           <div class="selected-client">
-            <div class="sc-avatar">{{ getInitials(selectedClient.fullName) }}</div>
+            <div class="sc-avatar">
+              {{ getInitials(selectedClient.fullName) }}
+            </div>
             <div class="sc-info">
               <span class="sc-name">{{ selectedClient.fullName }}</span>
               <span class="sc-phone">{{ selectedClient.phone }}</span>
@@ -41,7 +41,6 @@
             </button>
           </div>
         </ng-container>
-
       </div>
 
       <!-- Resultados de búsqueda -->
@@ -49,7 +48,8 @@
         <div
           class="search-result-item"
           *ngFor="let c of clientResults"
-          (click)="selectClient(c)">
+          (click)="selectClient(c)"
+        >
           <div class="sr-avatar">{{ getInitials(c.fullName) }}</div>
           <div>
             <span class="sr-name">{{ c.fullName }}</span>
@@ -64,17 +64,41 @@
       <button
         class="item-tab"
         [class.active]="activeItemTab === 'services'"
-        (click)="activeItemTab = 'services'">
+        (click)="activeItemTab = 'services'"
+      >
         <i class="pi pi-scissors"></i>
         Servicios
       </button>
       <button
         class="item-tab"
         [class.active]="activeItemTab === 'products'"
-        (click)="activeItemTab = 'products'">
+        (click)="activeItemTab = 'products'"
+      >
         <i class="pi pi-box"></i>
         Productos
       </button>
+    </div>
+
+    <div class="barber-sale-selector" *ngIf="!isSingleBarber">
+      <div class="selector-info">
+        <span class="selector-label">Barbero que atendió</span>
+        <span class="selector-help"
+          >Esta venta contará para reportes, comisiones y pagos.</span
+        >
+      </div>
+
+      <p-dropdown
+        [options]="barberOptions"
+        [(ngModel)]="selectedBarberId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecciona un barbero"
+        styleClass="barber-sale-dd"
+        appendTo="body"
+        [filter]="true"
+        filterBy="label"
+      >
+      </p-dropdown>
     </div>
 
     <!-- Lista de servicios -->
@@ -82,18 +106,28 @@
       <div
         class="item-card"
         *ngFor="let svc of services"
-        [class.in-cart]="isInCart(svc.id, 'service')"
-        (click)="addService(svc)">
+        [class.in-cart]="isInCart(getServiceCartId(svc), 'service')"
+        (click)="addService(svc)"
+      >
         <div class="item-info">
-          <span class="item-name">{{ svc.name }}</span>
-          <span class="item-type">{{ svc.type === 'hair' ? 'Cabello' : svc.type === 'beard' ? 'Barba' : 'Combo' }}</span>
+          <span class="item-name">{{ svc.displayName }}</span>
+          <span class="item-type">{{ svc.categoryName }}</span>
         </div>
         <div class="item-right">
-          <span class="item-price">{{ formatCurrency(svc.price) }}</span>
-          <div class="item-qty" *ngIf="isInCart(svc.id, 'service')">
-            {{ cartQty(svc.id, 'service') }}
+          <span class="item-price">{{
+            formatCurrency(getServicePrice(svc))
+          }}</span>
+          <div
+            class="item-qty"
+            *ngIf="isInCart(getServiceCartId(svc), 'service')"
+          >
+            {{ cartQty(getServiceCartId(svc), "service") }}
           </div>
-          <i class="pi pi-plus add-icon" *ngIf="!isInCart(svc.id, 'service')"></i>
+
+          <i
+            class="pi pi-plus add-icon"
+            *ngIf="!isInCart(getServiceCartId(svc), 'service')"
+          ></i>
         </div>
       </div>
 
@@ -109,17 +143,23 @@
         class="item-card"
         *ngFor="let prod of products"
         [class.in-cart]="isInCart(prod.id, 'product')"
-        (click)="addProduct(prod)">
+        (click)="addProduct(prod)"
+      >
         <div class="item-info">
           <span class="item-name">{{ prod.name }}</span>
           <span class="item-stock">Stock: {{ prod.stock }}</span>
         </div>
         <div class="item-right">
-          <span class="item-price">{{ formatCurrency(prod.price) }}</span>
+          <span class="item-price">{{
+            formatCurrency(getProductPrice(prod))
+          }}</span>
           <div class="item-qty" *ngIf="isInCart(prod.id, 'product')">
-            {{ cartQty(prod.id, 'product') }}
+            {{ cartQty(prod.id, "product") }}
           </div>
-          <i class="pi pi-plus add-icon" *ngIf="!isInCart(prod.id, 'product')"></i>
+          <i
+            class="pi pi-plus add-icon"
+            *ngIf="!isInCart(prod.id, 'product')"
+          ></i>
         </div>
       </div>
 
@@ -128,24 +168,25 @@
         <p>No hay productos disponibles</p>
       </div>
     </div>
-
   </div>
 
   <!-- ── Panel derecho: carrito ─────────────────────────── -->
   <div class="pos-cart">
-
     <div class="cart-header">
       <h2>Resumen de venta</h2>
-      <span class="cart-count" *ngIf="cart.length > 0">{{ cart.length }} items</span>
+      <span class="cart-count" *ngIf="cart.length > 0"
+        >{{ cart.length }} items</span
+      >
     </div>
 
     <!-- Items del carrito -->
     <div class="cart-items" *ngIf="cart.length > 0">
       <div class="cart-item" *ngFor="let item of cart">
-
         <div class="ci-info">
           <span class="ci-name">{{ item.name }}</span>
-          <span class="ci-type">{{ item.type === 'service' ? 'Servicio' : 'Producto' }}</span>
+          <span class="ci-type">{{
+            item.type === "service" ? "Servicio" : "Producto"
+          }}</span>
         </div>
 
         <div class="ci-controls">
@@ -158,12 +199,13 @@
           </button>
         </div>
 
-        <span class="ci-total">{{ formatCurrency(item.price * item.quantity) }}</span>
+        <span class="ci-total">{{
+          formatCurrency(item.price * item.quantity)
+        }}</span>
 
         <button class="ci-remove" (click)="removeItem(item)">
           <i class="pi pi-trash"></i>
         </button>
-
       </div>
     </div>
 
@@ -188,7 +230,8 @@
             [(ngModel)]="discount"
             min="0"
             [max]="subtotal"
-            placeholder="0"/>
+            placeholder="0"
+          />
         </div>
       </div>
       <div class="total-row grand-total">
@@ -205,7 +248,8 @@
           *ngFor="let opt of paymentOptions"
           class="payment-opt"
           [class.active]="paymentMethod === opt.value"
-          (click)="paymentMethod = opt.value">
+          (click)="paymentMethod = opt.value"
+        >
           <i class="pi {{ opt.icon }}"></i>
           <span>{{ opt.label }}</span>
         </button>
@@ -216,11 +260,17 @@
     <button
       class="confirm-btn"
       (click)="confirmSale()"
-      [disabled]="cart.length === 0 || saving">
+      [disabled]="
+        cart.length === 0 ||
+        saving ||
+        (requiresBarberSelection && !selectedBarberId)
+      "
+    >
       <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
       <i class="pi pi-check" *ngIf="!saving"></i>
-      {{ saving ? 'Procesando...' : 'Confirmar venta — ' + formatCurrency(total) }}
+      {{
+        saving ? "Procesando..." : "Confirmar venta — " + formatCurrency(total)
+      }}
     </button>
-
   </div>
 </div>

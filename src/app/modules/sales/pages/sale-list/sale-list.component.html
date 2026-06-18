@@ -216,30 +216,47 @@
             <div class="donut-center">
               <span class="donut-total-label">Total</span>
               <span class="donut-total">{{
-                formatCurrency(totalRevenue)
+                formatCurrency(paymentMethodsTotal)
               }}</span>
             </div>
           </div>
           <div class="payment-list">
-            <div class="payment-item" *ngFor="let p of paymentMethods">
+            <div class="payment-item" *ngFor="let p of paymentMethodsSummary">
               <div class="payment-left">
-                <i
-                  class="pi"
-                  [class.pi-money-bill]="p.paymentMethod === 'cash'"
-                  [class.pi-credit-card]="p.paymentMethod === 'card'"
-                  [class.pi-send]="p.paymentMethod === 'transfer'"
+                <div
+                  class="payment-icon"
+                  [style.color]="p.color"
+                  [style.background]="p.softColor"
                 >
-                </i>
-                <span>{{ paymentLabel(p.paymentMethod) }}</span>
+                  <i class="pi {{ p.icon }}"></i>
+                </div>
+
+                <div class="payment-info">
+                  <span class="payment-name">{{ p.label }}</span>
+                  <span class="payment-meta">
+                    {{ p.salesCount }}
+                    {{ p.salesCount === 1 ? "venta" : "ventas" }} ·
+                    {{ p.percent }}%
+                  </span>
+                </div>
               </div>
+
               <div class="payment-right">
                 <span class="payment-amount">{{
-                  formatCurrency(p.revenue)
+                  formatCurrency(p.amount)
                 }}</span>
-                <span class="payment-count">{{ p.totalSales }} ventas</span>
+              </div>
+
+              <div class="payment-progress">
+                <div
+                  class="payment-progress-fill"
+                  [style.width.%]="p.percent"
+                  [style.background]="p.color"
+                ></div>
               </div>
             </div>
-            <div class="empty-row" *ngIf="paymentMethods.length === 0">
+
+            <div class="empty-row" *ngIf="paymentMethodsSummary.length === 0">
               Sin datos aún
             </div>
           </div>
@@ -292,20 +309,17 @@
         </div>
       </div>
     </div>
-
     <div class="card sales-history-card">
       <div class="card-header history-header">
         <div>
           <h2>Historial de ventas</h2>
           <p>Últimas ventas registradas desde agenda y punto de venta</p>
         </div>
-
         <button class="history-refresh" type="button" (click)="loadSales()">
           <i class="pi pi-refresh"></i>
           Actualizar
         </button>
       </div>
-
       <ng-container *ngIf="salesLoading">
         <div class="history-loading">
           <p-skeleton
@@ -316,7 +330,6 @@
           </p-skeleton>
         </div>
       </ng-container>
-
       <div
         class="history-table-wrap"
         *ngIf="!salesLoading && recentSales.length > 0"
@@ -331,18 +344,21 @@
               <th>Método</th>
               <th>Total</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
-
           <tbody>
-            <tr *ngFor="let sale of recentSales">
+            <tr
+              *ngFor="let sale of recentSales"
+              class="history-row"
+              (click)="openSaleDetail(sale)"
+            >
               <td>
                 <div class="sale-main">
                   <strong>{{ saleItemsSummary(sale) }}</strong>
                   <span>{{ formatDateTime(sale.createdAt) }}</span>
                 </div>
               </td>
-
               <td>
                 <span
                   class="origin-pill"
@@ -361,7 +377,6 @@
                   {{ saleOriginLabel(sale) }}
                 </span>
               </td>
-
               <td>
                 <div class="client-cell">
                   <div class="mini-avatar">
@@ -370,34 +385,41 @@
                   <span>{{ sale.clientName }}</span>
                 </div>
               </td>
-
               <td>
                 <span class="barber-name">
                   {{ saleBarberName(sale) }}
                 </span>
               </td>
-
               <td>
                 <span class="payment-pill">
                   <i class="pi" [ngClass]="paymentIcon(sale.paymentMethod)"></i>
                   {{ paymentLabel(sale.paymentMethod) }}
                 </span>
               </td>
-
               <td class="history-amount">
                 {{ formatCurrency(sale.total) }}
               </td>
-
               <td>
                 <span class="status-pill status-{{ sale.status }}">
                   {{ statusLabel(sale.status) }}
                 </span>
               </td>
+              <td>
+                <div class="sale-actions">
+                  <button
+                    type="button"
+                    class="sale-action-btn"
+                    pTooltip="Ver detalle"
+                    (click)="openSaleDetail(sale); $event.stopPropagation()"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
-
       <div
         class="empty-history"
         *ngIf="!salesLoading && recentSales.length === 0"
@@ -420,3 +442,229 @@
     </div>
   </ng-container>
 </div>
+<p-dialog
+  [(visible)]="showSaleDetail"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [baseZIndex]="13000"
+  [style]="{ width: '720px', maxWidth: '96vw' }"
+  [breakpoints]="{ '768px': '96vw', '520px': '98vw' }"
+  styleClass="sale-receipt-dialog"
+  *ngIf="selectedSale"
+>
+  <ng-template pTemplate="header">
+    <div class="sale-detail-header">
+      <div>
+        <h2>Detalle de venta</h2>
+        <p>{{ saleReceiptNumber(selectedSale) }}</p>
+      </div>
+      <span class="status-pill status-{{ selectedSale.status }}">
+        {{ statusLabel(selectedSale.status) }}
+      </span>
+    </div>
+  </ng-template>
+  <div class="sale-detail-body">
+    <div class="sale-detail-loading" *ngIf="loadingSaleDetail">
+      <p-skeleton height="90px" borderRadius="16px"></p-skeleton>
+      <p-skeleton height="220px" borderRadius="16px"></p-skeleton>
+    </div>
+    <ng-container *ngIf="!loadingSaleDetail">
+      <div class="sale-total-card">
+        <span>Total de venta</span>
+        <strong>{{ formatCurrency(selectedSale.total) }}</strong>
+      </div>
+      <div class="sale-info-grid">
+        <div class="sale-info-box">
+          <span>Cliente</span>
+          <strong>{{ selectedSale.clientName || "Cliente de paso" }}</strong>
+        </div>
+        <div class="sale-info-box">
+          <span>Barbero</span>
+          <strong>{{ saleBarberName(selectedSale) }}</strong>
+        </div>
+        <div class="sale-info-box">
+          <span>Origen</span>
+          <strong>{{ saleOriginLabel(selectedSale) }}</strong>
+        </div>
+        <div class="sale-info-box">
+          <span>Método</span>
+          <strong>
+            <i
+              class="pi"
+              [ngClass]="paymentIcon(selectedSale.paymentMethod)"
+            ></i>
+            {{ paymentLabel(selectedSale.paymentMethod) }}
+          </strong>
+        </div>
+        <div class="sale-info-box">
+          <span>Fecha</span>
+          <strong>{{ formatDateTime(selectedSale.createdAt) }}</strong>
+        </div>
+        <div class="sale-info-box">
+          <span>Conceptos</span>
+          <strong>{{ saleItemsCount(selectedSale) }}</strong>
+        </div>
+      </div>
+      <div class="sale-items-card">
+        <div class="sale-section-title">
+          <h3>Conceptos vendidos</h3>
+          <span>{{ selectedSale.items.length }} registro(s)</span>
+        </div>
+        <div class="sale-item-row" *ngFor="let item of selectedSale.items">
+          <div class="sale-item-left">
+            <div
+              class="sale-item-icon"
+              [class.product]="item.itemType === 'product'"
+            >
+              <i
+                class="pi"
+                [ngClass]="item.itemType === 'service' ? 'pi-user' : 'pi-box'"
+              ></i>
+            </div>
+            <div>
+              <strong>
+                {{ item.itemName || saleItemTypeLabel(item.itemType) }}
+              </strong>
+              <span
+                >{{ saleItemTypeLabel(item.itemType) }} · Cant.
+                {{ item.quantity }}</span
+              >
+            </div>
+          </div>
+          <div class="sale-item-right">
+            <span>{{ formatCurrency(item.unitPrice || 0) }}</span>
+            <strong>{{ formatCurrency(item.total || 0) }}</strong>
+          </div>
+        </div>
+        <div class="empty-sale-items" *ngIf="selectedSale.items.length === 0">
+          <i class="pi pi-info-circle"></i>
+          <span>Esta venta no tiene conceptos registrados.</span>
+        </div>
+      </div>
+      <div class="sale-totals-card">
+        <div>
+          <span>Subtotal</span>
+          <strong>{{ formatCurrency(selectedSale.subtotal) }}</strong>
+        </div>
+        <div>
+          <span>Descuento</span>
+          <strong>{{ formatCurrency(selectedSale.discount) }}</strong>
+        </div>
+        <div class="grand">
+          <span>Total</span>
+          <strong>{{ formatCurrency(selectedSale.total) }}</strong>
+        </div>
+      </div>
+      <div class="sale-notes" *ngIf="selectedSale.notes">
+        <span>Notas</span>
+        <p>{{ selectedSale.notes }}</p>
+      </div>
+    </ng-container>
+  </div>
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      class="btn-danger-soft"
+      *ngIf="canCancelSale(selectedSale)"
+      [disabled]="cancellingSale"
+      (click)="openCancelSaleDialog()"
+    >
+      <i
+        class="pi"
+        [ngClass]="cancellingSale ? 'pi-spin pi-spinner' : 'pi-ban'"
+      ></i>
+      {{ cancellingSale ? "Cancelando..." : "Cancelar venta" }}
+    </button>
+    <button type="button" class="btn-outline" (click)="closeSaleDetail()">
+      Cerrar
+    </button>
+    <button type="button" class="btn-primary" (click)="printSaleReceipt()">
+      <i class="pi pi-print"></i>
+      Imprimir ticket
+    </button>
+  </ng-template>
+</p-dialog>
+<p-dialog
+  [(visible)]="showCancelSaleDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [appendTo]="'body'"
+  [baseZIndex]="16000"
+  [style]="{ width: '500px', maxWidth: '94vw' }"
+  styleClass="cancel-sale-dialog"
+  *ngIf="selectedSale"
+>
+  <ng-template pTemplate="header">
+    <div class="cancel-modal-header">
+      <div class="cancel-modal-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+
+      <div class="cancel-modal-title">
+        <h3>Cancelar venta</h3>
+        <p>{{ saleReceiptNumber(selectedSale) }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="cancel-modal-content">
+    <div class="cancel-alert">
+      <i class="pi pi-info-circle"></i>
+      <span>
+        Esta acción marcará la venta como cancelada. Si incluye productos, el
+        stock regresará automáticamente al inventario.
+      </span>
+    </div>
+
+    <div class="cancel-total-card">
+      <span>Total de venta</span>
+      <strong>{{ formatCurrency(selectedSale.total) }}</strong>
+    </div>
+
+    <div class="cancel-field">
+      <div class="cancel-field-head">
+        <label>Motivo de cancelación</label>
+        <small>{{ cancelSaleReason.length || 0 }}/300</small>
+      </div>
+
+      <textarea
+        pInputTextarea
+        [(ngModel)]="cancelSaleReason"
+        rows="4"
+        maxlength="300"
+        placeholder="Ej. Venta registrada por error, producto equivocado, cliente canceló..."
+      >
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="cancel-modal-actions">
+      <button
+        type="button"
+        class="btn-outline"
+        [disabled]="cancellingSale"
+        (click)="closeCancelSaleDialog()"
+      >
+        Cerrar
+      </button>
+
+      <button
+        type="button"
+        class="btn-cancel-sale"
+        [disabled]="cancellingSale || !cancelSaleReason.trim()"
+        (click)="confirmCancelSale()"
+      >
+        <i
+          class="pi"
+          [ngClass]="cancellingSale ? 'pi-spin pi-spinner' : 'pi-ban'"
+        >
+        </i>
+        {{ cancellingSale ? "Cancelando..." : "Confirmar cancelación" }}
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
